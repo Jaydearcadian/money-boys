@@ -22,6 +22,13 @@ import {
 import { MarketDepthSchema } from "../agents/quant.js";
 import { RiskAccountSchema } from "../skills/igraph-guard/security.js";
 import type { OrderDispatcher, ExecutionRecord } from "../bitget/dispatcher.js";
+import {
+  BenchmarkFeedUnavailableError,
+  fetchTradFiBenchmark,
+} from "../agents/benchmarks.js";
+
+/** Fail-closed rationale used when the TradFi benchmark feed is unavailable. */
+export const FAIL_CLOSED_BENCHMARK_RATIONALE = "FAIL_CLOSED: TradFi benchmark unavailable";
 
 /**
  * CLM-006 / GAP-006 — Council cyclic handoff adapter (Phase 05 hardened).
@@ -415,6 +422,144 @@ export function executeDeliberationCycle(
 
 export const CouncilAdapter = {
   execute: executeDeliberationCycle,
+  executeWithLiveBenchmark: executeDeliberationCycleWithLiveBenchmark,
+  failClosedVeto: buildFailClosedBenchmarkVeto,
 };
 
 export { sealCycle };
+
+/**
+ * STRICT FAIL-CLOSED: build a sealed HARD_VETO result for an unavailable
+ * TradFi benchmark feed. Deliberation status is HARD_VETO with rationale
+ * "FAIL_CLOSED: TradFi benchmark unavailable"; receipt is VETOED (never
+ * dispatched). The receipt still seals + verifies.
+ */
+export function buildFailClosedBenchmarkVeto(
+  catalyst: MacroCatalystProposal,
+  depth: unknown,
+  account: RiskAccount,
+  params: DeliberationCycleParams,
+): DeliberationCycleResult {
+  const tTotalStart = performance.now();
+  const macro = MacroCatalystProposalSchema.parse(catalyst);
+  const book = MarketDepthSchema.parse(depth);
+  const acct = RiskAccountSchema.parse(account);
+  const p = DeliberationCycleParamsSchema.parse(params);
+  const exposureUsd = Math.round(p.quantity * p.priceUsd * 100) / 100;
+
+  // Run the hot path on the supplied (stale/last-known) inputs only to
+  // produce well-formed, verifiable telemetry — the verdict is overridden
+  // to HARD_VETO below regardless of scores (fail-closed, no trading).
+  const hot = runHotPath(macro, book, acct, p, p.quantity, p.orderSizeUsd, exposureUsd);
+  void hot;
+
+  const deliberation: CouncilDeliberationResult = reduceCouncilVote({
+    macroScore: macro.score,
+    quantScore: 0,
+    riskScore: 0,
+    execScore: 0,
+    riskPermitted: false,
+    originalExposureUsd: exposureUsd,
+  });
+
+  const tSealStart = performance.now();
+  const receipt = sealWithScores(
+    p,
+    macro,
+    {
+      ...runHotPath(macro, book, acct, p, p.quantity, p.orderSizeUsd, exposureUsd),
+      deliberation,
+    },
+    "VETOED",
+    FAIL_CLOSED_BENCHMARK_RATIONALE,
+    1,
+    0,
+  );
+  const sealingMs = performance.now() - tSealStart;
+  const totalPipelineMs = performance.now() - tTotalStart;
+  const quant = evaluateBasisSpread({
+    tokenPrice: p.tokenPrice,
+    tradFiClosePrice: p.tradFiClosePrice,
+    orderSizeUsd: p.orderSizeUsd,
+    depth: book,
+    fundingRate8h: p.fundingRate8h,
+    hoursToClose: p.hoursToClose,
+    takerFee: p.takerFee,
+  });
+  return {
+    receipt,
+    deliberation,
+    quant,
+    risk: StructuralChangeGuard.evaluateBlastRadius(
+      { symbol: p.symbol, side: p.side, quantity: p.quantity, priceUsd: p.priceUsd },
+      acct,
+    ),
+    execution: evaluateExecution({
+      orderSizeUsd: p.orderSizeUsd,
+      availableDepthUsd: quant.availableDepthUsd,
+      depthCoverage: quant.depthCoverage,
+      completeFill: quant.completeFill,
+      takerFee: p.takerFee,
+      vwapSlippage: quant.vwapSlippage,
+    }),
+    passNumber: 1,
+    executionQuantity: 0,
+    executionExposureUsd: 0,
+    latencies: {
+      macroMs: 0,
+      quantMs: 0,
+      riskMs: 0,
+      execMs: 0,
+      councilReducerMs: 0,
+      sealingMs,
+      totalPipelineMs,
+    },
+  };
+}
+
+/**
+ * Fail-closed deliberation with a LIVE TradFi benchmark fetch.
+ * Resolves tradFiClosePrice via fetchTradFiBenchmark (allowFallback=false);
+ * on BenchmarkFeedUnavailableError immediately returns a HARD_VETO result
+ * with rationale "FAIL_CLOSED: TradFi benchmark unavailable" (never throws,
+ * never dispatches).
+ */
+export async function executeDeliberationCycleWithLiveBenchmark(
+  catalyst: MacroCatalystProposal,
+  depth: unknown,
+  account: RiskAccount,
+  params: Omit<DeliberationCycleParams, "tradFiClosePrice"> & { tradFiClosePrice?: number },
+  dispatcher?: OrderDispatcher,
+  fetchImpl: typeof fetch = fetch,
+): Promise<DeliberationCycleResult> {
+  const maybePrice = (params as { tradFiClosePrice?: unknown }).tradFiClosePrice;
+  let close: number;
+  if (typeof maybePrice === "number" && Number.isFinite(maybePrice) && maybePrice > 0) {
+    close = maybePrice;
+  } else {
+    try {
+      const bench = await fetchTradFiBenchmark(params.symbol, fetchImpl);
+      close = bench.closePriceUsd;
+    } catch (err) {
+      if (err instanceof BenchmarkFeedUnavailableError) {
+        // Fail-closed: HARD_VETO, no dispatch.
+        const fallbackParams = DeliberationCycleParamsSchema.parse({
+          ...params,
+          tradFiClosePrice: 1,
+        });
+        return buildFailClosedBenchmarkVeto(catalyst, depth, account, fallbackParams);
+      }
+      throw err;
+    }
+  }
+  const fullParams = DeliberationCycleParamsSchema.parse({ ...params, tradFiClosePrice: close });
+  try {
+    const out = executeDeliberationCycle(catalyst, depth, account, fullParams, dispatcher as OrderDispatcher);
+    return await out;
+  } catch (err) {
+    if (err instanceof BenchmarkFeedUnavailableError) {
+      return buildFailClosedBenchmarkVeto(catalyst, depth, account, fullParams);
+    }
+    throw err;
+  }
+}

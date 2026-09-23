@@ -1,9 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { executeDeliberationCycle } from "../src/council/adapter.js";
+import {
+  buildFailClosedBenchmarkVeto,
+  executeDeliberationCycle,
+  FAIL_CLOSED_BENCHMARK_RATIONALE,
+} from "../src/council/adapter.js";
 import { sealReceipt, verifyReceipt } from "../src/council/receipts.js";
 import { OrderDispatcher } from "../src/bitget/dispatcher.js";
 import {
+  BenchmarkFeedUnavailableError,
   fetchTradFiBenchmark,
   cleanUnderlyingSymbol,
   FRIDAY_CLOSE_SNAPSHOT,
@@ -14,7 +19,7 @@ import { evaluateBasisSpread } from "../src/agents/quant.js";
 /**
  * Phase 05 dispatch hardening (Sections 1, 2, 4, 5):
  * T1 recursive soft-reject, T2 dispatcher guard, T3 paper dispatch,
- * T4 benchmark fallback, T5 latency profile.
+ * T4a default fail-closed, T4b opt-in fallback, T4c adapter veto, T4d boot guard, T5 latency profile.
  */
 
 function fixedDepth(mid: number, availUsd = 7500) {
@@ -171,13 +176,45 @@ describe("dispatch hardening (Phase 05)", () => {
     assert.equal(rec.feeUsd, expectedFee);
   });
 
-  it("T4 benchmark fallback: unreachable MCP returns verified static snapshot", async () => {
+  it("T4a default fail-closed: offline/unreachable feed rejects with BenchmarkFeedUnavailableError", async () => {
     assert.equal(cleanUnderlyingSymbol("rNVDAUSDT"), "NVDA");
     assert.equal(cleanUnderlyingSymbol("rTSLAUSDT"), "TSLA");
     const unreachable: typeof fetch = () => {
       throw new Error("offline fixture");
     };
-    const bench = await fetchTradFiBenchmark("rNVDAUSDT", unreachable);
+    await assert.rejects(
+      fetchTradFiBenchmark("rNVDAUSDT", unreachable),
+      (err: unknown) => err instanceof BenchmarkFeedUnavailableError,
+    );
+    const timeout: typeof fetch = (_url, opts) => {
+      const err = new Error("aborted");
+      (err as Error & { name: string }).name = "AbortError";
+      void opts;
+      throw err;
+    };
+    await assert.rejects(
+      fetchTradFiBenchmark("rAAPLUSDT", timeout),
+      (err: unknown) => err instanceof BenchmarkFeedUnavailableError,
+    );
+    const http500: typeof fetch = () =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+        json: () => Promise.resolve({}),
+      } as unknown as Response);
+    await assert.rejects(
+      fetchTradFiBenchmark("rNVDAUSDT", http500),
+      (err: unknown) => err instanceof BenchmarkFeedUnavailableError,
+    );
+  });
+
+  it("T4b explicit opt-in fallback: { allowFallback: true } yields verified LOCAL_SNAPSHOT", async () => {
+    const unreachable: typeof fetch = () => {
+      throw new Error("offline fixture");
+    };
+    const bench = await fetchTradFiBenchmark("rNVDAUSDT", unreachable, {
+      allowFallback: true,
+    });
     assert.equal(bench.symbol, "rNVDAUSDT");
     assert.equal(bench.closePriceUsd, FRIDAY_CLOSE_SNAPSHOT["rNVDAUSDT"]);
     assert.equal(bench.closePriceUsd, 128.8);
@@ -188,9 +225,57 @@ describe("dispatch hardening (Phase 05)", () => {
       void opts;
       throw err;
     };
-    const bench2 = await fetchTradFiBenchmark("rAAPLUSDT", timeout);
+    const bench2 = await fetchTradFiBenchmark("rAAPLUSDT", timeout, {
+      allowFallback: true,
+    });
     assert.equal(bench2.closePriceUsd, 224.2);
     assert.equal(bench2.source, "LOCAL_SNAPSHOT");
+  });
+
+  it("T4c adapter interceptor: buildFailClosedBenchmarkVeto seals HARD_VETO with zero execution and no dispatch", () => {
+    const close = 60_000;
+    const token = close * 1.0293;
+    const quantity = 0.08;
+    const result = buildFailClosedBenchmarkVeto(
+      catalyst("BTCUSDT", 85),
+      fixedDepth(token, 24_000),
+      { equityUsd: 20_000, usedMarginUsd: 1_000, freeMarginUsd: 19_000, openOrders: [] },
+      {
+        symbol: "BTCUSDT",
+        side: "sell",
+        quantity,
+        priceUsd: token,
+        tokenPrice: token,
+        tradFiClosePrice: close,
+        orderSizeUsd: 5_000,
+        fundingRate8h: 0.0001,
+        hoursToClose: 8,
+        takerFee: 0.0006,
+      },
+    );
+    assert.equal(result.deliberation.status, "HARD_VETO");
+    assert.equal(result.receipt.decision, "VETOED");
+    assert.ok(
+      result.receipt.rationale.includes(FAIL_CLOSED_BENCHMARK_RATIONALE),
+      result.receipt.rationale,
+    );
+    assert.ok(
+      result.receipt.rationale.includes("FAIL_CLOSED: TradFi benchmark unavailable"),
+      result.receipt.rationale,
+    );
+    assert.equal(verifyReceipt(result.receipt), true);
+    assert.equal(result.executionQuantity, 0);
+    assert.equal(result.executionExposureUsd, 0);
+    assert.equal(result.executionRecord, undefined);
+  });
+
+  it("T4d dispatcher boot guard: TESTNET without credentials throws; PAPER boots keyless", () => {
+    assert.throws(
+      () => new OrderDispatcher("TESTNET"),
+      /without bitgetClient|credentials/i,
+    );
+    const paper = new OrderDispatcher("PAPER");
+    assert.equal(paper.mode, "PAPER");
   });
 
   it("T5 latency profile: real timers > 0 with hot path under 5ms", () => {

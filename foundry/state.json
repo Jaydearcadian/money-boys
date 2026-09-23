@@ -10,5 +10,5 @@
   "high_open_gaps": 3,
   "external_blockers": 1,
   "live_evidence_current": false,
-  "notes": "Phase 01 public Bitget ticker TESTED; private auth BLOCKED_EXTERNAL without BITGET_* keys. No git commit yet \u2014 head null until first commit."
+  "notes": "Phase 01 public Bitget ticker TESTED; private auth BLOCKED_EXTERNAL without BITGET_* keys. Fail-closed TradFi benchmark veto + authenticated Bitget Demo dispatch TESTED (unit: T4a/T4b/T4c/T4d, 34/34 engine tests); live_bitget_demo_orders.jsonl absent until real Demo code 0/00000; PAPER heartbeat kept distinct from TESTNET daemon (no ONLINE claim without pm2 list+logs+fresh JSONL)."
 }

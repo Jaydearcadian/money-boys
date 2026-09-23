@@ -1,8 +1,14 @@
 /**
  * TradFi Friday-benchmark snapshots via the Bitget Developer Toolkit
  * bitget-mcp-server (HTTP transport: https://agent.bitget.com/mcp).
- * Pure TypeScript, zero credentials. Fail-closed to verified static
- * Friday-close snapshots when the MCP endpoint is unreachable.
+ * Pure TypeScript, zero credentials.
+ *
+ * STRICT FAIL-CLOSED SEMANTICS (institutional requirement / S2 Hackathon):
+ * live execution NEVER silently falls back to LOCAL_SNAPSHOT. The default
+ * is allowFallback = false; any unreachable feed, HTTP error, or invalid
+ * payload throws BenchmarkFeedUnavailableError. Callers (council adapter)
+ * must catch it and HARD_VETO. Explicit opt-in fallback
+ * (allowFallback: true) is reserved for offline PAPER tooling/tests only.
  */
 
 export type BenchmarkSource = "BITGET_MCP" | "LOCAL_SNAPSHOT";
@@ -26,6 +32,21 @@ export const FRIDAY_CLOSE_SNAPSHOT: Record<string, number> = {
 export const BENCHMARK_AS_OF = "2026-09-18T20:00:00Z";
 export const BITGET_MCP_URL = "https://agent.bitget.com/mcp";
 export const BENCHMARK_TIMEOUT_MS = 1500;
+
+/** Thrown when the live TradFi benchmark feed is unreachable/invalid and fail-closed is engaged. */
+export class BenchmarkFeedUnavailableError extends Error {
+  readonly symbol: string;
+  constructor(symbol: string, detail = "feed unreachable") {
+    super(`TradFi benchmark quote for ${symbol} failed: ${detail}. Fail-closed engaged.`);
+    this.name = "BenchmarkFeedUnavailableError";
+    this.symbol = symbol;
+  }
+}
+
+export type FetchBenchmarkOptions = {
+  /** Explicit opt-in to LOCAL_SNAPSHOT fallback. Default false (fail-closed). */
+  allowFallback?: boolean;
+};
 
 /** "rNVDAUSDT" -> "NVDA", "rTSLAUSDT" -> "TSLA", passthrough otherwise. */
 export function cleanUnderlyingSymbol(tokenSymbol: string): string {
@@ -80,21 +101,32 @@ function extractPrice(payload: unknown): number | null {
 
 /**
  * Fetch the Friday TradFi benchmark close for a token symbol.
- * Tries the Bitget MCP `get_stock_quote` tool with a 1500ms timeout;
- * on timeout, HTTP error, or unparseable payload returns the verified
- * static snapshot with source LOCAL_SNAPSHOT. Never throws for a
- * known snapshot symbol.
+ *
+ * STRICT FAIL-CLOSED (default): tries the Bitget MCP `get_stock_quote`
+ * tool with a 1500ms timeout; on timeout, HTTP error, or unparseable
+ * payload THROWS BenchmarkFeedUnavailableError. No silent fallback.
+ *
+ * Set { allowFallback: true } ONLY for offline PAPER tooling/tests to
+ * receive the verified static snapshot with source LOCAL_SNAPSHOT.
  */
 export async function fetchTradFiBenchmark(
   symbol: string,
   fetchImpl: typeof fetch = fetch,
+  opts?: FetchBenchmarkOptions | boolean,
 ): Promise<TradFiBenchmark> {
+  const allowFallback =
+    typeof opts === "boolean" ? opts : (opts?.allowFallback ?? false);
   const underlying = cleanUnderlyingSymbol(symbol);
+  const fail = (detail: string): TradFiBenchmark => {
+    if (allowFallback) return snapshotFor(symbol);
+    throw new BenchmarkFeedUnavailableError(symbol, detail);
+  };
+  let res!: Response;
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), BENCHMARK_TIMEOUT_MS);
     try {
-      const res = await fetchImpl(BITGET_MCP_URL, {
+      res = await fetchImpl(BITGET_MCP_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
@@ -105,22 +137,29 @@ export async function fetchTradFiBenchmark(
         }),
         signal: controller.signal,
       });
-      if (!res.ok) return snapshotFor(symbol);
-      const body: unknown = await res.json();
-      const price = extractPrice(body);
-      if (price === null) return snapshotFor(symbol);
-      return {
-        symbol,
-        closePriceUsd: price,
-        asOf: new Date().toISOString(),
-        source: "BITGET_MCP",
-      };
     } finally {
       clearTimeout(timer);
     }
-  } catch {
-    return snapshotFor(symbol);
+  } catch (err) {
+    if (err instanceof BenchmarkFeedUnavailableError) throw err;
+    const detail = err instanceof Error ? err.message : String(err);
+    return fail(`feed unreachable (${detail})`);
   }
+  if (!res!.ok) return fail(`feed unreachable (HTTP ${res!.status})`);
+  let body: unknown;
+  try {
+    body = await res!.json();
+  } catch {
+    return fail("feed unreachable (invalid JSON)");
+  }
+  const price = extractPrice(body);
+  if (price === null) return fail("feed unreachable (invalid response)");
+  return {
+    symbol,
+    closePriceUsd: price,
+    asOf: new Date().toISOString(),
+    source: "BITGET_MCP",
+  };
 }
 
 export const TradFiBenchmarkService = {
