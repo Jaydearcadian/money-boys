@@ -1,0 +1,102 @@
+
+> money-boys@0.1.0 verify /home/ubuntu/money-boys
+> bash scripts/verify
+
+== money-boys verify ==
+PASS: BUILD_FOUNDRY.md
+PASS: PRD.md
+PASS: AGENTS.md
+PASS: README.md
+PASS: ARCHITECTURE.md
+PASS: foundry/state.json
+PASS: foundry/gaps.jsonl
+PASS: foundry/claims.jsonl
+PASS: foundry/assumptions.md
+PASS: foundry/contradictions.md
+PASS: foundry/phases/01-bitget-substrate.md
+PASS: docs/canonical/CURRENT_STATE.md
+PASS: docs/canonical/IMPLEMENTATION_STATUS.md
+PASS: docs/canonical/ASSUMPTIONS.md
+PASS: docs/canonical/CONTRADICTIONS.md
+PASS: docs/canonical/EVIDENCE_LEDGER.md
+PASS: docs/canonical/STATE_MODEL.md
+PASS: docs/canonical/AUTHORITY_MODEL.md
+PASS: docs/research/OPEN_QUESTIONS.md
+PASS: docs/PROGRESS_LEDGER.md
+PASS: packages/engine/package.json
+PASS: packages/engine/src/bitget/client.ts
+PASS: packages/engine/src/bitget/test-auth.ts
+PASS: foundry/evidence/p01/auth_test.json
+PASS: foundry/evidence/manifest-schema.json
+PASS: secret scan (basic)
+
+> @money-boys/engine@0.1.0 test /home/ubuntu/money-boys/packages/engine
+> node --import tsx --test test/*.test.ts
+
+▶ BitgetClient
+  ✔ constructs with explicit config (0.56571ms)
+✔ BitgetClient (1.317883ms)
+▶ Council quorum + proposal reducer (CLM-006 / GAP-006)
+  ✔ T1 High consensus (Macro=85, Quant=90, Risk=85, Exec=80) approves and seals receipt (5.536956ms)
+  ✔ T2 Unilateral Risk veto rejects trade even when Macro=100 and Quant=100 (0.944265ms)
+  ✔ T3 Soft rejection (S=68.0) scales down exposure by 50% without dropping (0.863793ms)
+  ✔ T4 Quorum failure (<3 members passing) terminates proposal (0.674847ms)
+✔ Council quorum + proposal reducer (CLM-006 / GAP-006) (9.167595ms)
+▶ hot-path integration: quant -> risk guard -> receipt seal/verify
+  ✔ Case 1: liquid book, profitable basis, safe margin -> APPROVED receipt seals and verifies (3.883541ms)
+  ✔ Case 2: risk guard veto (exposure > $5,000) -> VETOED receipt seals and verifies (0.936514ms)
+✔ hot-path integration: quant -> risk guard -> receipt seal/verify (5.753329ms)
+▶ Macro cognitive shield (CLM-005 / GAP-005)
+  ✔ T1 Valid catalyst output parses and matches schema (2.680073ms)
+  ✔ T2 Conversational noise / unformatted text rejected; fails closed to NEUTRAL (0.749463ms)
+  ✔ T3 Provenance hash is deterministic and tamper-sensitive (0.333764ms)
+  ✔ T4 Missing API key / fetch error triggers clean NEUTRAL fallback (0.441465ms)
+✔ Macro cognitive shield (CLM-005 / GAP-005) (5.297742ms)
+▶ QuantBoy Alpha Engine (CLM-004 / GAP-004)
+  ✔ T1 Alpha Detection: +2.93% spread on deep book clears hurdle (SELL_BASIS, edge > 1.5%, score >= 75) (2.098169ms)
+  ✔ T2 Depth Slippage Hurdle: same spread on thin book fails hurdle (NEUTRAL, score < 50) (0.577162ms)
+  ✔ T3 Funding Carry Drag: 48h window with elevated funding expands hurdle and compresses edge (0.492176ms)
+  ✔ T4 Fail-Closed Stability: empty book does not throw, fails closed (NEUTRAL, score < 50) (0.276224ms)
+✔ QuantBoy Alpha Engine (CLM-004 / GAP-004) (4.414632ms)
+▶ ReasoningReceipt SHA-256 sealing (CLM-003, reconciled shape)
+  ✔ seals and verifies an approved trade receipt (quant + permitted guard) (4.428916ms)
+  ✔ seals and verifies a vetoed trade receipt (guard HARD_VETO) (0.97102ms)
+  ✔ detects tampering with riskReport.projectedLiquidationPrice (0.814838ms)
+  ✔ detects tampering with quantMetrics.netEdgePct (0.963303ms)
+  ✔ is key-order independent: differently ordered inputs yield identical receiptHash (0.852961ms)
+✔ ReasoningReceipt SHA-256 sealing (CLM-003, reconciled shape) (9.511394ms)
+▶ StructuralChangeGuard.evaluateBlastRadius (CLM-002)
+  ✔ approves a safe trade and surfaces same-symbol cancels + liq estimate (2.420956ms)
+  ✔ vetoes exposure breaching the $5,000 single-trade cap (0.369617ms)
+  ✔ vetoes projected margin utilization above 65% (0.307183ms)
+  ✔ vetoes exposure exceeding free margin (0.193472ms)
+✔ StructuralChangeGuard.evaluateBlastRadius (CLM-002) (4.509709ms)
+ℹ tests 24
+ℹ suites 7
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 904.400636
+PASS: engine unit tests
+
+> @money-boys/engine@0.1.0 typecheck /home/ubuntu/money-boys/packages/engine
+> tsc --noEmit
+
+PASS: engine typecheck
+PASS: BUILD_FOUNDRY.md
+PASS: PRD.md
+PASS: AGENTS.md
+PASS: foundry/state.json
+PASS: foundry/gaps.jsonl
+PASS: foundry/claims.jsonl
+PASS: foundry/assumptions.md
+PASS: foundry/contradictions.md
+PASS: foundry/phases/01-bitget-substrate.md
+PASS: scripts/verify
+PASS: foundry ledgers parse + evidence paths for elevated claims
+check-foundry OK
+PASS: check-foundry
+PASS: p01 evidence coherence
+VERIFY OK
