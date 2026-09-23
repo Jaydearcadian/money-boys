@@ -11,7 +11,8 @@ Status vocabulary: Foundry §2 (`PROPOSED` … `LIVE` / `BLOCKED_*`).
 | ReasoningReceipt | TESTED | CLM-003, `receipts.test.ts` | — |
 | Quant engine | TESTED | CLM-004, `quant.test.ts` | Mid-price slippage reference |
 | Macro shield | TESTED | CLM-005, `macro-shield.test.ts` | Proposal-only; key-gated live call |
-| Council + deliberation | TESTED | CLM-006, `council.test.ts` | APPROVED/VETOED receipt enum |
+| Council proposal reducer | TESTED | CLM-006, `council.test.ts` | APPROVED/VETOED receipt enum |
+| Execution agent (fill feasibility + Bitget taker fee tier) | TESTED | CLM-006, `council.test.ts`, `dispatch-hardening.test.ts` T1/T6/T7 | PAPER auto-dispatch only on APPROVED |
 | Benchmark fail-closed veto + PAPER dispatch | TESTED | CLM-007, `dispatch-hardening.test.ts` | Unit only; no live demo orders |
 | Telemetry server | TESTED | CLM-008, `telemetry.test.ts`, `p05/closeout_tests.txt` | Ephemeral-port integration; no LIVE deploy |
 | Desk UI | TESTED | CLM-009, `p05/desk_typecheck.txt`, desk build | Typecheck+build only; no E2E/LIVE |

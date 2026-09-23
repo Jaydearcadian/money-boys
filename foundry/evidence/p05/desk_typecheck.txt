@@ -1,3 +1,4 @@
+
 > @money-boys/desk@0.1.0 typecheck /home/ubuntu/money-boys/packages/desk
 > tsc --noEmit
 

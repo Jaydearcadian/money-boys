@@ -8,4 +8,4 @@ Canonical copy lives in `foundry/assumptions.md` (machine-adjacent). Summary:
 | ASM-002 | Bitget v2 HMAC prehash format | OPEN |
 | ASM-003 | DashScope Qwen-Plus OK for warm path | OPEN |
 | ASM-004 | Relevant tokenized equity symbols on Bitget | OPEN |
-| ASM-005 | <50ms hot path feasible on Node | OPEN |
+| ASM-005 | <50ms hot path feasible on Node | CLOSED (I-04 charter <50ms holds; T5 median-of-5 + empirical <10ms, GAP-007) |
