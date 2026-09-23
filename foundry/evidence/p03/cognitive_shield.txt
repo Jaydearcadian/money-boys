@@ -1,0 +1,96 @@
+
+> money-boys@0.1.0 verify /home/ubuntu/money-boys
+> bash scripts/verify
+
+== money-boys verify ==
+PASS: BUILD_FOUNDRY.md
+PASS: PRD.md
+PASS: AGENTS.md
+PASS: README.md
+PASS: ARCHITECTURE.md
+PASS: foundry/state.json
+PASS: foundry/gaps.jsonl
+PASS: foundry/claims.jsonl
+PASS: foundry/assumptions.md
+PASS: foundry/contradictions.md
+PASS: foundry/phases/01-bitget-substrate.md
+PASS: docs/canonical/CURRENT_STATE.md
+PASS: docs/canonical/IMPLEMENTATION_STATUS.md
+PASS: docs/canonical/ASSUMPTIONS.md
+PASS: docs/canonical/CONTRADICTIONS.md
+PASS: docs/canonical/EVIDENCE_LEDGER.md
+PASS: docs/canonical/STATE_MODEL.md
+PASS: docs/canonical/AUTHORITY_MODEL.md
+PASS: docs/research/OPEN_QUESTIONS.md
+PASS: docs/PROGRESS_LEDGER.md
+PASS: packages/engine/package.json
+PASS: packages/engine/src/bitget/client.ts
+PASS: packages/engine/src/bitget/test-auth.ts
+PASS: foundry/evidence/p01/auth_test.json
+PASS: foundry/evidence/manifest-schema.json
+PASS: secret scan (basic)
+
+> @money-boys/engine@0.1.0 test /home/ubuntu/money-boys/packages/engine
+> node --import tsx --test test/*.test.ts
+
+▶ BitgetClient
+  ✔ constructs with explicit config (1.842841ms)
+✔ BitgetClient (2.604185ms)
+▶ hot-path integration: quant -> risk guard -> receipt seal/verify
+  ✔ Case 1: liquid book, profitable basis, safe margin -> APPROVED receipt seals and verifies (3.88459ms)
+  ✔ Case 2: risk guard veto (exposure > $5,000) -> VETOED receipt seals and verifies (0.932719ms)
+✔ hot-path integration: quant -> risk guard -> receipt seal/verify (5.713406ms)
+▶ Macro cognitive shield (CLM-005 / GAP-005)
+  ✔ T1 Valid catalyst output parses and matches schema (3.005311ms)
+  ✔ T2 Conversational noise / unformatted text rejected; fails closed to NEUTRAL (0.808088ms)
+  ✔ T3 Provenance hash is deterministic and tamper-sensitive (0.334284ms)
+  ✔ T4 Missing API key / fetch error triggers clean NEUTRAL fallback (0.496006ms)
+✔ Macro cognitive shield (CLM-005 / GAP-005) (5.686679ms)
+▶ QuantBoy Alpha Engine (CLM-004 / GAP-004)
+  ✔ T1 Alpha Detection: +2.93% spread on deep book clears hurdle (SELL_BASIS, edge > 1.5%, score >= 75) (2.182273ms)
+  ✔ T2 Depth Slippage Hurdle: same spread on thin book fails hurdle (NEUTRAL, score < 50) (0.625312ms)
+  ✔ T3 Funding Carry Drag: 48h window with elevated funding expands hurdle and compresses edge (0.512625ms)
+  ✔ T4 Fail-Closed Stability: empty book does not throw, fails closed (NEUTRAL, score < 50) (0.269924ms)
+✔ QuantBoy Alpha Engine (CLM-004 / GAP-004) (4.597574ms)
+▶ ReasoningReceipt SHA-256 sealing (CLM-003, reconciled shape)
+  ✔ seals and verifies an approved trade receipt (quant + permitted guard) (4.055618ms)
+  ✔ seals and verifies a vetoed trade receipt (guard HARD_VETO) (0.948459ms)
+  ✔ detects tampering with riskReport.projectedLiquidationPrice (0.851586ms)
+  ✔ detects tampering with quantMetrics.netEdgePct (0.971232ms)
+  ✔ is key-order independent: differently ordered inputs yield identical receiptHash (0.864926ms)
+✔ ReasoningReceipt SHA-256 sealing (CLM-003, reconciled shape) (8.938381ms)
+▶ StructuralChangeGuard.evaluateBlastRadius (CLM-002)
+  ✔ approves a safe trade and surfaces same-symbol cancels + liq estimate (2.454768ms)
+  ✔ vetoes exposure breaching the $5,000 single-trade cap (0.353504ms)
+  ✔ vetoes projected margin utilization above 65% (0.271064ms)
+  ✔ vetoes exposure exceeding free margin (0.229958ms)
+✔ StructuralChangeGuard.evaluateBlastRadius (CLM-002) (4.367954ms)
+ℹ tests 20
+ℹ suites 6
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 791.853854
+PASS: engine unit tests
+
+> @money-boys/engine@0.1.0 typecheck /home/ubuntu/money-boys/packages/engine
+> tsc --noEmit
+
+PASS: engine typecheck
+PASS: BUILD_FOUNDRY.md
+PASS: PRD.md
+PASS: AGENTS.md
+PASS: foundry/state.json
+PASS: foundry/gaps.jsonl
+PASS: foundry/claims.jsonl
+PASS: foundry/assumptions.md
+PASS: foundry/contradictions.md
+PASS: foundry/phases/01-bitget-substrate.md
+PASS: scripts/verify
+PASS: foundry ledgers parse + evidence paths for elevated claims
+check-foundry OK
+PASS: check-foundry
+PASS: p01 evidence coherence
+VERIFY OK
