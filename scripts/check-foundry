@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# Money Boys — Foundry consistency check (lightweight)
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+FAIL=0
+
+need() {
+  local f="$1"
+  if [[ -f "$f" ]]; then echo "PASS: $f"; else echo "FAIL: missing $f"; FAIL=1; fi
+}
+
+need BUILD_FOUNDRY.md
+need PRD.md
+need AGENTS.md
+need foundry/state.json
+need foundry/gaps.jsonl
+need foundry/claims.jsonl
+need foundry/assumptions.md
+need foundry/contradictions.md
+need foundry/phases/01-bitget-substrate.md
+need scripts/verify
+
+python3 - <<'PY' || FAIL=1
+import json, sys, pathlib
+root = pathlib.Path(".")
+state = json.loads((root/"foundry/state.json").read_text())
+assert "current_phase" in state and "status" in state
+claims=[]
+for line in (root/"foundry/claims.jsonl").read_text().splitlines():
+    line=line.strip()
+    if line: claims.append(json.loads(line))
+assert claims, "no claims"
+for c in claims:
+    for e in c.get("evidence") or []:
+        p = root/e
+        if c.get("state") in {"TESTED","INTEGRATED","E2E_VERIFIED","LIVE_DEMONSTRATED","LIVE"} and c.get("evidence"):
+            if not p.exists():
+                print(f"FAIL: claim {c['id']} missing evidence path {e}")
+                sys.exit(1)
+    if c.get("state") in {"LIVE","LIVE_DEMONSTRATED"}:
+        # refuse LIVE without evidence list
+        if not c.get("evidence"):
+            print(f"FAIL: {c['id']} LIVE without evidence")
+            sys.exit(1)
+# gaps: CLOSED must have closed_by_commit
+for line in (root/"foundry/gaps.jsonl").read_text().splitlines():
+    line=line.strip()
+    if not line: continue
+    g=json.loads(line)
+    if g.get("status")=="CLOSED" and not g.get("closed_by_commit"):
+        print(f"FAIL: {g['id']} CLOSED without closed_by_commit")
+        sys.exit(1)
+print("PASS: foundry ledgers parse + evidence paths for elevated claims")
+PY
+
+if [[ "$FAIL" -ne 0 ]]; then
+  echo "check-foundry FAILED"
+  exit 1
+fi
+echo "check-foundry OK"

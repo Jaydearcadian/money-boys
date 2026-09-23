@@ -1,0 +1,14 @@
+{
+  "name": "money-boys",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "verify": "bash scripts/verify",
+    "check-foundry": "bash scripts/check-foundry",
+    "check-foundry:node": "node scripts/check-foundry.mjs",
+    "engine:typecheck": "pnpm --filter @money-boys/engine typecheck",
+    "engine:test": "pnpm --filter @money-boys/engine test",
+    "engine:auth": "pnpm --filter @money-boys/engine test:auth"
+  }
+}

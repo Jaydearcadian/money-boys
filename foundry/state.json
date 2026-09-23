@@ -1,0 +1,14 @@
+{
+  "project": "money-boys",
+  "version": 1,
+  "current_phase": "01",
+  "status": "IN_PROGRESS",
+  "head": null,
+  "last_verified_head": null,
+  "last_verified_at": null,
+  "critical_open_gaps": 0,
+  "high_open_gaps": 3,
+  "external_blockers": 1,
+  "live_evidence_current": false,
+  "notes": "Phase 01 public Bitget ticker TESTED; private auth BLOCKED_EXTERNAL without BITGET_* keys. No git commit yet \u2014 head null until first commit."
+}

@@ -1,0 +1,16 @@
+name: pr-checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repo health check
+        run: ./scripts/verify.sh
+      # Extend per stack: formatting, typecheck, tests, build.
+      # Main-branch: full suite + integration. Release: exact-head
+      # verification + deployment manifest + smoke test + artifact capture.
+      # A green badge is not evidence of behavior CI does not test.

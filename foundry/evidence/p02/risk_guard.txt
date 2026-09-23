@@ -1,0 +1,79 @@
+Money Boys — Risk Boy HARD_VETO evidence (CLM-002 / GAP-002)
+timestamp: 2026-09-23T07:57:38.023Z
+scope: packages/engine/src/skills/igraph-guard/security.ts :: StructuralChangeGuard.evaluateBlastRadius
+tests: packages/engine/test/risk-guard.test.ts (4 cases) + packages/engine/test/client.test.ts (1 case)
+
+--- engine unit tests (pnpm --filter @money-boys/engine test) ---
+
+> @money-boys/engine@0.1.0 test /home/ubuntu/money-boys/packages/engine
+> node --import tsx --test test/*.test.ts
+
+▶ BitgetClient
+  ✔ constructs with explicit config (1.836263ms)
+✔ BitgetClient (2.598575ms)
+▶ StructuralChangeGuard.evaluateBlastRadius (CLM-002)
+  ✔ approves a safe trade and surfaces same-symbol cancels + liq estimate (3.537125ms)
+  ✔ vetoes exposure breaching the $5,000 single-trade cap (0.609826ms)
+  ✔ vetoes projected margin utilization above 65% (0.29341ms)
+  ✔ vetoes exposure exceeding free margin (0.208795ms)
+✔ StructuralChangeGuard.evaluateBlastRadius (CLM-002) (6.12624ms)
+ℹ tests 5
+ℹ suites 2
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 272.180315
+
+--- pnpm verify (filtered summary) ---
+== money-boys verify ==
+PASS: BUILD_FOUNDRY.md
+PASS: PRD.md
+PASS: AGENTS.md
+PASS: README.md
+PASS: ARCHITECTURE.md
+PASS: foundry/state.json
+PASS: foundry/gaps.jsonl
+PASS: foundry/claims.jsonl
+PASS: foundry/assumptions.md
+PASS: foundry/contradictions.md
+PASS: foundry/phases/01-bitget-substrate.md
+PASS: docs/canonical/CURRENT_STATE.md
+PASS: docs/canonical/IMPLEMENTATION_STATUS.md
+PASS: docs/canonical/ASSUMPTIONS.md
+PASS: docs/canonical/CONTRADICTIONS.md
+PASS: docs/canonical/EVIDENCE_LEDGER.md
+PASS: docs/canonical/STATE_MODEL.md
+PASS: docs/canonical/AUTHORITY_MODEL.md
+PASS: docs/research/OPEN_QUESTIONS.md
+PASS: docs/PROGRESS_LEDGER.md
+PASS: packages/engine/package.json
+PASS: packages/engine/src/bitget/client.ts
+PASS: packages/engine/src/bitget/test-auth.ts
+PASS: foundry/evidence/p01/auth_test.json
+PASS: foundry/evidence/manifest-schema.json
+PASS: secret scan (basic)
+PASS: engine unit tests
+PASS: engine typecheck
+PASS: BUILD_FOUNDRY.md
+PASS: PRD.md
+PASS: AGENTS.md
+PASS: foundry/state.json
+PASS: foundry/gaps.jsonl
+PASS: foundry/claims.jsonl
+PASS: foundry/assumptions.md
+PASS: foundry/contradictions.md
+PASS: foundry/phases/01-bitget-substrate.md
+PASS: scripts/verify
+PASS: foundry ledgers parse + evidence paths for elevated claims
+check-foundry OK
+PASS: check-foundry
+PASS: p01 evidence coherence
+VERIFY OK
+--- invariant mapping ---
+R1 $5k single-trade cap  -> HARD_VETO, covered by "vetoes exposure breaching the $5,000 single-trade cap"
+R2 free-margin floor      -> HARD_VETO, covered by "vetoes exposure exceeding free margin"
+R3 65% utilization ceiling -> HARD_VETO, covered by "vetoes projected margin utilization above 65%"
+APPROVED path             -> covered by "approves a safe trade and surfaces same-symbol cancels + liq estimate"
+No LLM / no network / no Bitget writes in risk path: security.ts imports only zod (schemas) — no fetch, no crypto keys, no LLM libs.

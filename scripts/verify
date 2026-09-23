@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# Money Boys canonical verify (Foundry lightweight kernel)
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+FAIL=0
+
+echo "== money-boys verify =="
+
+pass() { echo "PASS: $1"; }
+fail() { echo "FAIL: $1"; FAIL=1; }
+
+for f in \
+  BUILD_FOUNDRY.md PRD.md AGENTS.md README.md ARCHITECTURE.md \
+  foundry/state.json foundry/gaps.jsonl foundry/claims.jsonl \
+  foundry/assumptions.md foundry/contradictions.md \
+  foundry/phases/01-bitget-substrate.md \
+  docs/canonical/CURRENT_STATE.md \
+  docs/canonical/IMPLEMENTATION_STATUS.md \
+  docs/canonical/ASSUMPTIONS.md \
+  docs/canonical/CONTRADICTIONS.md \
+  docs/canonical/EVIDENCE_LEDGER.md \
+  docs/canonical/STATE_MODEL.md \
+  docs/canonical/AUTHORITY_MODEL.md \
+  docs/research/OPEN_QUESTIONS.md \
+  docs/PROGRESS_LEDGER.md \
+  packages/engine/package.json \
+  packages/engine/src/bitget/client.ts \
+  packages/engine/src/bitget/test-auth.ts \
+  foundry/evidence/p01/auth_test.json \
+  foundry/evidence/manifest-schema.json
+do
+  if [[ -f "$f" ]]; then pass "$f"; else fail "missing $f"; fi
+done
+
+# secret scan (basic)
+if grep -RInE '(sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' \
+  --exclude-dir=node_modules --exclude-dir=.git --exclude='pnpm-lock.yaml' . 2>/dev/null \
+  | grep -v 'scripts/verify' | grep -v '.env.example' ; then
+  fail "possible secret material"
+else
+  pass "secret scan (basic)"
+fi
+
+# engine unit tests + typecheck when deps present
+if [[ -d packages/engine/node_modules ]] || [[ -d node_modules ]]; then
+  if pnpm --filter @money-boys/engine test; then pass "engine unit tests"; else fail "engine unit tests"; fi
+  if pnpm --filter @money-boys/engine typecheck; then pass "engine typecheck"; else fail "engine typecheck"; fi
+else
+  fail "dependencies not installed — run pnpm install"
+fi
+
+# foundry consistency
+if bash scripts/check-foundry; then pass "check-foundry"; else fail "check-foundry"; fi
+
+# p01 evidence honesty: if authConfirmed true without keys env, fail closed
+python3 - <<'PY' || FAIL=1
+import json, pathlib
+p = pathlib.Path("foundry/evidence/p01/auth_test.json")
+data = json.loads(p.read_text())
+assert data.get("claimId") == "CLM-001"
+assert "tickerSample" in data
+# Do not allow LIVE-looking status without auth when file says authConfirmed false
+if data.get("authConfirmed") is False and data.get("status") == "LIVE_DEMONSTRATED":
+    print("FAIL: p01 claims LIVE_DEMONSTRATED without authConfirmed")
+    raise SystemExit(1)
+print("PASS: p01 evidence coherence")
+PY
+
+if [[ "$FAIL" -eq 0 ]]; then
+  echo "VERIFY OK"
+  exit 0
+fi
+echo "VERIFY FAILED"
+exit 1

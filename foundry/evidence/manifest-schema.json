@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MoneyBoysEvidenceManifest",
+  "type": "object",
+  "required": ["schemaVersion", "capability", "status", "commit", "environment", "timestamp", "tests"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1" },
+    "capability": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PROPOSED",
+        "IMPLEMENTED",
+        "TESTED",
+        "INTEGRATED",
+        "E2E_VERIFIED",
+        "LIVE_DEMONSTRATED",
+        "LIVE",
+        "BLOCKED_EXTERNAL",
+        "BLOCKED_INTERNAL",
+        "IMPLEMENTED_LOCAL",
+        "TESTED_LOCAL",
+        "TESTED_TESTNET",
+        "VERIFIED",
+        "COMPOSITE_FIXTURE",
+        "PRODUCTION"
+      ]
+    },
+    "commit": { "type": ["string", "null"] },
+    "environment": { "type": "string" },
+    "timestamp": { "type": "string" },
+    "tests": {
+      "type": "object",
+      "required": ["passed", "failed"],
+      "properties": {
+        "passed": { "type": "integer" },
+        "failed": { "type": "integer" }
+      }
+    },
+    "artifacts": { "type": "array", "items": { "type": "string" } },
+    "limitations": { "type": "array", "items": { "type": "string" } }
+  }
+}
