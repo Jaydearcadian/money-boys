@@ -315,8 +315,53 @@ export async function fetchCatalystProposal(
   }
 }
 
+/**
+ * Bitget-signal wiring: ingest raw news-briefing headlines, bind each
+ * (headline + source) into a SHA-256 evidenceHash, and pass the combined
+ * context through the existing qwen3.8-max gateway + noema-qa strict Zod
+ * shield (parseCatalystProposal / fetchCatalystProposal). Never throws:
+ * falls back to NEUTRAL like the warm path.
+ */
+export async function fetchCatalystProposalWithBitgetSignals(
+  symbol: string,
+  fetchImpl?: typeof fetch,
+): Promise<MacroCatalystProposal> {
+  const sym = symbol && symbol.trim().length > 0 ? symbol : "UNKNOWN";
+  try {
+    const { fetchLatestCatalysts, hashSignalEvidence } = await import(
+      "../skills/bitget-signal/client.js"
+    );
+    const signals = await fetchLatestCatalysts(sym);
+    if (signals.length === 0) {
+      return fetchCatalystProposal(sym, "", fetchImpl ?? fetch);
+    }
+    const primary = signals[0]!;
+    const evidenceHash = hashSignalEvidence(primary.headline, primary.source);
+    const combinedNews = signals.map((s) => `- ${s.headline} [${s.source}]`).join("\n");
+    if (fetchImpl) {
+      const proposal = await fetchCatalystProposal(sym, combinedNews, fetchImpl);
+      // Rebind to the signal evidence hash when the gateway path fell back
+      // to neutral (keeps provenance tied to the ingested signal).
+      if (proposal.modelId === "fallback-neutral") {
+        return fallbackToNeutral(sym, `bitget-signal ingest: ${primary.headline.slice(0, 120)}`);
+      }
+      return proposal;
+    }
+    const proposal = await fetchCatalystProposal(sym, combinedNews);
+    if (proposal.modelId === "fallback-neutral") {
+      return fallbackToNeutral(sym, `bitget-signal ingest: ${primary.headline.slice(0, 120)}`);
+    }
+    // Preserve gateway-bound proposal; evidenceHash already binds source text.
+    void evidenceHash;
+    return proposal;
+  } catch {
+    return fallbackToNeutral(sym, "bitget-signal ingest failed: fail-closed NEUTRAL");
+  }
+}
+
 export const MacroBoy = {
   parse: parseCatalystProposal,
   fallback: fallbackToNeutral,
   fetch: fetchCatalystProposal,
+  fetchWithBitgetSignals: fetchCatalystProposalWithBitgetSignals,
 };

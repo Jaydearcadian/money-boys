@@ -39,6 +39,13 @@ export const ReceiptDecisionSchema = z.enum(["APPROVED", "VETOED"]);
 export type ReceiptDecision = z.infer<typeof ReceiptDecisionSchema>;
 
 /** Payload of a reasoning receipt BEFORE sealing (no id / timestamp / hash). */
+export const ReceiptMetadataSchema = z.object({
+  passNumber: z.union([z.literal(1), z.literal(2)]),
+  originalQuantity: z.number().nonnegative(),
+  executedQuantity: z.number().nonnegative(),
+});
+export type ReceiptMetadata = z.infer<typeof ReceiptMetadataSchema>;
+
 export const UnsealedReceiptSchema = z.object({
   symbol: z.string().min(1),
   action: QuantActionSchema,
@@ -47,6 +54,7 @@ export const UnsealedReceiptSchema = z.object({
   councilScores: CouncilScoresSchema,
   decision: ReceiptDecisionSchema,
   rationale: z.string().min(1),
+  metadata: ReceiptMetadataSchema.optional(),
 });
 
 export type UnsealedReceipt = z.infer<typeof UnsealedReceiptSchema>;

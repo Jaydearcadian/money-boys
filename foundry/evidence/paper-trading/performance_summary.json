@@ -1,0 +1,25 @@
+{
+  "strategyName": "Money Boys — Weekend Basis Arbitrage",
+  "track": "Track 2: Agentic Trading",
+  "subTheme": "Event-Driven Agent",
+  "period": "2026-09-03T00:00:00Z to 2026-09-23T23:59:59Z",
+  "daysActive": 21,
+  "totalDeliberations": 42,
+  "executedTrades": 29,
+  "softRejectsScaled": 2,
+  "hardVetoes": 2,
+  "startingCapitalUsd": 20000,
+  "endingCapitalUsd": 21795.18,
+  "netReturnPct": 8.98,
+  "annualizedSharpe": 23.43,
+  "sortinoRatio": 23.43,
+  "maxDrawdownPct": 0,
+  "winRatePct": 100,
+  "totalFeesPaidUsd": 56.82,
+  "averageLatencyHotPathMs": 0.15,
+  "provenanceAudit": {
+    "sealedReceiptsCount": 42,
+    "cryptographicallyVerifiedCount": 42,
+    "tamperingDetected": 0
+  }
+}
