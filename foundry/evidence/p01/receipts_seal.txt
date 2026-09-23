@@ -1,0 +1,80 @@
+
+> money-boys@0.1.0 verify /home/ubuntu/money-boys
+> bash scripts/verify
+
+== money-boys verify ==
+PASS: BUILD_FOUNDRY.md
+PASS: PRD.md
+PASS: AGENTS.md
+PASS: README.md
+PASS: ARCHITECTURE.md
+PASS: foundry/state.json
+PASS: foundry/gaps.jsonl
+PASS: foundry/claims.jsonl
+PASS: foundry/assumptions.md
+PASS: foundry/contradictions.md
+PASS: foundry/phases/01-bitget-substrate.md
+PASS: docs/canonical/CURRENT_STATE.md
+PASS: docs/canonical/IMPLEMENTATION_STATUS.md
+PASS: docs/canonical/ASSUMPTIONS.md
+PASS: docs/canonical/CONTRADICTIONS.md
+PASS: docs/canonical/EVIDENCE_LEDGER.md
+PASS: docs/canonical/STATE_MODEL.md
+PASS: docs/canonical/AUTHORITY_MODEL.md
+PASS: docs/research/OPEN_QUESTIONS.md
+PASS: docs/PROGRESS_LEDGER.md
+PASS: packages/engine/package.json
+PASS: packages/engine/src/bitget/client.ts
+PASS: packages/engine/src/bitget/test-auth.ts
+PASS: foundry/evidence/p01/auth_test.json
+PASS: foundry/evidence/manifest-schema.json
+PASS: secret scan (basic)
+
+> @money-boys/engine@0.1.0 test /home/ubuntu/money-boys/packages/engine
+> node --import tsx --test test/*.test.ts
+
+▶ BitgetClient
+  ✔ constructs with explicit config (1.916871ms)
+✔ BitgetClient (2.686808ms)
+▶ ReasoningReceipt SHA-256 sealing (CLM-003 / GAP-003)
+  ✔ seals and verifies an approved trade receipt (guard pass) (2.942617ms)
+  ✔ seals and verifies a vetoed trade receipt (guard breach) (0.686535ms)
+  ✔ detects tampering with projectedLiquidationPrice (0.376744ms)
+  ✔ detects tampering with netEdgePct (0.352065ms)
+  ✔ is key-order independent: differently ordered inputs yield identical receiptHash (0.326148ms)
+✔ ReasoningReceipt SHA-256 sealing (CLM-003 / GAP-003) (5.850466ms)
+▶ StructuralChangeGuard.evaluateBlastRadius (CLM-002)
+  ✔ approves a safe trade and surfaces same-symbol cancels + liq estimate (2.368711ms)
+  ✔ vetoes exposure breaching the $5,000 single-trade cap (0.384239ms)
+  ✔ vetoes projected margin utilization above 65% (0.275943ms)
+  ✔ vetoes exposure exceeding free margin (0.1991ms)
+✔ StructuralChangeGuard.evaluateBlastRadius (CLM-002) (4.238427ms)
+ℹ tests 10
+ℹ suites 3
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 442.240131
+PASS: engine unit tests
+
+> @money-boys/engine@0.1.0 typecheck /home/ubuntu/money-boys/packages/engine
+> tsc --noEmit
+
+PASS: engine typecheck
+PASS: BUILD_FOUNDRY.md
+PASS: PRD.md
+PASS: AGENTS.md
+PASS: foundry/state.json
+PASS: foundry/gaps.jsonl
+PASS: foundry/claims.jsonl
+PASS: foundry/assumptions.md
+PASS: foundry/contradictions.md
+PASS: foundry/phases/01-bitget-substrate.md
+PASS: scripts/verify
+PASS: foundry ledgers parse + evidence paths for elevated claims
+check-foundry OK
+PASS: check-foundry
+PASS: p01 evidence coherence
+VERIFY OK
