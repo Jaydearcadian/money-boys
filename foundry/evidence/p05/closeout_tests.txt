@@ -1,0 +1,12 @@
+  ✔ T3b simulate-cycle honors body params (risk veto probe) (9.251654ms)
+  ✔ T4 halt toggles flag; simulate-cycle 403 while halted (9.66693ms)
+  ✔ GET /api/desk/stream emits INIT SSE event (8.375352ms)
+✔ telemetry server (Phase 05 Batch 2) (115.027446ms)
+ℹ tests 40
+ℹ suites 10
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1542.218635

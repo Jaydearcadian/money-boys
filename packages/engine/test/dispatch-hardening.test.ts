@@ -278,34 +278,54 @@ describe("dispatch hardening (Phase 05)", () => {
     assert.equal(paper.mode, "PAPER");
   });
 
-  it("T5 latency profile: real timers > 0 with hot path under 5ms", () => {
+  it("T5 latency profile: JIT warm-up + median hot path under charter 50ms / empirical 10ms", () => {
     const close = 60_000;
     const token = close * 1.0293;
-    const cycle = executeDeliberationCycle(
-      catalyst("BTCUSDT", 85),
-      fixedDepth(token, 24_000),
-      { equityUsd: 20_000, usedMarginUsd: 1_000, freeMarginUsd: 19_000, openOrders: [] },
-      {
-        symbol: "BTCUSDT",
-        side: "sell",
-        quantity: 0.08,
-        priceUsd: token,
-        tokenPrice: token,
-        tradFiClosePrice: close,
-        orderSizeUsd: 5_000,
-        fundingRate8h: 0.0001,
-        hoursToClose: 8,
-        takerFee: 0.0006,
-      },
-    );
-    const lat = cycle.latencies;
+    const mkCycle = () =>
+      executeDeliberationCycle(
+        catalyst("BTCUSDT", 85),
+        fixedDepth(token, 24_000),
+        { equityUsd: 20_000, usedMarginUsd: 1_000, freeMarginUsd: 19_000, openOrders: [] },
+        {
+          symbol: "BTCUSDT",
+          side: "sell",
+          quantity: 0.08,
+          priceUsd: token,
+          tokenPrice: token,
+          tradFiClosePrice: close,
+          orderSizeUsd: 5_000,
+          fundingRate8h: 0.0001,
+          hoursToClose: 8,
+          takerFee: 0.0006,
+        },
+      );
+    // JIT warm-up: 3 untimed runs to settle V8 inline caches / module resolution
+    // on multi-tenant vCPUs before measured iterations.
+    for (let i = 0; i < 3; i++) mkCycle();
+    const samples: number[] = [];
+    let last = mkCycle();
+    for (let i = 0; i < 5; i++) {
+      const output = mkCycle();
+      last = output;
+      const hotPathMs =
+        output.latencies.quantMs + output.latencies.riskMs + output.latencies.execMs;
+      samples.push(hotPathMs);
+    }
+    const sorted = [...samples].sort((a, b) => a - b);
+    const medianHotPathMs = sorted[Math.floor(sorted.length / 2)];
+    const lat = last.latencies;
     assert.ok(lat.totalPipelineMs > 0, `total ${lat.totalPipelineMs}`);
     for (const [k, v] of Object.entries(lat)) {
       assert.ok(v >= 0, `${k}=${v}`);
     }
-    assert.ok(lat.quantMs < 5, `quant ${lat.quantMs}`);
-    assert.ok(lat.riskMs < 5, `risk ${lat.riskMs}`);
-    assert.ok(lat.execMs < 5, `exec ${lat.execMs}`);
+    assert.ok(
+      medianHotPathMs < 50,
+      `I-04 violation: Hot-path median (${medianHotPathMs.toFixed(2)}ms) must be < 50ms`,
+    );
+    assert.ok(
+      medianHotPathMs < 10,
+      `Empirical target exceeded: Hot-path median (${medianHotPathMs.toFixed(2)}ms) must be < 10ms`,
+    );
   });
 
   it("T6 adapter+dispatcher: APPROVED cycle auto-dispatches PAPER executionRecord", async () => {

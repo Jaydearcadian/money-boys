@@ -44,8 +44,10 @@ fi
 
 # engine unit tests + typecheck when deps present
 if [[ -d packages/engine/node_modules ]] || [[ -d node_modules ]]; then
-  if pnpm --filter @money-boys/engine test; then pass "engine unit tests"; else fail "engine unit tests"; fi
   if pnpm --filter @money-boys/engine typecheck; then pass "engine typecheck"; else fail "engine typecheck"; fi
+  if pnpm --filter @money-boys/desk typecheck; then pass "desk typecheck"; else fail "desk typecheck"; fi
+  if pnpm --filter @money-boys/engine test; then pass "engine unit tests"; else fail "engine unit tests"; fi
+  if pnpm --filter @money-boys/desk build; then pass "desk build"; else fail "desk build"; fi
 else
   fail "dependencies not installed — run pnpm install"
 fi
