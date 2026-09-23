@@ -5,14 +5,23 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { hashCatalystPayload } from "./skills/noema-qa/provenance.js";
 import { state } from "./server-state.js";
 
-export function fixture() {
+export function fixture(overrides?: { symbol?: unknown; side?: unknown; quantity?: unknown; priceUsd?: unknown }) {
   const tokenPrice = 132.71;
   const tradFiClosePrice = 128.8;
-  const quantity = 18.84;
-  const orderSizeUsd = Math.round(quantity * tokenPrice * 100) / 100;
+  const symbol = typeof overrides?.symbol === "string" && overrides.symbol.length > 0 ? overrides.symbol : "rNVDAUSDT";
+  const rawSide = typeof overrides?.side === "string" ? overrides.side.toLowerCase() : "buy";
+  const side = rawSide === "sell" ? ("sell" as const) : ("buy" as const);
+  const quantity =
+    typeof overrides?.quantity === "number" && Number.isFinite(overrides.quantity) && overrides.quantity > 0
+      ? overrides.quantity
+      : 18.84;
+  const priceUsd =
+    typeof overrides?.priceUsd === "number" && Number.isFinite(overrides.priceUsd) && overrides.priceUsd > 0
+      ? overrides.priceUsd
+      : tokenPrice;
+  const orderSizeUsd = Math.round(quantity * priceUsd * 100) / 100;
   const bids = Array.from({ length: 10 }, (_, i) => ({ price: tokenPrice * (1 - 0.0002 * (i + 1)), quantity: 50 }));
   const asks = Array.from({ length: 10 }, (_, i) => ({ price: tokenPrice * (1 + 0.0002 * (i + 1)), quantity: 50 }));
-  const symbol = "rNVDAUSDT";
   const catalyst = {
     symbol, direction: "BULLISH" as const, score: 85, confidence: 0.8,
     catalysts: [{ title: "TSMC CoWoS capacity expansion", detail: "AI hardware catalyst.", sentiment: "BULLISH" as const, confidence: 0.8 }],
@@ -26,7 +35,7 @@ export function fixture() {
     openOrders: [] as { orderId: string; symbol: string }[],
   };
   const params = {
-    symbol, side: "buy" as const, quantity, priceUsd: tokenPrice, tokenPrice,
+    symbol, side, quantity, priceUsd, tokenPrice,
     tradFiClosePrice, orderSizeUsd, fundingRate8h: 0.0001, hoursToClose: 8, takerFee: 0.0006,
   };
   return { catalyst, depth: { bids, asks }, account, params };

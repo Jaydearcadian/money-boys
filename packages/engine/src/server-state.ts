@@ -51,9 +51,10 @@ export function snapshot(): DeskSnapshot {
 }
 
 export function pushReceipt(r: SealedReasoningReceipt): void {
+  // Newest-first ring buffer (prepend, cap 50) — matches telemetry spec.
   state.latestReceipt = r;
-  state.recentReceipts.push(r);
-  if (state.recentReceipts.length > 50) state.recentReceipts.splice(0, state.recentReceipts.length - 50);
+  state.recentReceipts.unshift(r);
+  if (state.recentReceipts.length > 50) state.recentReceipts.length = 50;
 }
 
 export function broadcastReceipt(receipt: SealedReasoningReceipt, execution?: unknown): void {

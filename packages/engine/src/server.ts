@@ -2,7 +2,9 @@
  * Phase 05 Batch 2 — part 2b: HTTP + SSE entrypoint.
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { pathToFileURL } from "node:url";
 import { executeDeliberationCycle } from "./council/adapter.js";
+import { OrderDispatcher } from "./bitget/dispatcher.js";
 import { TELEMETRY_PORT, COMMIT, state, snapshot, pushReceipt, broadcastReceipt, broadcastHalt, seedLatest } from "./server-state.js";
 import { fixture, setCors, json, readBody } from "./server-helpers.js";
 
@@ -13,7 +15,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   if (method === "OPTIONS") { setCors(res); res.writeHead(204); res.end(); return; }
   if (method === "GET" && path === "/health") { json(res, 200, { status: "ok", uptime: process.uptime(), commit: COMMIT }); return; }
   if (method === "GET" && path === "/api/desk/state") { json(res, 200, snapshot()); return; }
-  if (method === "GET" && path === "/api/desk/receipts") { json(res, 200, { receipts: [...state.recentReceipts].reverse() }); return; }
+  if (method === "GET" && path === "/api/desk/receipts") { json(res, 200, { receipts: [...state.recentReceipts] }); return; }
   if (method === "GET" && path === "/api/desk/stream") {
     res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive", "Access-Control-Allow-Origin": "*" });
     state.sseClients.add(res);
@@ -39,8 +41,14 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   if (method === "POST" && path === "/api/desk/simulate-cycle") {
     if (state.systemHalt === true) { json(res, 403, { error: "System emergency halt engaged. Deliberation prohibited." }); return; }
     try {
-      const fx = fixture();
-      const out = await executeDeliberationCycle(fx.catalyst, fx.depth, fx.account, fx.params);
+      let overrides: { symbol?: unknown; side?: unknown; quantity?: unknown; priceUsd?: unknown } = {};
+      const rawBody = await readBody(req);
+      if (rawBody.trim().length > 0) {
+        try { overrides = JSON.parse(rawBody) as typeof overrides; } catch { overrides = {}; }
+      }
+      const fx = fixture(overrides);
+      const dispatcher = new OrderDispatcher("PAPER");
+      const out = await executeDeliberationCycle(fx.catalyst, fx.depth, fx.account, fx.params, dispatcher);
       pushReceipt(out.receipt);
       state.activeNodes.quant.lastNetEdgePct = Math.round(out.quant.netEdge * 10000) / 100;
       state.activeNodes.quant.latencyMs = Math.round(out.latencies.quantMs * 100) / 100;
@@ -48,8 +56,8 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
       state.activeNodes.exec.latencyMs = Math.round(out.latencies.execMs * 100) / 100;
       state.activeNodes.risk.marginUtilizationPct = Math.round(out.risk.projectedMarginUtilization * 10000) / 100;
       state.activeNodes.risk.hardVetoActive = out.risk.decision !== "APPROVED";
-      broadcastReceipt(out.receipt, { deliberation: out.deliberation, passNumber: out.passNumber, executionQuantity: out.executionQuantity });
-      json(res, 200, { receipt: out.receipt, deliberation: out.deliberation, passNumber: out.passNumber, executionQuantity: out.executionQuantity, executionExposureUsd: out.executionExposureUsd, latencies: out.latencies });
+      broadcastReceipt(out.receipt, out.executionRecord ?? null);
+      json(res, 200, out);
     } catch (err) { json(res, 500, { error: err instanceof Error ? err.message : String(err) }); }
     return;
   }
@@ -65,10 +73,24 @@ export function createTelemetryServer(): Server {
   });
 }
 
+export function startServer(port: number = TELEMETRY_PORT): Promise<Server> {
+  seedLatest();
+  const server = createTelemetryServer();
+  return new Promise<Server>((resolve) => { server.listen(port, () => resolve(server)); });
+}
+
+export function stopServer(server: Server): Promise<void> {
+  return new Promise<void>((resolve) => {
+    for (const c of state.sseClients) { try { c.end(); } catch { /* noop */ } }
+    state.sseClients.clear();
+    server.close(() => resolve());
+  });
+}
+
 export { TELEMETRY_PORT, COMMIT };
 
-const isMain = process.argv[1] != null && (process.argv[1].endsWith("server.ts") || process.argv[1].endsWith("server.js"));
+const isMain = process.argv[1] != null && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {
   const server = createTelemetryServer();
-  server.listen(TELEMETRY_PORT, () => { console.log("[telemetry] listening on :" + TELEMETRY_PORT + " commit=" + COMMIT); });
+  server.listen(TELEMETRY_PORT, () => { console.log("[telemetry] MONEY BOYS desk telemetry listening on :" + TELEMETRY_PORT + " commit=" + COMMIT); });
 }

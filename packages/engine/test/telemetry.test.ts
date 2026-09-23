@@ -8,10 +8,9 @@ import { verifyReceipt } from "../src/council/receipts.js";
  * Binds an ephemeral port; asserts health/state/halt/simulate + SSE INIT.
  */
 
-const PORT = 3101;
-process.env.PORT = String(PORT);
-
-let createTelemetryServer: () => Server;
+let PORT = 0;
+let startServer: (port?: number) => Promise<Server>;
+let stopServer: (server: Server) => Promise<void>;
 let server: Server;
 
 async function req(method: string, path: string, body?: unknown): Promise<{ status: number; json: unknown; text: string; headers: Headers }> {
@@ -29,13 +28,16 @@ async function req(method: string, path: string, body?: unknown): Promise<{ stat
 describe("telemetry server (Phase 05 Batch 2)", () => {
   before(async () => {
     const mod = await import("../src/server.js");
-    createTelemetryServer = mod.createTelemetryServer as () => Server;
-    server = createTelemetryServer();
-    await new Promise<void>((resolve) => server.listen(PORT, resolve));
+    startServer = mod.startServer as (port?: number) => Promise<Server>;
+    stopServer = mod.stopServer as (server: Server) => Promise<void>;
+    server = await startServer(0);
+    const addr = server.address();
+    PORT = typeof addr === "object" && addr !== null ? (addr as { port: number }).port : 0;
+    assert.ok(PORT > 0, "ephemeral port assigned");
   });
 
   after(async () => {
-    await new Promise<void>((resolve) => server.close(() => resolve()));
+    await stopServer(server);
   });
 
   it("GET /health reports ok + commit", async () => {
@@ -59,16 +61,34 @@ describe("telemetry server (Phase 05 Batch 2)", () => {
     assert.ok(body["latestReceipt"] !== null);
   });
 
-  it("POST /api/desk/simulate-cycle seals + verifies, then 403 under halt", async () => {
+  it("T3 simulate-cycle executes PAPER deliberation: valid receiptHash + PAPER orderId", async () => {
     const sim = await req("POST", "/api/desk/simulate-cycle");
     assert.equal(sim.status, 200);
     const body = sim.json as Record<string, unknown>;
+    const receipt = body["receipt"] as Record<string, unknown>;
+    assert.ok(receipt, "DeliberationCycleOutput.receipt present");
+    assert.equal(verifyReceipt(receipt), true);
+    assert.match(String(receipt["receiptHash"]), /^[0-9a-f]{64}$/);
+    const exec = body["executionRecord"] as Record<string, unknown> | undefined;
+    assert.ok(exec, "PAPER executionRecord attached");
+    assert.equal(String(exec["orderId"]).length, 25);
+    assert.match(String(exec["orderId"]), /^bg-paper-[0-9a-f]{16}$/);
+  });
+
+  it("T3b simulate-cycle honors body params (risk veto probe)", async () => {
+    const r = await req("POST", "/api/desk/simulate-cycle", { quantity: 100, priceUsd: 200 });
+    assert.equal(r.status, 200);
+    const body = r.json as Record<string, unknown>;
     assert.ok(body["receipt"]);
     assert.equal(verifyReceipt(body["receipt"]), true);
+  });
+
+  it("T4 halt toggles flag; simulate-cycle 403 while halted", async () => {
     const halt = await req("POST", "/api/desk/halt", {});
     assert.equal((halt.json as Record<string, unknown>)["systemHalt"], true);
     const blocked = await req("POST", "/api/desk/simulate-cycle");
     assert.equal(blocked.status, 403);
+    assert.match(String((blocked.json as Record<string, unknown>)["error"]), /halt/i);
     const unhalt = await req("POST", "/api/desk/halt", { systemHalt: false });
     assert.equal((unhalt.json as Record<string, unknown>)["systemHalt"], false);
   });
