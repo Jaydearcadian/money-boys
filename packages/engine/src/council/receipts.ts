@@ -1,36 +1,51 @@
 import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
+import { QuantActionSchema, QuantAnalysisResultSchema } from "../agents/quant.js";
+import { BlastRadiusReportSchema } from "../skills/igraph-guard/security.js";
 
 /**
  * CLM-003 / GAP-003 — ReasoningReceipt SHA-256 Sealing.
+ * Pre-flight reconciliation: the receipt natively takes Quant Boy output
+ * (`quantMetrics`) and the iGraph-aligned risk report (`riskReport` via
+ * `BlastRadiusReportSchema`), plus council persona scores and the council
+ * decision. `sealReceipt` binds the payload with a SHA-256 hash over a
+ * deterministic canonical JSON encoding, and `verifyReceipt` re-computes
+ * and compares in constant time.
  *
- * A receipt captures a council decision over a trade, incorporating the
- * output of the StructuralChangeGuard. `sealReceipt` binds the payload with
- * a SHA-256 hash over a deterministic canonical JSON encoding, and
- * `verifyReceipt` re-computes and compares in constant time.
+ * Upstream parity (pre-flight audit of /tmp/upstream):
+ *  - iGraph `PactSigner`: canonical JSON (sort_keys, compact separators) +
+ *    HMAC-SHA256 + `hmac.compare_digest`  <=>  `canonicalJson` + SHA-256 +
+ *    `crypto.timingSafeEqual` here (receipts are self-sealed, hence plain
+ *    SHA-256 instead of HMAC).
+ *  - 0-infinity `queryString`: sorted keys + encodeURIComponent serialization,
+ *    mirrored by the Bitget client's query serialization (venue headers
+ *    remain Bitget v2 `ACCESS-*`; see `bitget/client.ts`).
  */
 
 // ---------------------------------------------------------------------------
 // Schemas
 // ---------------------------------------------------------------------------
 
-/** Output of the StructuralChangeGuard consumed by the council. */
-export const StructuralGuardOutputSchema = z.object({
-  guardVersion: z.string().min(1),
-  verdict: z.enum(["pass", "breach"]),
-  structuralChangeDetected: z.boolean(),
-  maxDrawdownBps: z.number().int().nonnegative(),
-});
+/** Council persona scores: individual 0–100 persona scores + compositeScore. */
+export const CouncilScoresSchema = z
+  .object({
+    compositeScore: z.number().min(0).max(100),
+  })
+  .catchall(z.number().min(0).max(100));
 
-export type StructuralGuardOutput = z.infer<typeof StructuralGuardOutputSchema>;
+export type CouncilScores = z.infer<typeof CouncilScoresSchema>;
+
+export const ReceiptDecisionSchema = z.enum(["APPROVED", "VETOED"]);
+export type ReceiptDecision = z.infer<typeof ReceiptDecisionSchema>;
 
 /** Payload of a reasoning receipt BEFORE sealing (no id / timestamp / hash). */
 export const UnsealedReceiptSchema = z.object({
-  tradeId: z.string().min(1),
-  decision: z.enum(["approved", "vetoed"]),
-  projectedLiquidationPrice: z.number().finite(),
-  netEdgePct: z.number().finite(),
-  guard: StructuralGuardOutputSchema,
+  symbol: z.string().min(1),
+  action: QuantActionSchema,
+  quantMetrics: QuantAnalysisResultSchema,
+  riskReport: BlastRadiusReportSchema,
+  councilScores: CouncilScoresSchema,
+  decision: ReceiptDecisionSchema,
   rationale: z.string().min(1),
 });
 

@@ -1,109 +1,126 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { evaluateBasisSpread } from "../src/agents/quant.js";
 import { sealReceipt, verifyReceipt } from "../src/council/receipts.js";
+import {
+  StructuralChangeGuard,
+  toBlastRadiusReport,
+} from "../src/skills/igraph-guard/security.js";
 
-/** Representative StructuralChangeGuard output: no structural change. */
-const guardPass = {
-  guardVersion: "scg-1.4.0",
-  verdict: "pass",
-  structuralChangeDetected: false,
-  maxDrawdownBps: 120,
-} as const;
+function deepDepth() {
+  const bids = Array.from({ length: 10 }, (_, i) => ({
+    price: 61_750 - i * 10,
+    quantity: 2,
+  }));
+  const asks = Array.from({ length: 10 }, (_, i) => ({
+    price: 61_760 + i * 10,
+    quantity: 2,
+  }));
+  return { bids, asks };
+}
 
-/** Representative StructuralChangeGuard output: structural breach. */
-const guardBreach = {
-  guardVersion: "scg-1.4.0",
-  verdict: "breach",
-  structuralChangeDetected: true,
-  maxDrawdownBps: 950,
-} as const;
+/** Representative reconciled APPROVED receipt input (quant + guard pass). */
+function approvedInput() {
+  const quantMetrics = evaluateBasisSpread({
+    tokenPrice: 61_758,
+    tradFiClosePrice: 60_000,
+    orderSizeUsd: 5_000,
+    depth: deepDepth(),
+    fundingRate8h: 0.0001,
+    hoursToClose: 8,
+    takerFee: 0.0006,
+  });
+  const blast = StructuralChangeGuard.evaluateBlastRadius(
+    { symbol: "BTCUSDT", side: "sell", quantity: 0.08, priceUsd: 61_758 },
+    {
+      equityUsd: 20_000,
+      usedMarginUsd: 1_000,
+      freeMarginUsd: 19_000,
+      openOrders: [],
+    },
+  );
+  assert.equal(blast.decision, "APPROVED");
+  return {
+    symbol: "BTCUSDT",
+    action: quantMetrics.action,
+    quantMetrics,
+    riskReport: toBlastRadiusReport(blast),
+    councilScores: {
+      compositeScore: quantMetrics.quantScore,
+      quant: quantMetrics.quantScore,
+      risk: 100,
+    },
+    decision: "APPROVED",
+    rationale: "Guard permitted; edge clears hurdle; council approves.",
+  } as const;
+}
 
-describe("ReasoningReceipt SHA-256 sealing (CLM-003 / GAP-003)", () => {
-  it("seals and verifies an approved trade receipt (guard pass)", () => {
-    const sealed = sealReceipt({
-      tradeId: "trade-approved-001",
-      decision: "approved",
-      projectedLiquidationPrice: 61234.5,
-      netEdgePct: 1.25,
-      guard: { ...guardPass },
-      rationale: "Guard passed; edge exceeds 1% threshold.",
-    });
+/** Representative reconciled VETOED receipt input (guard veto). */
+function vetoedInput() {
+  const base = approvedInput();
+  const blast = StructuralChangeGuard.evaluateBlastRadius(
+    // exposure = 0.1 * 61_758 = $6,175.80 > $5,000 cap -> HARD_VETO
+    { symbol: "BTCUSDT", side: "sell", quantity: 0.1, priceUsd: 61_758 },
+    {
+      equityUsd: 100_000,
+      usedMarginUsd: 0,
+      freeMarginUsd: 100_000,
+      openOrders: [],
+    },
+  );
+  assert.equal(blast.decision, "HARD_VETO");
+  return {
+    ...base,
+    riskReport: toBlastRadiusReport(blast),
+    councilScores: { ...base.councilScores, risk: 0, compositeScore: 12.5 },
+    decision: "VETOED",
+    rationale: "Risk guard HARD_VETO: exposure exceeds $5,000 cap; council vetoes.",
+  } as const;
+}
+
+describe("ReasoningReceipt SHA-256 sealing (CLM-003, reconciled shape)", () => {
+  it("seals and verifies an approved trade receipt (quant + permitted guard)", () => {
+    const sealed = sealReceipt(approvedInput() as unknown as Record<string, unknown>);
     assert.match(sealed.receiptHash, /^[0-9a-f]{64}$/);
     assert.equal(verifyReceipt(sealed), true);
   });
 
-  it("seals and verifies a vetoed trade receipt (guard breach)", () => {
-    const sealed = sealReceipt({
-      tradeId: "trade-vetoed-002",
-      decision: "vetoed",
-      projectedLiquidationPrice: 58900.0,
-      netEdgePct: -0.42,
-      guard: { ...guardBreach },
-      rationale: "Structural breach detected; council vetoes the trade.",
-    });
-    assert.equal(sealed.decision, "vetoed");
+  it("seals and verifies a vetoed trade receipt (guard HARD_VETO)", () => {
+    const sealed = sealReceipt(vetoedInput() as unknown as Record<string, unknown>);
+    assert.equal(sealed.decision, "VETOED");
+    assert.equal(sealed.riskReport.permitted, false);
+    assert.ok(sealed.riskReport.rejectionReason);
     assert.equal(verifyReceipt(sealed), true);
   });
 
-  it("detects tampering with projectedLiquidationPrice", () => {
-    const sealed = sealReceipt({
-      tradeId: "trade-tamper-liq",
-      decision: "approved",
-      projectedLiquidationPrice: 61234.5,
-      netEdgePct: 1.25,
-      guard: { ...guardPass },
-      rationale: "Baseline receipt for liquidation-price tamper test.",
-    });
+  it("detects tampering with riskReport.projectedLiquidationPrice", () => {
+    const sealed = sealReceipt(approvedInput() as unknown as Record<string, unknown>);
     assert.equal(verifyReceipt(sealed), true);
-    const tampered = { ...sealed, projectedLiquidationPrice: 99999.99 };
+    const tampered = {
+      ...sealed,
+      riskReport: { ...sealed.riskReport, projectedLiquidationPrice: 99999.99 },
+    };
     assert.equal(verifyReceipt(tampered), false);
   });
 
-  it("detects tampering with netEdgePct", () => {
-    const sealed = sealReceipt({
-      tradeId: "trade-tamper-edge",
-      decision: "approved",
-      projectedLiquidationPrice: 61234.5,
-      netEdgePct: 1.25,
-      guard: { ...guardPass },
-      rationale: "Baseline receipt for net-edge tamper test.",
-    });
+  it("detects tampering with quantMetrics.netEdgePct", () => {
+    const sealed = sealReceipt(approvedInput() as unknown as Record<string, unknown>);
     assert.equal(verifyReceipt(sealed), true);
-    const tampered = { ...sealed, netEdgePct: 9.99 };
+    const tampered = {
+      ...sealed,
+      quantMetrics: { ...sealed.quantMetrics, netEdgePct: 9.99 },
+    };
     assert.equal(verifyReceipt(tampered), false);
   });
 
   it("is key-order independent: differently ordered inputs yield identical receiptHash", () => {
-    const orderedA = {
-      tradeId: "trade-order-001",
-      decision: "approved",
-      projectedLiquidationPrice: 61234.5,
-      netEdgePct: 1.25,
-      guard: {
-        guardVersion: "scg-1.4.0",
-        verdict: "pass",
-        structuralChangeDetected: false,
-        maxDrawdownBps: 120,
-      },
-      rationale: "Key-order independence check.",
-    } as const;
+    const orderedA = approvedInput() as unknown as Record<string, unknown>;
+    // Same logical payload, top-level keys inserted in reverse order.
+    const orderedB = Object.fromEntries(
+      Object.entries(orderedA).reverse(),
+    ) as unknown as Record<string, unknown>;
 
-    // Same logical payload, keys inserted in reverse order (incl. nested guard).
-    const orderedB = {
-      rationale: "Key-order independence check.",
-      guard: {
-        maxDrawdownBps: 120,
-        structuralChangeDetected: false,
-        verdict: "pass",
-        guardVersion: "scg-1.4.0",
-      },
-      netEdgePct: 1.25,
-      projectedLiquidationPrice: 61234.5,
-      decision: "approved",
-      tradeId: "trade-order-001",
-    } as unknown as Record<string, unknown>;
-
-    const sealedA = sealReceipt(orderedA as unknown as Record<string, unknown>);
+    const sealedA = sealReceipt(orderedA);
     const sealedB = sealReceipt(orderedB);
 
     assert.equal(verifyReceipt(sealedA), true);

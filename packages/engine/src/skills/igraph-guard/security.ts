@@ -61,6 +61,40 @@ export const BlastRadiusResultSchema = z.object({
 });
 export type BlastRadiusResult = z.infer<typeof BlastRadiusResultSchema>;
 
+/**
+ * Upstream-reconciled change-request verification report (pre-flight audit).
+ *
+ * Canonical verification keys shared with the iGraph change-guard surface
+ * and sealed into the ReasoningReceipt (`riskReport`):
+ *   { permitted, projectedMarginUtilizationPct, projectedLiquidationPrice,
+ *     staleOrdersToCancel, rejectionReason? }
+ *
+ * `projectedMarginUtilizationPct` is percentage points (e.g. 8.0 = 8%).
+ * `projectedLiquidationPrice` is null when vetoed (no projection emitted).
+ * `rejectionReason` is present only when `permitted` is false.
+ */
+export const BlastRadiusReportSchema = z.object({
+  permitted: z.boolean(),
+  projectedMarginUtilizationPct: z.number().nonnegative(),
+  projectedLiquidationPrice: z.number().nonnegative().nullable(),
+  staleOrdersToCancel: z.array(z.string()),
+  rejectionReason: z.string().min(1).optional(),
+});
+export type BlastRadiusReport = z.infer<typeof BlastRadiusReportSchema>;
+
+/** Map the internal HARD_VETO evaluation result onto the reconciled report shape. */
+export function toBlastRadiusReport(result: BlastRadiusResult): BlastRadiusReport {
+  return BlastRadiusReportSchema.parse({
+    permitted: result.decision === "APPROVED",
+    projectedMarginUtilizationPct: Math.round(result.projectedMarginUtilization * 10000) / 100,
+    projectedLiquidationPrice: result.projectedLiquidationPrice,
+    staleOrdersToCancel: result.cancelCandidates,
+    ...(result.decision === "HARD_VETO"
+      ? { rejectionReason: result.reasons.join("; ") || "HARD_VETO" }
+      : {}),
+  });
+}
+
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }

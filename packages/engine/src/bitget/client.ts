@@ -36,6 +36,16 @@ export class BitgetClient {
     this.baseUrl = (cfg.baseUrl ?? "https://api.bitget.com").replace(/\/$/, "");
   }
 
+  /**
+   * Pre-flight audit vs 0-infinity (`src/testnet/index.ts`):
+   *  - Query serialization matches upstream `queryString` exactly: sorted
+   *    keys, `encodeURIComponent(k)=encodeURIComponent(v)` joined with "&".
+   *  - Signing is HMAC-SHA256 in both. Prehash/message and digest encoding
+   *    are venue-specific: upstream Binance testnet signs the query string
+   *    (hex digest, `X-MBX-APIKEY` header); Bitget v2 signs
+   *    `timestamp + METHOD + pathWithQuery + body` (base64 digest,
+   *    `ACCESS-*` header casing below, per Bitget API v2 docs).
+   */
   private sign(timestamp: string, method: string, path: string, body: string): string {
     const prehash = `${timestamp}${method.toUpperCase()}${path}${body}`;
     return createHmac("sha256", this.secretKey).update(prehash).digest("base64");
