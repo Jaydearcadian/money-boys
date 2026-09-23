@@ -1,0 +1,86 @@
+
+> money-boys@0.1.0 verify /home/ubuntu/money-boys
+> bash scripts/verify
+
+== money-boys verify ==
+PASS: BUILD_FOUNDRY.md
+PASS: PRD.md
+PASS: AGENTS.md
+PASS: README.md
+PASS: ARCHITECTURE.md
+PASS: foundry/state.json
+PASS: foundry/gaps.jsonl
+PASS: foundry/claims.jsonl
+PASS: foundry/assumptions.md
+PASS: foundry/contradictions.md
+PASS: foundry/phases/01-bitget-substrate.md
+PASS: docs/canonical/CURRENT_STATE.md
+PASS: docs/canonical/IMPLEMENTATION_STATUS.md
+PASS: docs/canonical/ASSUMPTIONS.md
+PASS: docs/canonical/CONTRADICTIONS.md
+PASS: docs/canonical/EVIDENCE_LEDGER.md
+PASS: docs/canonical/STATE_MODEL.md
+PASS: docs/canonical/AUTHORITY_MODEL.md
+PASS: docs/research/OPEN_QUESTIONS.md
+PASS: docs/PROGRESS_LEDGER.md
+PASS: packages/engine/package.json
+PASS: packages/engine/src/bitget/client.ts
+PASS: packages/engine/src/bitget/test-auth.ts
+PASS: foundry/evidence/p01/auth_test.json
+PASS: foundry/evidence/manifest-schema.json
+PASS: secret scan (basic)
+
+> @money-boys/engine@0.1.0 test /home/ubuntu/money-boys/packages/engine
+> node --import tsx --test test/*.test.ts
+
+▶ BitgetClient
+  ✔ constructs with explicit config (1.875381ms)
+✔ BitgetClient (2.71363ms)
+▶ QuantBoy Alpha Engine (CLM-004 / GAP-004)
+  ✔ T1 Alpha Detection: +2.93% spread on deep book clears hurdle (SELL_BASIS, edge > 1.5%, score >= 75) (2.034312ms)
+  ✔ T2 Depth Slippage Hurdle: same spread on thin book fails hurdle (NEUTRAL, score < 50) (0.650498ms)
+  ✔ T3 Funding Carry Drag: 48h window with elevated funding expands hurdle and compresses edge (0.513444ms)
+  ✔ T4 Fail-Closed Stability: empty book does not throw, fails closed (NEUTRAL, score < 50) (0.283908ms)
+✔ QuantBoy Alpha Engine (CLM-004 / GAP-004) (4.523614ms)
+▶ ReasoningReceipt SHA-256 sealing (CLM-003 / GAP-003)
+  ✔ seals and verifies an approved trade receipt (guard pass) (2.756127ms)
+  ✔ seals and verifies a vetoed trade receipt (guard breach) (0.594123ms)
+  ✔ detects tampering with projectedLiquidationPrice (0.391748ms)
+  ✔ detects tampering with netEdgePct (0.363271ms)
+  ✔ is key-order independent: differently ordered inputs yield identical receiptHash (0.335401ms)
+✔ ReasoningReceipt SHA-256 sealing (CLM-003 / GAP-003) (5.549491ms)
+▶ StructuralChangeGuard.evaluateBlastRadius (CLM-002)
+  ✔ approves a safe trade and surfaces same-symbol cancels + liq estimate (2.593502ms)
+  ✔ vetoes exposure breaching the $5,000 single-trade cap (0.357928ms)
+  ✔ vetoes projected margin utilization above 65% (0.2914ms)
+  ✔ vetoes exposure exceeding free margin (0.188171ms)
+✔ StructuralChangeGuard.evaluateBlastRadius (CLM-002) (4.407643ms)
+ℹ tests 14
+ℹ suites 4
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 552.948536
+PASS: engine unit tests
+
+> @money-boys/engine@0.1.0 typecheck /home/ubuntu/money-boys/packages/engine
+> tsc --noEmit
+
+PASS: engine typecheck
+PASS: BUILD_FOUNDRY.md
+PASS: PRD.md
+PASS: AGENTS.md
+PASS: foundry/state.json
+PASS: foundry/gaps.jsonl
+PASS: foundry/claims.jsonl
+PASS: foundry/assumptions.md
+PASS: foundry/contradictions.md
+PASS: foundry/phases/01-bitget-substrate.md
+PASS: scripts/verify
+PASS: foundry ledgers parse + evidence paths for elevated claims
+check-foundry OK
+PASS: check-foundry
+PASS: p01 evidence coherence
+VERIFY OK
