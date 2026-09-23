@@ -1,0 +1,14 @@
+=== RUNNING LIVE MONEY BOYS DELIBERATION COUNCIL ===
+[1] Querying Qwen via hackathon gateway...
+[1] Ingested: BULLISH (Score: 82/100, conf: 0.78, model: macro-boy-news-catalyst-v1)
+[2] Live Bitget Benchmark Price: $85950
+[3] Deliberating across Council...
+
+=== COUNCIL VERDICT ===
+Deliberation Status : APPROVED
+Composite Score     : 90.50
+Passing Members     : 4/4 [macro, quant, risk, exec]
+Net Edge            : 2.58%
+Projected Margin    : 20.00%
+Receipt Hash        : 13e436a3479d0a68b0dea332d0eabe77865799bd85c1a9121ec9895f27455da4
+Seal Verification   : VALID (SHA-256 MATCH)

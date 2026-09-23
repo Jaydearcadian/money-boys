@@ -1,0 +1,2 @@
+{"choices":[{"finish_reason":"stop","index":0,"message":{"content":"OK","reasoning_content":"We need respond to user: \"Ping test: respond with OK.\" Need final only OK. Ensure no extra.","role":"assistant"}}],"created":1790154411,"id":"chatcmpl-6495e64e-7a08-4169-ab3f-940dd8a09cd5","model":"qwen3.8-max","object":"chat.completion","usage":{"completion_tokens":27,"completion_tokens_details":{"reasoning_tokens":23,"text_tokens":27},"prompt_tokens":66,"prompt_tokens_details":{"cached_tokens":0,"text_tokens":66},"total_tokens":93}}
+HTTP_CODE:200
