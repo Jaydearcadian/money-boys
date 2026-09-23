@@ -4,8 +4,13 @@ import { z } from "zod";
  * Quant Boy Alpha Engine (CLM-004 / GAP-004).
  *
  * Pure TypeScript + Zod. Zero external dependencies, no LLM, no network,
- * no Bitget writes. Sub-millisecond math: raw basis dislocation, orderbook
- * VWAP walk, funding-carry-adjusted friction hurdle, net edge, 0-100 score.
+ * no Bitget writes. Sub-millisecond math: raw basis dislocation
+ * (B_raw = (P_token - P_close) / P_close), orderbook VWAP walk over
+ * bids/asks to fill Q (USD), funding-carry hurdle
+ * (|r_8h| * (hours / 8)), round-trip friction hurdle
+ * H = (2 * fee) + slippage + carry, net edge alpha = |B_raw| - H,
+ * Z-score (netEdge / 0.01) and composite 0-100 quantScore.
+ * Canonical entrypoint: evaluateBasisSpread(input). analyzeQuant is an alias.
  *
  * Conventions:
  *  - Fraction fields (e.g. `rawBasis`, `hurdleRate`, `netEdge`) are decimals
@@ -49,8 +54,12 @@ export const QuantProposalInputSchema = z.object({
   fundingRate8h: z.number().finite().default(0),
   /** Weekend/carry window in hours until TradFi re-open. */
   hoursToClose: z.number().nonnegative().default(0),
+  /** Alias of hoursToClose (scope naming: hoursToOpen). Takes precedence if set. */
+  hoursToOpen: z.number().nonnegative().optional(),
   /** Taker fee as fraction. Defaults to 0.06%. */
   takerFee: z.number().nonnegative().default(DEFAULT_TAKER_FEE),
+  /** Alias of takerFee (scope naming: feePct as fraction). Takes precedence if set. */
+  feePct: z.number().nonnegative().optional(),
 });
 export type QuantProposalInput = z.infer<typeof QuantProposalInputSchema>;
 
@@ -70,6 +79,8 @@ export const QuantAnalysisResultSchema = z.object({
   hurdleRatePct: z.number().nonnegative(),
   netEdge: z.number().finite(),
   netEdgePct: z.number().finite(),
+  /** Z-score of net edge in units of 1% edge (netEdge / 0.01). */
+  zScore: z.number().finite(),
   availableDepthUsd: z.number().nonnegative(),
   depthCoverage: z.number().nonnegative(),
   quantScore: z.number().min(0).max(100),
@@ -113,9 +124,12 @@ function bestAsk(asks: OrderBookLevel[]): number | null {
 // Core analysis (pure, fail-closed, never throws on book shape)
 // ---------------------------------------------------------------------------
 
-export function analyzeQuant(input: QuantProposalInput): QuantAnalysisResult {
+export function evaluateBasisSpread(input: QuantProposalInput): QuantAnalysisResult {
   const q = QuantProposalInputSchema.parse(input);
   const { tokenPrice: pToken, tradFiClosePrice: pClose, orderSizeUsd: Q } = q;
+  // Scope aliases: hoursToOpen ~= hoursToClose, feePct ~= takerFee (fraction).
+  const hours = q.hoursToOpen ?? q.hoursToClose;
+  const fee = q.feePct ?? q.takerFee;
 
   // Raw basis dislocation: B_raw = (P_token - P_close) / P_close.
   const rawBasis = (pToken - pClose) / pClose;
@@ -179,14 +193,17 @@ export function analyzeQuant(input: QuantProposalInput): QuantAnalysisResult {
     }
   }
 
-  // Friction hurdle: H = C_fee + slippage + fundingCarry,
-  // fundingCarry = |r_8h| * (hoursToClose / 8). Absolute funding so elevated
+  // Friction hurdle (round-trip): H = (2 * fee) + slippage + fundingCarry,
+  // fundingCarry = |r_8h| * (hours / 8). Absolute funding so elevated
   // rates always expand the hurdle (weekend carry drag).
-  const fundingCarry = Math.abs(q.fundingRate8h) * (q.hoursToClose / 8);
-  const hurdleRate = q.takerFee + vwapSlippage + fundingCarry;
+  const fundingCarry = Math.abs(q.fundingRate8h) * (hours / 8);
+  const hurdleRate = 2 * fee + vwapSlippage + fundingCarry;
 
   // Net edge: alpha_net = |B_raw| - H.
   const netEdge = Math.abs(rawBasis) - hurdleRate;
+
+  // Z-score: net edge in units of 1% (0.01) edge. Positive edge -> positive z.
+  const zScoreRaw = netEdge / 0.01;
 
   // Depth coverage: Lambda = min(1, availableDepth / (2Q)).
   const depthCoverage = Math.min(1, Q > 0 ? availableDepthUsd / (2 * Q) : 0);
@@ -235,6 +252,7 @@ export function analyzeQuant(input: QuantProposalInput): QuantAnalysisResult {
     hurdleRatePct: round(hurdleRate * 100, 4),
     netEdge: round(netEdge, 6),
     netEdgePct: round(netEdge * 100, 4),
+    zScore: round(zScoreRaw, 4),
     availableDepthUsd: round(availableDepthUsd, 2),
     depthCoverage: round(depthCoverage, 4),
     quantScore,
@@ -246,4 +264,6 @@ export function analyzeQuant(input: QuantProposalInput): QuantAnalysisResult {
   });
 }
 
-export const QuantBoy = { analyze: analyzeQuant };
+export const analyzeQuant = evaluateBasisSpread;
+
+export const QuantBoy = { analyze: evaluateBasisSpread, evaluate: evaluateBasisSpread };
