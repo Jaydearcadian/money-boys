@@ -39,65 +39,65 @@ PASS: desk typecheck
 > @money-boys/engine@0.1.0 test /home/ubuntu/money-boys/packages/engine
 > node --import tsx --test test/*.test.ts
 
-﹣ bitget demo integration (credential-gated) (0.43814ms) # SKIP
+﹣ bitget demo integration (credential-gated) (0.411032ms) # SKIP
 ▶ BitgetClient
-  ✔ constructs with explicit config (0.558478ms)
-✔ BitgetClient (2.612857ms)
+  ✔ constructs with explicit config (1.832482ms)
+✔ BitgetClient (2.657638ms)
 ▶ Council quorum + proposal reducer (CLM-006 / GAP-006)
-  ✔ T1 High consensus (Macro=85, Quant=90, Risk=85, Exec=80) approves and seals receipt (7.092638ms)
-  ✔ T2 Unilateral Risk veto rejects trade even when Macro=100 and Quant=100 (0.991776ms)
-  ✔ T3 Soft rejection (S=68.0) scales down exposure by 50% without dropping (1.05814ms)
-  ✔ T4 Quorum failure (<3 members passing) terminates proposal (0.748631ms)
-✔ Council quorum + proposal reducer (CLM-006 / GAP-006) (11.103391ms)
+  ✔ T1 High consensus (Macro=85, Quant=90, Risk=85, Exec=80) approves and seals receipt (6.959453ms)
+  ✔ T2 Unilateral Risk veto rejects trade even when Macro=100 and Quant=100 (0.961049ms)
+  ✔ T3 Soft rejection (S=68.0) scales down exposure by 50% without dropping (0.924616ms)
+  ✔ T4 Quorum failure (<3 members passing) terminates proposal (0.758868ms)
+✔ Council quorum + proposal reducer (CLM-006 / GAP-006) (10.813494ms)
 ▶ dispatch hardening (Phase 05)
-  ✔ T1 recursive soft-reject: marginal macro triggers Pass 2 at 50% quantity and approves (7.373551ms)
-  ✔ T2 dispatcher guard: dispatch() throws on a VETOED receipt (1.304192ms)
-  ✔ T3 paper dispatch: bg-paper- orderId, 0.06% fee, FILLED (0.935316ms)
-  ✔ T4a default fail-closed: offline/unreachable feed rejects with BenchmarkFeedUnavailableError (0.852851ms)
-  ✔ T4b explicit opt-in fallback: { allowFallback: true } yields verified LOCAL_SNAPSHOT (0.29448ms)
-  ✔ T4c adapter interceptor: buildFailClosedBenchmarkVeto seals HARD_VETO with zero execution and no dispatch (2.061168ms)
-  ✔ T4d dispatcher boot guard: TESTNET without credentials throws; PAPER boots keyless (0.355281ms)
-  ✔ T5 latency profile: JIT warm-up + median hot path under charter 50ms / empirical 10ms (6.518344ms)
-  ✔ T6 adapter+dispatcher: APPROVED cycle auto-dispatches PAPER executionRecord (0.76932ms)
-  ✔ T7 scaled failure: Pass 2 still short of 75 seals VETOED with SCALED_FAILED (1.26033ms)
-✔ dispatch hardening (Phase 05) (23.422268ms)
+  ✔ T1 recursive soft-reject: marginal macro triggers Pass 2 at 50% quantity and approves (7.36981ms)
+  ✔ T2 dispatcher guard: dispatch() throws on a VETOED receipt (1.378103ms)
+  ✔ T3 paper dispatch: bg-paper- orderId, 0.06% fee, FILLED (0.910419ms)
+  ✔ T4a default fail-closed: offline/unreachable feed rejects with BenchmarkFeedUnavailableError (0.85456ms)
+  ✔ T4b explicit opt-in fallback: { allowFallback: true } yields verified LOCAL_SNAPSHOT (0.280704ms)
+  ✔ T4c adapter interceptor: buildFailClosedBenchmarkVeto seals HARD_VETO with zero execution and no dispatch (2.146804ms)
+  ✔ T4d dispatcher boot guard: TESTNET without credentials throws; PAPER boots keyless (0.321383ms)
+  ✔ T5 latency profile: JIT warm-up + median hot path under charter 50ms / empirical 10ms (9.783493ms)
+  ✔ T6 adapter+dispatcher: APPROVED cycle auto-dispatches PAPER executionRecord (0.687006ms)
+  ✔ T7 scaled failure: Pass 2 still short of 75 seals VETOED with SCALED_FAILED (1.303189ms)
+✔ dispatch hardening (Phase 05) (26.616865ms)
 ▶ hot-path integration: quant -> risk guard -> receipt seal/verify
-  ✔ Case 1: liquid book, profitable basis, safe margin -> APPROVED receipt seals and verifies (4.05052ms)
-  ✔ Case 2: risk guard veto (exposure > $5,000) -> VETOED receipt seals and verifies (0.921287ms)
-✔ hot-path integration: quant -> risk guard -> receipt seal/verify (5.889174ms)
+  ✔ Case 1: liquid book, profitable basis, safe margin -> APPROVED receipt seals and verifies (4.09367ms)
+  ✔ Case 2: risk guard veto (exposure > $5,000) -> VETOED receipt seals and verifies (0.960575ms)
+✔ hot-path integration: quant -> risk guard -> receipt seal/verify (5.972496ms)
 ▶ Macro cognitive shield (CLM-005 / GAP-005)
-  ✔ T1 Valid catalyst output parses and matches schema (2.838402ms)
-  ✔ T2 Conversational noise / unformatted text rejected; fails closed to NEUTRAL (0.778519ms)
-  ✔ T3 Provenance hash is deterministic and tamper-sensitive (0.364054ms)
-  ✔ T4 Missing API key / fetch error triggers clean NEUTRAL fallback (0.588269ms)
-✔ Macro cognitive shield (CLM-005 / GAP-005) (5.650557ms)
+  ✔ T1 Valid catalyst output parses and matches schema (2.837652ms)
+  ✔ T2 Conversational noise / unformatted text rejected; fails closed to NEUTRAL (0.781771ms)
+  ✔ T3 Provenance hash is deterministic and tamper-sensitive (0.383106ms)
+  ✔ T4 Missing API key / fetch error triggers clean NEUTRAL fallback (0.6746ms)
+✔ Macro cognitive shield (CLM-005 / GAP-005) (5.740841ms)
 ▶ QuantBoy Alpha Engine (CLM-004 / GAP-004)
-  ✔ T1 Alpha Detection: +2.93% spread on deep book clears hurdle (SELL_BASIS, edge > 1.5%, score >= 75) (2.774239ms)
-  ✔ T2 Depth Slippage Hurdle: same spread on thin book fails hurdle (NEUTRAL, score < 50) (0.640017ms)
-  ✔ T3 Funding Carry Drag: 48h window with elevated funding expands hurdle and compresses edge (0.563042ms)
-  ✔ T4 Fail-Closed Stability: empty book does not throw, fails closed (NEUTRAL, score < 50) (0.283049ms)
-✔ QuantBoy Alpha Engine (CLM-004 / GAP-004) (5.52677ms)
+  ✔ T1 Alpha Detection: +2.93% spread on deep book clears hurdle (SELL_BASIS, edge > 1.5%, score >= 75) (2.07561ms)
+  ✔ T2 Depth Slippage Hurdle: same spread on thin book fails hurdle (NEUTRAL, score < 50) (0.627398ms)
+  ✔ T3 Funding Carry Drag: 48h window with elevated funding expands hurdle and compresses edge (0.508168ms)
+  ✔ T4 Fail-Closed Stability: empty book does not throw, fails closed (NEUTRAL, score < 50) (0.296586ms)
+✔ QuantBoy Alpha Engine (CLM-004 / GAP-004) (4.543775ms)
 ▶ ReasoningReceipt SHA-256 sealing (CLM-003, reconciled shape)
-  ✔ seals and verifies an approved trade receipt (quant + permitted guard) (4.13402ms)
-  ✔ seals and verifies a vetoed trade receipt (guard HARD_VETO) (1.017691ms)
-  ✔ detects tampering with riskReport.projectedLiquidationPrice (0.875057ms)
-  ✔ detects tampering with quantMetrics.netEdgePct (0.977182ms)
-  ✔ is key-order independent: differently ordered inputs yield identical receiptHash (0.976245ms)
-✔ ReasoningReceipt SHA-256 sealing (CLM-003, reconciled shape) (9.198353ms)
+  ✔ seals and verifies an approved trade receipt (quant + permitted guard) (4.365286ms)
+  ✔ seals and verifies a vetoed trade receipt (guard HARD_VETO) (1.028391ms)
+  ✔ detects tampering with riskReport.projectedLiquidationPrice (1.363635ms)
+  ✔ detects tampering with quantMetrics.netEdgePct (0.849733ms)
+  ✔ is key-order independent: differently ordered inputs yield identical receiptHash (0.968951ms)
+✔ ReasoningReceipt SHA-256 sealing (CLM-003, reconciled shape) (9.93635ms)
 ▶ StructuralChangeGuard.evaluateBlastRadius (CLM-002)
-  ✔ approves a safe trade and surfaces same-symbol cancels + liq estimate (2.450522ms)
-  ✔ vetoes exposure breaching the $5,000 single-trade cap (0.35961ms)
-  ✔ vetoes projected margin utilization above 65% (0.284119ms)
-  ✔ vetoes exposure exceeding free margin (0.213661ms)
-✔ StructuralChangeGuard.evaluateBlastRadius (CLM-002) (4.328031ms)
+  ✔ approves a safe trade and surfaces same-symbol cancels + liq estimate (2.4949ms)
+  ✔ vetoes exposure breaching the $5,000 single-trade cap (0.408847ms)
+  ✔ vetoes projected margin utilization above 65% (0.28143ms)
+  ✔ vetoes exposure exceeding free margin (0.199565ms)
+✔ StructuralChangeGuard.evaluateBlastRadius (CLM-002) (4.435421ms)
 ▶ telemetry server (Phase 05 Batch 2)
-  ✔ GET /health reports ok + commit (20.451537ms)
-  ✔ GET /api/desk/state has halt/nodes/account/receipt + CORS (4.392119ms)
-  ✔ T3 simulate-cycle executes PAPER deliberation: valid receiptHash + PAPER orderId (7.816676ms)
-  ✔ T3b simulate-cycle honors body params (risk veto probe) (14.299003ms)
-  ✔ T4 halt toggles flag; simulate-cycle 403 while halted (8.387884ms)
-  ✔ GET /api/desk/stream emits INIT SSE event (9.877099ms)
-✔ telemetry server (Phase 05 Batch 2) (119.585641ms)
+  ✔ GET /health reports ok + commit (20.280189ms)
+  ✔ GET /api/desk/state has halt/nodes/account/receipt + CORS (4.826044ms)
+  ✔ T3 simulate-cycle executes PAPER deliberation: valid receiptHash + PAPER orderId (8.665128ms)
+  ✔ T3b simulate-cycle honors body params (risk veto probe) (11.793896ms)
+  ✔ T4 halt toggles flag; simulate-cycle 403 while halted (7.962731ms)
+  ✔ GET /api/desk/stream emits INIT SSE event (8.105189ms)
+✔ telemetry server (Phase 05 Batch 2) (113.761409ms)
 ℹ tests 40
 ℹ suites 10
 ℹ pass 40
@@ -105,7 +105,7 @@ PASS: desk typecheck
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 1555.725382
+ℹ duration_ms 1541.439762
 PASS: engine unit tests
 
 > @money-boys/desk@0.1.0 build /home/ubuntu/money-boys/packages/desk
@@ -119,7 +119,7 @@ computing gzip size...
 dist/index.html                   0.38 kB │ gzip:  0.28 kB
 dist/assets/index-CV3F9T4S.css   11.99 kB │ gzip:  3.12 kB
 dist/assets/index-DPSVnxGv.js   165.32 kB │ gzip: 52.28 kB
-✓ built in 1.25s
+✓ built in 1.43s
 PASS: desk build
 PASS: BUILD_FOUNDRY.md
 PASS: PRD.md
