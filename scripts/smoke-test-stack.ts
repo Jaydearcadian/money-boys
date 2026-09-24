@@ -42,12 +42,14 @@ async function fetchJson(
 }
 
 async function check1EngineHealth(): Promise<void> {
-  const name = "Check 1 (Engine Health): GET /health -> 200 status ok";
+  const name = "Check 1 (Engine Health): GET /health -> 200 status ok + commit";
   try {
     const r = await fetchJson(`${ENGINE}/health`);
     const body = (r.json ?? {}) as Record<string, unknown>;
-    if (r.status === 200 && body["status"] === "ok") ok(name, `200 ok commit=${String(body["commit"] ?? "?")}`);
-    else bad(name, `expected 200 {status:"ok"}, got ${r.status} ${r.text.slice(0, 160)}`);
+    const commit = body["commit"];
+    if (r.status === 200 && body["status"] === "ok" && typeof commit === "string" && commit.length > 0)
+      ok(name, `200 ok commit=${commit}`);
+    else bad(name, `expected 200 {status:"ok", commit present}, got ${r.status} ${r.text.slice(0, 160)}`);
   } catch (err) {
     bad(name, err instanceof Error ? err.message : String(err));
   }
@@ -100,8 +102,34 @@ async function check3StateStore(): Promise<void> {
     bad(name, err instanceof Error ? err.message : String(err));
   }
 }
+function parseSseEvents(buf: string): unknown[] {
+  const events: unknown[] = [];
+  for (const frame of buf.split("\n\n")) {
+    for (const line of frame.split("\n")) {
+      const t = line.trim();
+      if (t.startsWith("data:")) {
+        const payload = t.slice("data:".length).trim();
+        try {
+          events.push(JSON.parse(payload));
+        } catch {
+          /* ignore non-JSON keepalive/comments */
+        }
+      }
+    }
+  }
+  return events;
+}
+
+function eventOfType(events: unknown[], type: string): Record<string, unknown> | null {
+  for (const e of events) {
+    if (typeof e === "object" && e !== null && (e as Record<string, unknown>)["type"] === type)
+      return e as Record<string, unknown>;
+  }
+  return null;
+}
+
 async function check4SseStream(): Promise<void> {
-  const name = "Check 4 (SSE Stream): INIT within 3000ms";
+  const name = 'Check 4 (SSE Stream): data: {"type":"INIT",...} within 3000ms';
   try {
     const ctrl = new AbortController();
     const timeout = setTimeout(() => ctrl.abort(), 3000);
@@ -142,15 +170,40 @@ async function check4SseStream(): Promise<void> {
     } finally {
       clearTimeout(timeout);
     }
-    if (buf.includes("INIT")) ok(name, `INIT received (${buf.length}b)`);
-    else bad(name, `no INIT in 3000ms: ${buf.slice(0, 160)}`);
+    const initEvt = eventOfType(parseSseEvents(buf), "INIT");
+    if (initEvt) ok(name, `INIT received (${buf.length}b)`);
+    else bad(name, `no data: {"type":"INIT",...} in 3000ms: ${buf.slice(0, 200)}`);
   } catch (err) {
     bad(name, err instanceof Error ? err.message : String(err));
   }
 }
 
 async function check5DeliberationLoop(): Promise<void> {
-  const name = "Check 5 (Deliberation & Dispatch): simulate-cycle receipt + FILLED";
+  const name = "Check 5 (Deliberation & Dispatch): simulate-cycle receipt + SSE NEW_RECEIPT + FILLED";
+  // Hold an SSE subscription open across simulate-cycle so we can assert the
+  // server broadcasts NEW_RECEIPT with the matching receiptHash.
+  let sseBuf = "";
+  const sseCtrl = new AbortController();
+  const sseDone = (async () => {
+    try {
+      const res = await fetch(`${ENGINE}/api/desk/stream`, {
+        headers: { Accept: "text/event-stream" },
+        signal: sseCtrl.signal,
+      });
+      const reader = res.body?.getReader();
+      if (!reader) return;
+      const decoder = new TextDecoder();
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        sseBuf += decoder.decode(value, { stream: true });
+      }
+    } catch {
+      /* abort-expected */
+    }
+  })();
+  // Give the SSE connection a moment to establish before triggering the cycle.
+  await new Promise((r) => setTimeout(r, 400));
   try {
     const r = await fetchJson(`${ENGINE}/api/desk/simulate-cycle`, {
       method: "POST",
@@ -177,10 +230,27 @@ async function check5DeliberationLoop(): Promise<void> {
     const orderId = typeof exec?.["orderId"] === "string" ? (exec["orderId"] as string) : "";
     if (!/^bg-paper-[0-9a-f]{16}$/.test(orderId)) problems.push(`orderId=${orderId} (want bg-paper-16hex)`);
     if (exec?.["status"] !== "FILLED") problems.push(`status=${String(exec?.["status"])} (want FILLED)`);
-    if (problems.length === 0) ok(name, `verified order=${orderId} FILLED`);
+    // Wait briefly for the NEW_RECEIPT broadcast, then match receiptHash.
+    let matched = false;
+    for (let i = 0; i < 20 && !matched; i++) {
+      for (const e of parseSseEvents(sseBuf)) {
+        const rec = (e as Record<string, unknown>)["type"] === "NEW_RECEIPT" ? e as Record<string, unknown> : null;
+        const er = rec?.["receipt"] as Record<string, unknown> | undefined;
+        if (rec && typeof er?.["receiptHash"] === "string" && (er["receiptHash"] as string) === hash && hash !== "") {
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) await new Promise((rr) => setTimeout(rr, 150));
+    }
+    if (!matched) problems.push("no SSE NEW_RECEIPT with matching receiptHash");
+    if (problems.length === 0) ok(name, `verified order=${orderId} FILLED + SSE NEW_RECEIPT ${hash.slice(0, 12)}…`);
     else bad(name, problems.join("; "));
   } catch (err) {
     bad(name, err instanceof Error ? err.message : String(err));
+  } finally {
+    sseCtrl.abort();
+    await sseDone;
   }
 }
 
