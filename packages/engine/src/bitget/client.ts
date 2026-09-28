@@ -16,6 +16,14 @@ export type BitgetClientConfig = {
   secretKey: string;
   passphrase: string;
   baseUrl?: string;
+  /**
+   * Bitget Demo Trading routes to the SAME base URL (https://api.bitget.com)
+   * with the SAME HMAC signing — the only wire difference is the extra
+   * `paptrading: 1` request header plus a Demo-scoped API key.
+   * (https://www.bitget.com/api-doc/common/demotrading/restapi)
+   * Default false so the live path is byte-identical to before.
+   */
+  demoTrading?: boolean;
 };
 
 /**
@@ -28,12 +36,14 @@ export class BitgetClient {
   readonly secretKey: string;
   readonly passphrase: string;
   readonly baseUrl: string;
+  readonly demoTrading: boolean;
 
   constructor(cfg: BitgetClientConfig) {
     this.apiKey = cfg.apiKey;
     this.secretKey = cfg.secretKey;
     this.passphrase = cfg.passphrase;
     this.baseUrl = (cfg.baseUrl ?? "https://api.bitget.com").replace(/\/$/, "");
+    this.demoTrading = cfg.demoTrading ?? false;
   }
 
   /**
@@ -75,6 +85,12 @@ export class BitgetClient {
       headers["ACCESS-TIMESTAMP"] = timestamp;
       headers["ACCESS-PASSPHRASE"] = this.passphrase;
       headers.locale = "en-US";
+      // Demo Trading routing: same base URL + same signing, plus this header.
+      // Without it a Demo-scoped key hits the live matcher and the venue
+      // answers 40099 "exchange environment is incorrect".
+      if (this.demoTrading) {
+        headers["paptrading"] = "1";
+      }
     }
     const res = await fetch(`${this.baseUrl}${pathWithQuery}`, {
       method,

@@ -200,7 +200,11 @@ async function tick(
 async function main(): Promise<void> {
   mkdirSync(OUT_DIR, { recursive: true });
   // Fail-closed boot: throws immediately when creds are missing (no simulation).
-  const client = new BitgetClient({ apiKey, secretKey, passphrase, baseUrl: BITGET_BASE_URL });
+  // Demo Trading = same base URL + same HMAC signing + `paptrading: 1` header
+  // (sent by BitgetClient when demoTrading is true). Demo-scoped keys 40099
+  // without it. BITGET_ENV=testnet|demo -> demo route; anything else -> live.
+  const demoTrading = BITGET_ENV === "testnet" || BITGET_ENV === "demo";
+  const client = new BitgetClient({ apiKey, secretKey, passphrase, baseUrl: BITGET_BASE_URL, demoTrading });
   const dispatcher = new OrderDispatcher("TESTNET", client);
   let running = true;
   process.on("SIGTERM", () => { running = false; });

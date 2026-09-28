@@ -20,6 +20,11 @@ async function runPhase01Gate() {
     apiKey: apiKey || "mock-key",
     secretKey: secretKey || "mock-secret",
     passphrase: passphrase || "mock-pass",
+    // Demo-scoped keys only authenticate on the Demo Trading route, which is
+    // the same base URL + same signing + `paptrading: 1` header. BITGET_ENV
+    // testnet/demo flips that header; anything else targets live.
+    demoTrading: (process.env.BITGET_ENV ?? "").toLowerCase() === "testnet" ||
+      (process.env.BITGET_ENV ?? "").toLowerCase() === "demo",
   });
 
   // 1. Public substrate: ticker ingestion
