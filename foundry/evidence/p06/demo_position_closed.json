@@ -1,0 +1,112 @@
+{
+  "claimId": "CLM-007",
+  "phase": "06c-demo-position-closed",
+  "timestamp_utc": "2026-09-30T08:50:20Z",
+  "commit_at_time_of_attempt": "c37a163d7b48341d36fa3325f0d4650ef8f851ce",
+  "result_summary": "POSITION CLOSED \u2014 account returned to flat on the Demo venue",
+  "environment": {
+    "BITGET_ENV": "testnet",
+    "demoTrading_header_sent": true,
+    "venue_route": "Bitget Demo Trading (paptrading:1)"
+  },
+  "pre_state": {
+    "endpoint": "GET /api/v2/mix/position/all-position",
+    "code": "00000",
+    "symbol": "BTCUSDT",
+    "holdSide": "short",
+    "total": "0.001",
+    "openPriceAvg": "83364.4",
+    "leverage": "10",
+    "marginMode": "isolated",
+    "posMode": "hedge_mode",
+    "liquidationPrice": "91284.5943061915190125",
+    "deductedFee_on_open": "0.05001864",
+    "unrealizedPL_at_close": "0.3005"
+  },
+  "close_request_metadata": {
+    "endpoint": "POST /api/v2/mix/order/place-order",
+    "symbol": "BTCUSDT",
+    "productType": "USDT-FUTURES",
+    "marginMode": "isolated",
+    "marginCoin": "USDT",
+    "size": 0.001,
+    "side": "sell",
+    "side_semantics": "hedge_mode: `side` is the POSITION DIRECTION (long/short), not buy/sell. Closing a short requires side=sell + tradeSide=close.",
+    "orderType": "market",
+    "tradeSide": "close"
+  },
+  "failed_first_attempt": {
+    "error_code": "22002",
+    "error_msg": "No position to close",
+    "cause": "First close attempt sent side='buy', which the venue read as a long position. The hedge_mode contract requires side=sell to close a short position.",
+    "effect_on_position": "none \u2014 rejected before allocation, position unchanged",
+    "lesson": "In hedge mode `side` selects the position side; buy/sell semantics apply only to one-way mode."
+  },
+  "close_response": {
+    "venue_code": "00000",
+    "venue_msg": "success",
+    "venue_order_id": "1489108454353305601",
+    "venue_order_id_is_synthetic": false,
+    "clientOid": "1489108454357499904"
+  },
+  "close_readback": {
+    "endpoint": "GET /api/v2/mix/order/detail",
+    "code": "00000",
+    "state": "filled",
+    "size": "0.001",
+    "baseVolume": "0.001",
+    "priceAvg": "83061.9",
+    "fee": "-0.04983714",
+    "totalProfits": "0.3025",
+    "side": "sell",
+    "posSide": "short",
+    "posMode": "hedge_mode",
+    "tradeSide": "close"
+  },
+  "close_fill": {
+    "endpoint": "GET /api/v2/mix/order/fills",
+    "code": "00000",
+    "tradeId": "1489108454561001472",
+    "price": "83061.9",
+    "baseVolume": "0.001",
+    "fee_coin": "USDT",
+    "total_fee": "-0.04983714",
+    "profit": "0.3025"
+  },
+  "post_state": {
+    "endpoint": "GET /api/v2/mix/position/all-position",
+    "code": "00000",
+    "position": null,
+    "ACCOUNT_FLAT": true,
+    "note": "all-position returned no BTCUSDT row after the close"
+  },
+  "round_trip": {
+    "open_price": 83364.4,
+    "close_price": "83061.9",
+    "direction": "short",
+    "gross_pnl_usdt": "0.3025",
+    "open_fee_usdt": "0.05001864",
+    "close_fee_usdt": "-0.04983714",
+    "total_fees_usdt": "0.09985578",
+    "note": "Demo Trading balance only. Not a live-venue result."
+  },
+  "authorization_compliance": {
+    "close_orders_submitted": 1,
+    "open_orders_submitted": 1,
+    "total_close_attempts": 2,
+    "second_attempt_was_a_retry_of_a_rejected_call": true,
+    "rejected_calls_had_no_effect": true,
+    "LIVE_DEMO_RUN_used": false,
+    "loops": false,
+    "fabricated_ids_or_fills": false
+  },
+  "limitations": [
+    "Bitget DEMO TRADING only. No real capital.",
+    "Full position lifecycle is now proven on Demo: open -> fill -> read back -> close -> fill -> read back flat.",
+    "NOT proven: settlement mechanics beyond a single realized round trip (no funding accrual across an interval, no liquidation, no withdrawal).",
+    "NOT proven: live-venue execution of any kind.",
+    "NOT proven: continuous operation. Two bounded orders total, no daemon, no loop.",
+    "The close path was executed by a one-off script, not by OrderDispatcher. The dispatcher still only opens positions (tradeSide:'open'); wiring a close method is outstanding and is NOT claimed here.",
+    "No cancel path has been exercised (POST /api/v2/mix/order/cancel-order)."
+  ]
+}
