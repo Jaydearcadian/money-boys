@@ -1,0 +1,58 @@
+{
+  "claimId": "CLM-008",
+  "phase": "08-stack-smoke",
+  "timestamp_utc": "2026-09-30T07:22:47.967180Z",
+  "commit": "4e00ef4549c2f33a6e8900e6521215bab5d6ec64",
+  "result_summary": "SMOKE OK (6/6) \u2014 local stack only, no venue interaction",
+  "environment": {
+    "engine_url": "http://localhost:3001",
+    "desk_url": "http://localhost:3000",
+    "url_overrides_used": false,
+    "desk_build": "vite build PASS (43 modules)"
+  },
+  "checks": [
+    {
+      "n": 1,
+      "name": "Engine Health GET /health",
+      "result": "PASS",
+      "detail": "200 {status:ok, commit present}"
+    },
+    {
+      "n": 2,
+      "name": "Desk Preview GET /",
+      "result": "PASS",
+      "detail": "200 text/html"
+    },
+    {
+      "n": 3,
+      "name": "State Store",
+      "result": "PASS",
+      "detail": "4 nodes, equity 21795.18, halt=false"
+    },
+    {
+      "n": 4,
+      "name": "SSE Stream INIT",
+      "result": "PASS",
+      "detail": "INIT received within 3000ms (1574b)"
+    },
+    {
+      "n": 5,
+      "name": "Deliberation & Dispatch",
+      "result": "PASS",
+      "detail": "simulate-cycle receipt sealed+verified, SSE NEW_RECEIPT hash match, order bg-paper-84723e0e0c8ed7db status FILLED (PAPER mode)"
+    },
+    {
+      "n": 6,
+      "name": "Halt Breaker",
+      "result": "PASS",
+      "detail": "halt=true -> 403 -> halt=false (fail-closed)"
+    }
+  ],
+  "limitations": [
+    "Check 5 exercised PAPER mode only: orderId prefix bg-paper- is locally generated. No Bitget venue call occurred in this smoke run.",
+    "Engine reported commit=f1409c7 via COMMIT env fallback, which does not match repository HEAD 4e00ef4. The telemetry commit field is not bound to git HEAD at runtime.",
+    "Services were started locally and stopped after the run. Nothing is deployed.",
+    "A first attempt failed Check 2 (fetch failed) because the desk preview process had been reaped by the shell session; re-running under setsid produced 6/6. This is a harness/process-management flake, not an application defect.",
+    "This smoke run proves local end-to-end wiring only. It adds no evidence about Bitget authentication, order acceptance, fill, or settlement."
+  ]
+}
