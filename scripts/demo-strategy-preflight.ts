@@ -23,6 +23,12 @@ import { BitgetClient, type MixContractConfig } from "../packages/engine/src/bit
 import { mapToVenueSymbol } from "../packages/engine/src/bitget/dispatcher.js";
 import { evaluateBasisSpread } from "../packages/engine/src/agents/quant.js";
 import { buildPacket, sealIntents } from "../packages/engine/src/bitget/strategy-packet.js";
+import {
+  assessBenchmarkFreshness,
+  requiredBenchmarkSourceFor,
+  resolveRegime,
+  type BenchmarkEvidence,
+} from "../packages/engine/src/agents/market-regime.js";
 
 import {
   REPO_SYMBOL,
@@ -36,7 +42,15 @@ import {
 // Live pre-flight (network). Only runs when invoked directly.
 // ---------------------------------------------------------------------------
 
-async function mcpQuote(ticker: string): Promise<number> {
+/**
+ * Fetch a benchmark quote.
+ *
+ * Returns the price AND the upstream source timestamp. The Bitget
+ * equity_price_quote entry publishes NO timestamp field, so `sourceAsOf` is
+ * null for it — which makes freshness UNPROVABLE and must fail closed rather
+ * than being papered over with the local fetch time (GAP-015/GAP-018).
+ */
+async function mcpQuote(ticker: string): Promise<{ price: number; sourceAsOf: string | null }> {
   const { execFileSync } = await import("node:child_process");
   const H = ["-H", "Content-Type: application/json", "-H", "Accept: application/json, text/event-stream"];
   execFileSync("curl", ["-sS", "-D", "/tmp/mb-mcp-hdr.txt", "-X", "POST",
@@ -59,9 +73,21 @@ async function mcpQuote(ticker: string): Promise<number> {
     const parsed = JSON.parse(t) as { result?: { content?: { text?: string }[] } };
     const text = parsed.result?.content?.[0]?.text;
     if (!text) continue;
-    const body = JSON.parse(text) as { data?: { results?: { last_price?: number }[] } };
-    const price = body.data?.results?.[0]?.last_price;
-    if (typeof price === "number") return price;
+    const body = JSON.parse(text) as {
+      data?: { results?: Record<string, unknown>[] };
+    };
+    const row = body.data?.results?.[0] ?? {};
+    const price = row["last_price"];
+    if (typeof price !== "number") continue;
+    // Look for any upstream timestamp this entry might publish.
+    for (const k of ["ts", "timestamp", "as_of", "asOf", "trade_time", "update_time"]) {
+      const v = row[k];
+      if (typeof v === "string" || typeof v === "number") {
+        const ms = typeof v === "number" && v < 1e12 ? v * 1000 : Number(v);
+        if (Number.isFinite(ms)) return { price, sourceAsOf: new Date(ms).toISOString() };
+      }
+    }
+    return { price, sourceAsOf: null };
   }
   throw new Error("MCP returned no benchmark price — FAIL CLOSED");
 }
@@ -89,7 +115,18 @@ async function main(): Promise<void> {
   const referencePriceUsd = Number(ticker.lastPr);
   const book = await client.getMixOrderbook(venueSymbol, 20, PRODUCT_TYPE);
 
-  const benchPrice = await mcpQuote(BENCHMARK_TICKER);
+  const quote = await mcpQuote(BENCHMARK_TICKER);
+  const regime = resolveRegime();
+  const benchmark: BenchmarkEvidence = assessBenchmarkFreshness({
+    price: quote.price,
+    source: requiredBenchmarkSourceFor(regime.regime) === "EXPLICIT_TS_SOURCE"
+      ? "EXPLICIT_TS_SOURCE"
+      : "BITGET_MCP_QUOTE",
+    provider: "bitget_data",
+    sourceAsOf: quote.sourceAsOf,
+    fetchedAt: new Date().toISOString(),
+    maxAgeMs: 96 * 60 * 60 * 1000,
+  });
 
   const config: MixContractConfig = {
     ...contractRaw,
@@ -99,14 +136,17 @@ async function main(): Promise<void> {
 
   const quant = evaluateBasisSpread({
     tokenPrice: referencePriceUsd,
-    tradFiClosePrice: benchPrice,
+    tradFiClosePrice: benchmark.price,
     orderSizeUsd: targetUsd,
     depth: {
       bids: book.bids.map(([p, s]) => ({ price: Number(p), quantity: Number(s) })),
       asks: book.asks.map(([p, s]) => ({ price: Number(p), quantity: Number(s) })),
     },
     fundingRate8h: Number(ticker.fundingRate ?? 0),
-    hoursToClose: 1,
+    // Carry horizon is regime-derived, never hardcoded: 0 while TradFi is
+    // open, the true hours to the next 09:30 ET reopen while it is closed
+    // (~65.5h across a Friday-to-Monday weekend).
+    hoursToClose: regime.hoursToNextReopen,
     takerFee: Number(contractRaw.takerFeeRate ?? 0.0006),
   });
 
@@ -115,6 +155,9 @@ async function main(): Promise<void> {
     quant,
     account: { equityUsd: Number(row["accountEquity"]), freeMarginUsd: Number(row["available"]) },
     targetNotionalUsd: targetUsd,
+    benchmark,
+    regime: regime.regime,
+    hoursToNextReopen: regime.hoursToNextReopen,
   });
 
   const intents = sealIntents({
@@ -138,7 +181,15 @@ async function main(): Promise<void> {
       ACCOUNT_FLAT: ((positions.data as unknown[]) ?? []).length === 0,
     },
     venueContract: contractRaw,
-    benchmark: { value: benchPrice, source: "Bitget MCP equity_price_quote", isLocalSnapshot: false },
+    marketRegime: {
+      regime: regime.regime,
+      etNow: regime.etNowIso,
+      hoursToNextReopen: regime.hoursToNextReopen,
+      nextReopenAtIso: regime.nextReopenAtIso,
+      requiredBenchmarkSource: regime.requiredBenchmarkSource,
+      holidayCalendarSupported: regime.holidayCalendarSupported,
+      limitation: regime.limitation,
+    },
     tokenPrice: referencePriceUsd,
     ...base,
     receiptHash: intents.receiptHash,

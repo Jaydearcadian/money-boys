@@ -19,6 +19,11 @@ import { BitgetClient, type MixContractConfig } from "./client.js";
 import { sealReceipt } from "../council/receipts.js";
 import { StructuralChangeGuard } from "../skills/igraph-guard/security.js";
 import type { QuantAnalysisResult } from "../agents/quant.js";
+import {
+  assertBenchmarkProvable,
+  type BenchmarkEvidence,
+  type MarketRegime,
+} from "../agents/market-regime.js";
 
 /** Canonical repo/venue symbol pair for the tokenized-equity campaign. */
 export const REPO_SYMBOL = "rNVDAUSDT";
@@ -42,12 +47,34 @@ export interface SizingSummary {
   ok: boolean;
 }
 
+export interface BenchmarkGate {
+  regime: MarketRegime;
+  requiredSource: string;
+  price: number;
+  source: string;
+  provider: string | null;
+  /** Timestamp the UPSTREAM SOURCE published. Null = unprovable. */
+  sourceAsOf: string | null;
+  /** When this process fetched it. Never a substitute for sourceAsOf. */
+  fetchedAt: string;
+  freshness: "verified_fresh" | "verified_stale" | "unverifiable";
+  ageMs: number | null;
+  notes: string;
+  usable: boolean;
+  blockedReason: string | null;
+}
+
 export interface PreflightPacket {
   repositorySymbol: string;
   venueSymbol: string;
   referencePriceUsd: number;
   sizing: SizingSummary;
-  quant: QuantAnalysisResult;
+  /**
+   * Benchmark gate result. Null when no benchmark was supplied, in which case
+   * the packet is NOT executable — a missing benchmark fails closed.
+   */
+  benchmark: BenchmarkGate | null;
+  quant: QuantAnalysisResult | null;
   positiveNetEdge: boolean;
   executable: boolean;
   blockingReasons: string[];
@@ -55,6 +82,9 @@ export interface PreflightPacket {
   clientOidOpen: string | null;
   clientOidClose: string | null;
   risk: { decision: string; exposureUsd: number; projectedMarginUtilization: number } | null;
+  /** True when Quant was allowed to run at all. */
+  quantEvaluated: boolean;
+  hoursToNextReopen: number | null;
 }
 
 export interface SizingInputs {
@@ -102,30 +132,103 @@ export function resolveSizing(
  * Pure: no network, no credentials, no side effects. Separated from the I/O
  * so the sizing and gating rules are directly testable.
  */
+/**
+ * Assemble a packet.
+ *
+ * Order of operations matters: the benchmark gate runs BEFORE Quant Boy, so a
+ * missing or unprovable benchmark can never produce a quant verdict, let alone
+ * an executable packet. Quant is left null when the gate blocks.
+ */
 export function buildPacket(args: {
   config: MixContractConfig;
   quant: QuantAnalysisResult;
   account: { equityUsd: number; freeMarginUsd: number };
   targetNotionalUsd: number;
+  benchmark: BenchmarkEvidence | null;
+  regime: MarketRegime;
+  hoursToNextReopen: number;
   councilScores?: { compositeScore: number; macro: number; quant: number; risk: number; exec: number };
 }): Omit<PreflightPacket, "receiptHash" | "clientOidOpen" | "clientOidClose"> {
-  const { config, quant, account, targetNotionalUsd } = args;
+  const { config, account, targetNotionalUsd, benchmark, regime, hoursToNextReopen } = args;
+  const blockingReasons: string[] = [];
+
+  // ---- Gate 0: benchmark usability, BEFORE Quant Boy runs. ----
+  let benchmarkGate: BenchmarkGate | null = null;
+  let quantEvaluated = true;
+  if (benchmark === null) {
+    quantEvaluated = false;
+    blockingReasons.push(
+      "FAIL_CLOSED: no benchmark supplied; the strategy must not evaluate without one",
+    );
+  } else {
+    let usable = true;
+    let blockedReason: string | null = null;
+    try {
+      assertBenchmarkProvable(benchmark, regime);
+    } catch (err) {
+      usable = false;
+      blockedReason = err instanceof Error ? err.message : String(err);
+      quantEvaluated = false;
+      blockingReasons.push(blockedReason);
+    }
+    benchmarkGate = {
+      regime,
+      requiredSource: benchmark.source,
+      price: benchmark.price,
+      source: benchmark.source,
+      provider: benchmark.provider,
+      sourceAsOf: benchmark.sourceAsOf,
+      fetchedAt: benchmark.fetchedAt,
+      freshness: benchmark.freshness,
+      ageMs: benchmark.ageMs,
+      notes: benchmark.notes,
+      usable,
+      blockedReason,
+    };
+  }
+
+  // Quant Boy does not run at all when the benchmark gate blocks.
+  if (!quantEvaluated) {
+    return {
+      repositorySymbol: REPO_SYMBOL,
+      venueSymbol: config.symbol,
+      referencePriceUsd: Number(config.referencePriceUsd),
+      sizing: {
+        targetNotionalUsd,
+        compliantQuantity: null,
+        roundedNotionalUsd: null,
+        minQty: Number(config.minTradeNum),
+        minNotionalUsdt: Number(config.minTradeUSDT ?? 0),
+        multiplier: Number(config.sizeMultiplier),
+        precisionDecimalPlaces: Number(config.volumePlace ?? NaN),
+        steps: [],
+        reasons: ["benchmark unusable: not sized"],
+        ok: false,
+      },
+      benchmark: benchmarkGate,
+      quant: null,
+      positiveNetEdge: false,
+      executable: false,
+      blockingReasons,
+      risk: null,
+      quantEvaluated: false,
+      hoursToNextReopen,
+    };
+  }
+
+  const quant = args.quant;
   const sizing = resolveSizing(config, {
     targetNotionalUsd,
     referencePriceUsd: Number(config.referencePriceUsd),
     freeMarginUsd: account.freeMarginUsd,
   });
-
-  const blockingReasons: string[] = [];
-
-  // Gate 1: sizing. A null quantity means no compliant order exists.
   if (sizing.compliantQuantity === null) {
     blockingReasons.push(
       `sizing failed: ${sizing.reasons.join("; ") || "no compliant quantity"}`,
     );
   }
 
-  // Gate 2: strategy. A NEUTRAL verdict must never become an authorization.
+  // Gate 1: strategy. A NEUTRAL verdict must never become an authorization.
   const positiveNetEdge = quant.netEdge > 0 && quant.action !== "NEUTRAL";
   if (!positiveNetEdge) {
     blockingReasons.push(
@@ -162,11 +265,14 @@ export function buildPacket(args: {
     venueSymbol: config.symbol,
     referencePriceUsd: Number(config.referencePriceUsd),
     sizing,
+    benchmark: benchmarkGate,
     quant,
     positiveNetEdge,
     executable: blockingReasons.length === 0,
     blockingReasons,
     risk,
+    quantEvaluated: true,
+    hoursToNextReopen,
   };
 }
 

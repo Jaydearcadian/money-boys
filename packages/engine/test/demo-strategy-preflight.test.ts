@@ -10,6 +10,25 @@ import {
 } from "../src/bitget/strategy-packet.js";
 import type { MixContractConfig } from "../src/bitget/client.js";
 import { evaluateBasisSpread, type QuantAnalysisResult } from "../src/agents/quant.js";
+import {
+  assessBenchmarkFreshness,
+  type BenchmarkEvidence,
+} from "../src/agents/market-regime.js";
+
+/** A provably fresh benchmark: upstream publishes a real sourceAsOf. */
+function freshBenchmark(now: Date): BenchmarkEvidence {
+  return assessBenchmarkFreshness({
+    price: 228.0852,
+    source: "EXPLICIT_TS_SOURCE",
+    provider: "bitget_data",
+    sourceAsOf: new Date(now.getTime() - 30_000).toISOString(),
+    fetchedAt: now.toISOString(),
+    maxAgeMs: 96 * 60 * 60 * 1000,
+  });
+}
+
+const NOW = new Date("2026-09-30T14:00:00Z"); // 10:00 ET, TradFi open
+const REGIME_OPEN = "tradfi_open" as const;
 
 /**
  * Regression guard for the Stage 3 pre-flight packet generator.
@@ -116,6 +135,7 @@ describe("packet assembly", () => {
     const p = buildPacket({
       config: NVDA, quant: quantWith(0.005, "SELL_BASIS"),
       account: ACCOUNT, targetNotionalUsd: 2.29,
+      benchmark: freshBenchmark(NOW), regime: REGIME_OPEN, hoursToNextReopen: 0,
     });
     assert.notEqual(p.risk, null);
     // Risk must see the COMPLIANT size, never the bare minQty.
@@ -127,6 +147,7 @@ describe("packet assembly", () => {
   it("NEUTRAL is never executable, even with Risk APPROVED", () => {
     const p = buildPacket({
       config: NVDA, quant: quantWith(0, "NEUTRAL"), account: ACCOUNT, targetNotionalUsd: 25,
+      benchmark: freshBenchmark(NOW), regime: REGIME_OPEN, hoursToNextReopen: 0,
     });
     assert.equal(p.positiveNetEdge, false);
     assert.equal(p.executable, false);
@@ -138,6 +159,7 @@ describe("packet assembly", () => {
   it("negative net edge with a non-NEUTRAL action still blocks", () => {
     const p = buildPacket({
       config: NVDA, quant: quantWith(-0.001, "SELL_BASIS"), account: ACCOUNT, targetNotionalUsd: 25,
+      benchmark: freshBenchmark(NOW), regime: REGIME_OPEN, hoursToNextReopen: 0,
     });
     assert.equal(p.positiveNetEdge, false);
     assert.equal(p.executable, false);
@@ -146,6 +168,7 @@ describe("packet assembly", () => {
   it("a positive edge with compliant sizing is executable", () => {
     const p = buildPacket({
       config: NVDA, quant: quantWith(0.005, "SELL_BASIS"), account: ACCOUNT, targetNotionalUsd: 25,
+      benchmark: freshBenchmark(NOW), regime: REGIME_OPEN, hoursToNextReopen: 0,
     });
     assert.equal(p.positiveNetEdge, true);
     assert.equal(p.executable, true, p.blockingReasons.join(" | "));
@@ -155,6 +178,7 @@ describe("packet assembly", () => {
     const p = buildPacket({
       config: NVDA, quant: quantWith(0.005, "SELL_BASIS"),
       account: { equityUsd: 10, freeMarginUsd: 3 }, targetNotionalUsd: 2.29,
+      benchmark: freshBenchmark(NOW), regime: REGIME_OPEN, hoursToNextReopen: 0,
     });
     assert.equal(p.sizing.compliantQuantity, null);
     assert.equal(p.executable, false);
@@ -165,6 +189,7 @@ describe("packet assembly", () => {
   it("carries the compliant quantity and venue constraints into the packet", () => {
     const p = buildPacket({
       config: NVDA, quant: quantWith(0.005, "SELL_BASIS"), account: ACCOUNT, targetNotionalUsd: 2.29,
+      benchmark: freshBenchmark(NOW), regime: REGIME_OPEN, hoursToNextReopen: 0,
     });
     assert.equal(p.venueSymbol, VENUE_SYMBOL);
     assert.equal(p.repositorySymbol, REPO_SYMBOL);
@@ -217,5 +242,141 @@ describe("intent-bound clientOids", () => {
     assert.match(i.receiptHash, /^[0-9a-f]{64}$/);
     // A receipt hash is provenance, never an authorization. Executability is
     // decided by buildPacket, which is asserted separately.
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The benchmark gate is wired into the REAL packet path, before Quant Boy.
+//
+// This is the GAP-015 control that previously existed in isolation and was
+// never called. These tests exercise it through buildPacket, the function the
+// pre-flight script actually uses.
+// ---------------------------------------------------------------------------
+
+describe("benchmark gate blocks the real packet path", () => {
+  const unverifiable = assessBenchmarkFreshness({
+    price: 228.0852,
+    source: "BITGET_MCP_QUOTE", // the live MCP entry publishes no timestamp
+    provider: "bitget_data",
+    sourceAsOf: null,
+    fetchedAt: NOW.toISOString(),
+    maxAgeMs: 96 * 60 * 60 * 1000,
+  });
+
+  it("classifies the real MCP quote shape as unverifiable", () => {
+    assert.equal(unverifiable.freshness, "unverifiable");
+    assert.equal(unverifiable.sourceAsOf, null);
+  });
+
+  it("a missing source timestamp yields executable=false", () => {
+    const p = buildPacket({
+      config: NVDA, quant: quantWith(0.01, "SELL_BASIS"), account: ACCOUNT,
+      targetNotionalUsd: 25, benchmark: unverifiable,
+      regime: REGIME_OPEN, hoursToNextReopen: 0,
+    });
+    assert.equal(p.executable, false);
+    assert.equal(p.benchmark!.usable, false);
+    assert.ok(p.benchmark!.blockedReason);
+  });
+
+  it("Quant Boy does NOT run when the benchmark is unusable", () => {
+    const p = buildPacket({
+      config: NVDA, quant: quantWith(0.01, "SELL_BASIS"), account: ACCOUNT,
+      targetNotionalUsd: 25, benchmark: unverifiable,
+      regime: REGIME_OPEN, hoursToNextReopen: 0,
+    });
+    assert.equal(p.quantEvaluated, false);
+    assert.equal(p.quant, null, "no quant verdict may exist without a provable benchmark");
+    assert.equal(p.risk, null);
+  });
+
+  it("a POSITIVE edge still cannot become executable without a benchmark", () => {
+    const p = buildPacket({
+      config: NVDA, quant: quantWith(0.01, "SELL_BASIS"), account: ACCOUNT,
+      targetNotionalUsd: 25, benchmark: unverifiable,
+      regime: REGIME_OPEN, hoursToNextReopen: 0,
+    });
+    assert.equal(p.positiveNetEdge, false, "quant was never evaluated, so there is no edge");
+    assert.equal(p.executable, false);
+  });
+
+  it("a STALE source timestamp also blocks", () => {
+    const stale = assessBenchmarkFreshness({
+      price: 128.8, source: "EXPLICIT_TS_SOURCE",
+      sourceAsOf: "2026-09-18T20:00:00Z", fetchedAt: NOW.toISOString(),
+      maxAgeMs: 96 * 60 * 60 * 1000,
+    });
+    assert.equal(stale.freshness, "verified_stale");
+    const p = buildPacket({
+      config: NVDA, quant: quantWith(0.01, "SELL_BASIS"), account: ACCOUNT,
+      targetNotionalUsd: 25, benchmark: stale,
+      regime: REGIME_OPEN, hoursToNextReopen: 0,
+    });
+    assert.equal(p.executable, false);
+    assert.equal(p.quantEvaluated, false);
+  });
+
+  it("a null benchmark blocks before Quant", () => {
+    const p = buildPacket({
+      config: NVDA, quant: quantWith(0.01, "SELL_BASIS"), account: ACCOUNT,
+      targetNotionalUsd: 25, benchmark: null,
+      regime: REGIME_OPEN, hoursToNextReopen: 0,
+    });
+    assert.equal(p.executable, false);
+    assert.equal(p.quantEvaluated, false);
+    assert.equal(p.benchmark, null);
+    assert.ok(p.blockingReasons.some((r: string) => r.includes("no benchmark")));
+  });
+
+  it("a provably fresh benchmark lets Quant and Risk run as before", () => {
+    const p = buildPacket({
+      config: NVDA, quant: quantWith(0.005, "SELL_BASIS"), account: ACCOUNT,
+      targetNotionalUsd: 25, benchmark: freshBenchmark(NOW),
+      regime: REGIME_OPEN, hoursToNextReopen: 0,
+    });
+    assert.equal(p.quantEvaluated, true);
+    assert.equal(p.benchmark!.usable, true);
+    assert.equal(p.benchmark!.freshness, "verified_fresh");
+    assert.equal(p.executable, true, p.blockingReasons.join(" | "));
+  });
+
+  it("the packet preserves provider, source, sourceAsOf and freshness separately", () => {
+    const p = buildPacket({
+      config: NVDA, quant: quantWith(0.005, "SELL_BASIS"), account: ACCOUNT,
+      targetNotionalUsd: 25, benchmark: freshBenchmark(NOW),
+      regime: REGIME_OPEN, hoursToNextReopen: 0,
+    });
+    const b = p.benchmark!;
+    assert.equal(b.provider, "bitget_data");
+    assert.equal(b.source, "EXPLICIT_TS_SOURCE");
+    assert.equal(b.sourceAsOf, freshBenchmark(NOW).sourceAsOf);
+    assert.equal(b.fetchedAt, NOW.toISOString());
+    assert.equal(b.freshness, "verified_fresh");
+    assert.notEqual(b.sourceAsOf, b.fetchedAt);
+  });
+
+  it("isLocalSnapshot is never used as a freshness substitute", () => {
+    const snap = assessBenchmarkFreshness({
+      price: 128.8, source: "LOCAL_SNAPSHOT",
+      sourceAsOf: NOW.toISOString(), fetchedAt: NOW.toISOString(),
+      maxAgeMs: 96 * 60 * 60 * 1000,
+    });
+    assert.equal(snap.freshness, "unverifiable");
+    const p = buildPacket({
+      config: NVDA, quant: quantWith(0.01, "SELL_BASIS"), account: ACCOUNT,
+      targetNotionalUsd: 25, benchmark: snap,
+      regime: REGIME_OPEN, hoursToNextReopen: 0,
+    });
+    assert.equal(p.executable, false);
+  });
+
+  it("carries the regime-derived carry horizon into the packet", () => {
+    const p = buildPacket({
+      config: NVDA, quant: quantWith(0.005, "SELL_BASIS"), account: ACCOUNT,
+      targetNotionalUsd: 25, benchmark: freshBenchmark(NOW),
+      regime: "tradfi_closed", hoursToNextReopen: 65.5,
+    });
+    assert.equal(p.hoursToNextReopen, 65.5);
+    assert.equal(p.benchmark!.regime, "tradfi_closed");
   });
 });
