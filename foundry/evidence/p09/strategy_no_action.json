@@ -1,0 +1,318 @@
+{
+  "claimId": "CLM-010",
+  "phase": "09-bounded-demo-strategy-preflight",
+  "result_classification": "STRATEGY_EVALUATED_NO_ACTION",
+  "timestamp_utc": "2026-09-30T09:21:45.659Z",
+  "commit_at_time_of_run": "fd3401521d74953a486cd05ffcac07e4062b282e",
+  "orders_submitted": 0,
+  "order_endpoint_calls": 0,
+  "submitted": false,
+  "venue_contract_discovery": {
+    "code": "00000",
+    "symbol": "NVDAUSDT",
+    "baseCoin": "NVDA",
+    "quoteCoin": "USDT",
+    "symbolType": "perpetual",
+    "contract_size_multiplier": "0.01",
+    "min_trade_num": "0.01",
+    "min_trade_usdt": "5",
+    "price_precision_decimal_places": "2",
+    "qty_precision_decimal_places": "2",
+    "makerFeeRate": "0.0002",
+    "takerFeeRate": "0.0006",
+    "supportMarginCoins": [
+      "USDT"
+    ],
+    "buyLimitPriceRatio": "0.02",
+    "symbol_exists": true
+  },
+  "symbol_mapping": {
+    "repo_symbol": "rNVDAUSDT",
+    "venue_futures_symbol": "NVDAUSDT",
+    "mapToVenueSymbol_result": "NVDAUSDT",
+    "finding": "The r-prefix is SPOT-only on this venue. USDT-FUTURES uses the bare ticker. mapToVenueSymbol('rNVDAUSDT') -> 'NVDAUSDT' is therefore CORRECT for the futures dispatcher, but BitgetClient.getTicker() calls the SPOT endpoint, which serves rNVDAUSDT and rejects NVDAUSDT (40034). Any map-then-getTicker path fails. Recorded as GAP-013.",
+    "spot_ticker_rNVDAUSDT": "EXISTS (228.29)",
+    "spot_ticker_NVDAUSDT": "NOT FOUND (40034)",
+    "r_prefixed_usdt_futures_contracts": 0,
+    "usdt_futures_contract_count": 804
+  },
+  "endpoint_responses": {
+    "GET /api/v2/mix/market/contracts (NVDAUSDT, USDT-FUTURES)": "00000",
+    "GET /api/v2/mix/market/ticker (NVDAUSDT, USDT-FUTURES)": "00000",
+    "GET /api/v2/mix/market/orderbook (NVDAUSDT, USDT-FUTURES)": "00000",
+    "GET /api/v2/mix/market/depth": "40404 Request URL NOT FOUND \u2014 WRONG PATH, recorded as GAP-014",
+    "GET /api/v2/spot/account/assets": "00000",
+    "GET /api/v2/mix/account/accounts": "00000",
+    "GET /api/v2/mix/position/all-position": "00000 (empty)",
+    "GET /api/v2/mix/order/orders-pending": "00000 (entrustedList null)"
+  },
+  "live_mcp_benchmark": {
+    "source": "Bitget MCP agent.bitget.com/mcp (server bitget-mcp-server 4.0.5)",
+    "entry_id": "equity_price_quote",
+    "data_tier": "free",
+    "provider": "bitget_data",
+    "benchmark_ticker": "NVDA",
+    "venue_symbol": "NVDAUSDT",
+    "repo_symbol": "rNVDAUSDT",
+    "last_price": 228.2975,
+    "prev_close": 228.368,
+    "open": 228.29,
+    "close": 228.2975,
+    "volume": 472582,
+    "fetched_at": "2026-09-30T09:21:45.639Z",
+    "staleness_seconds": 0,
+    "IS_STALE": false,
+    "is_local_snapshot": false,
+    "note": "Live MCP read, not LOCAL_SNAPSHOT. FRIDAY_CLOSE_SNAPSHOT in benchmarks.ts is 128.8 and was NOT used."
+  },
+  "benchmark_defect": {
+    "finding": "benchmarks.ts hardcodes FRIDAY_CLOSE_SNAPSHOT with rNVDAUSDT=128.8 and BENCHMARK_AS_OF 2026-09-18T20:00:00Z. The live benchmark is 228.2975, so the snapshot is 43.6% stale. It must not be an implicit fallback for Demo/live strategy decisions. Recorded as GAP-015.",
+    "snapshot_value": 128.8,
+    "live_value": 228.2975,
+    "staleness_pct": 77.25,
+    "snapshot_used_in_this_run": false
+  },
+  "market_data": {
+    "source": "GET /api/v2/mix/market/ticker",
+    "code": "00000",
+    "lastPr": "228.56",
+    "askPr": "228.57",
+    "bidPr": "228.56",
+    "markPrice": "228.56",
+    "indexPrice": "228.3524053089358554",
+    "fundingRate": "0",
+    "ts": "1790760104515",
+    "ts_iso": "2026-09-30T09:21:44.515Z",
+    "age_seconds": 0,
+    "book_source": "GET /api/v2/mix/market/orderbook",
+    "book_code": "00000",
+    "top_asks": [
+      [
+        "228.57",
+        "36.4700000000000000"
+      ],
+      [
+        "228.58",
+        "664.9400000000000000"
+      ],
+      [
+        "228.59",
+        "820.3800000000000000"
+      ],
+      [
+        "228.6",
+        "36.5300000000000000"
+      ],
+      [
+        "228.61",
+        "6.9500000000000000"
+      ]
+    ],
+    "top_bids": [
+      [
+        "228.56",
+        "70.1600000000000000"
+      ],
+      [
+        "228.55",
+        "5.2500000000000000"
+      ],
+      [
+        "228.54",
+        "62.4600000000000000"
+      ],
+      [
+        "228.53",
+        "31.0000000000000000"
+      ],
+      [
+        "228.52",
+        "271.9000000000000000"
+      ]
+    ]
+  },
+  "account_state_before": {
+    "spot_auth_code": "00000",
+    "mix_account_code": "00000",
+    "equityUsd": 9364.2040197,
+    "availableUsd": 9364.2040197,
+    "assetMode": "single",
+    "positions": [],
+    "position_count": 0,
+    "pending_orders": {
+      "entrustedList": null,
+      "endId": null
+    },
+    "ACCOUNT_FLAT": true,
+    "NO_OPEN_ORDERS": true
+  },
+  "quant_evaluation": {
+    "raw_basis": 0.00115,
+    "raw_basis_pct": 0.115,
+    "mid_price": 228.565,
+    "vwap_price": 228.56,
+    "slippage_pct_book_walk_buy": 1,
+    "funding_rate_8h": "0",
+    "net_edge_pct": -0.0072,
+    "net_edge": -7.2e-05,
+    "action": "NEUTRAL",
+    "quant_score": 49.9,
+    "hurdle_rate_pct": 0.1222,
+    "vwap_slippage_pct": 0.0022,
+    "funding_carry_pct": 0,
+    "depth_coverage": 1,
+    "complete_fill": true,
+    "reasons": [
+      "net edge <= 0: fails friction hurdle, NEUTRAL"
+    ],
+    "DECISION_IS_EXECUTABLE": false
+  },
+  "basis_calculation": {
+    "raw_basis_pct": 0.115,
+    "vwap_slippage_pct": 0.0022,
+    "funding_carry_pct": 0,
+    "hurdle_rate_pct": 0.1222,
+    "net_edge_pct": -0.0072,
+    "interpretation": "Basis 0.115% does not clear the 0.1222% friction hurdle. Net edge is negative, so Quant correctly returns NEUTRAL. The strategy declined."
+  },
+  "risk_boy_result": {
+    "decision": "APPROVED",
+    "reasons": [],
+    "exposureUsd": 2.29,
+    "projected_margin_utilization": 0,
+    "projected_margin_utilization_pct": "0.0000%",
+    "ceiling_pct": 65,
+    "within_ceiling": true,
+    "cap_usd": 5000,
+    "within_cap": true,
+    "cap_headroom_usd": 4997.71,
+    "free_margin_usd": 9364.2040197,
+    "exposure_within_free_margin": true,
+    "account_shape": "REAL Demo account read, not synthetic",
+    "projected_liquidation_price": 457.12,
+    "cancel_candidates": []
+  },
+  "receipt": {
+    "receiptId": "37bedeab-3e7c-4182-853b-e7fbfb6a8417",
+    "receiptHash": "b601fcf460d1cbc51281faa65072590ee55634ae0469bf21238a82ee79ef8bd1",
+    "sealedAt": "2026-09-30T09:21:45.659Z",
+    "decision": "APPROVED",
+    "verifyReceipt_passed": true,
+    "seal_algorithm": "SHA-256 over canonical key-sorted JSON"
+  },
+  "client_oid_derivations": {
+    "derivation": "sha256(receiptHash + ':' + intent)[0:32]",
+    "open_intent": "5dda846994b43f5164621b8da2fb4a4c",
+    "close_intent": "613d27b92be230acd6fe2464db2cbe51",
+    "DISTINCT": true,
+    "note": "Intent-bound (GAP/40786 fix). Same intent twice reuses the id so the venue dedupes a retry."
+  },
+  "decision": {
+    "quant_action": "NEUTRAL",
+    "order_submitted": false,
+    "reason_no_action": [
+      "Quant Boy action = NEUTRAL",
+      "Net edge -0.0072% does not clear the 0.1222% friction hurdle",
+      "Risk Boy APPROVED does not override a Quant NEUTRAL \u2014 the council gate is not bypassed",
+      "Estimated notional $2.29 is below the venue minimum notional of $5"
+    ],
+    "operator_decision": "NOT AUTHORIZED TO SUBMIT. Campaign recorded as a no-action result."
+  },
+  "account_state_after": {
+    "note": "No order endpoint was called, so the account is unchanged.",
+    "positions": [],
+    "ACCOUNT_FLAT": true,
+    "pending_orders": null,
+    "verified_by": "GET /api/v2/mix/position/all-position returned [] and orders-pending returned null"
+  },
+  "pre_write_packet_summary": {
+    "environment": {
+      "BITGET_ENV": "testnet",
+      "demoTradingHeaderSent": true,
+      "baseUrl": "https://api.bitget.com",
+      "endpoint": "POST /api/v2/mix/order/place-order",
+      "positionMode": "hedge",
+      "marginMode": "isolated",
+      "marginCoin": "USDT",
+      "productType": "USDT-FUTURES"
+    },
+    "endpoint": "POST /api/v2/mix/order/place-order",
+    "symbol_repo": "rNVDAUSDT",
+    "symbol_venue": "NVDAUSDT",
+    "side": "sell",
+    "quantity": 0.01,
+    "estimated_notional_usd": 2.29,
+    "benchmark": {
+      "value": 228.2975,
+      "source": "Bitget MCP agent.bitget.com/mcp (server bitget-mcp-server 4.0.5)",
+      "timestamp": "2026-09-30T09:21:45.639Z",
+      "stale": false
+    },
+    "token_price": {
+      "value": 228.56,
+      "source": "GET /api/v2/mix/market/ticker",
+      "timestamp": "2026-09-30T09:21:44.515Z"
+    },
+    "raw_basis_pct": 0.115,
+    "hurdle_rate_pct": 0.1222,
+    "vwap_slippage_pct": 0.0022,
+    "taker_fee": "0.0006",
+    "funding_rate_8h": "0",
+    "net_edge_pct": -0.0072,
+    "quant_decision": "NEUTRAL",
+    "quant_score": 49.9,
+    "risk_decision": "APPROVED",
+    "projected_margin_utilization": 0,
+    "free_margin_result": "within free margin",
+    "council_scores": {
+      "compositeScore": 80,
+      "macro": 70,
+      "quant": 49.9,
+      "risk": 80,
+      "exec": 75
+    },
+    "quorum": "3 of 4 agents contributing (macro, quant, risk, exec) -> quorum gate satisfied",
+    "receipt_hash": "b601fcf460d1cbc51281faa65072590ee55634ae0469bf21238a82ee79ef8bd1",
+    "clientOid_open": "5dda846994b43f5164621b8da2fb4a4c",
+    "clientOid_close": "613d27b92be230acd6fe2464db2cbe51",
+    "expected_order_state": "FILLED (market order, taker at the book)",
+    "close_flatten_plan": [
+      "read back open order via GET /api/v2/mix/order/detail by orderId",
+      "if FILLED, submit the CLOSE intent with clientOid derived from receiptHash+':close'",
+      "read back the close via GET /api/v2/mix/order/detail",
+      "confirm account FLAT via GET /api/v2/mix/position/all-position returning no row",
+      "if any step fails: stop, record redacted evidence, do NOT retry blindly"
+    ],
+    "abort_conditions": [
+      "benchmark MCP read fails or returns a stale timestamp -> FAIL CLOSED, do not use LOCAL_SNAPSHOT",
+      "quant.action === NEUTRAL -> no order, the strategy correctly declines",
+      "risk.decision === HARD_VETO -> no order",
+      "exposure > $5000 or > free margin or utilization > 65% -> no order",
+      "quantity not a multiple of sizeMultiplier (0.01) -> no order",
+      "venue code !== '00000' -> do NOT retry, record the rejection",
+      "open fills but close fails -> escalate, do not leave a position unattended",
+      "any credential material appearing in output -> abort"
+    ],
+    "evidence_paths": [
+      "foundry/evidence/p01/auth_test.json",
+      "foundry/evidence/p06/demo_order_filled.json",
+      "foundry/evidence/p07/dispatcher_lifecycle.json",
+      "foundry/evidence/p09/ (to be created by this campaign)"
+    ]
+  },
+  "pre_write_proofs": {
+    "risk_boy_permits": true,
+    "receipt_sealed_and_verifies": true,
+    "benchmark_fresh_and_not_snapshot": true,
+    "open_close_clientOids_distinct": true,
+    "account_can_return_flat": true
+  },
+  "limitations": [
+    "Bitget DEMO TRADING substrate only. No real capital.",
+    "NOT an order: nothing was submitted, accepted, filled, or settled.",
+    "NOT a strategy profitability proof: no trade occurred. It proves the pipeline evaluated and correctly declined.",
+    "The MCP benchmark read is free-tier and unauthenticated; it proves the endpoint works, not that it is reliable under load or licensed for commercial use.",
+    "Notional constraint: the venue minimum is $5 but the minimum quantity 0.01 at $228.56 is $2.29. These constraints conflict at current prices; a campaign would need a larger size.",
+    "Market state is TradFi hours (Wednesday). Basis is naturally tight; the 65.5h closure window is when dislocation is expected."
+  ]
+}
