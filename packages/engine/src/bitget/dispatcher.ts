@@ -3,6 +3,19 @@ import type { SealedReasoningReceipt } from "../council/receipts.js";
 
 export type DispatcherMode = "PAPER" | "TESTNET" | "DEMO" | "LIVE";
 
+/**
+ * Bitget v2 futures position mode.
+ *
+ * The venue rejects a one-way order body against a hedge-mode account with
+ * error 40774 ("The order type for unilateral position must also be the
+ * unilateral position type"), and vice versa. Bitget futures accounts
+ * default to hedge mode, so the mode must be explicit rather than assumed.
+ *
+ *  - one_way: `tradeSide` MUST be omitted from the place-order body.
+ *  - hedge:   `tradeSide` is REQUIRED ("open" to open, "close" to reduce).
+ */
+export type BitgetPositionMode = "one_way" | "hedge";
+
 export interface ExecutionRecord {
   orderId: string;
   clientOid: string;
@@ -76,11 +89,17 @@ function isMissing(v: unknown): boolean {
  */
 export class OrderDispatcher {
   readonly mode: DispatcherMode;
+  readonly positionMode: BitgetPositionMode;
   private readonly bitgetClient?: BitgetOrderClient;
 
-  constructor(mode: DispatcherMode = "PAPER", bitgetClient?: BitgetOrderClient) {
+  constructor(
+    mode: DispatcherMode = "PAPER",
+    bitgetClient?: BitgetOrderClient,
+    positionMode: BitgetPositionMode = "one_way",
+  ) {
     const normalized = mode.toUpperCase() as DispatcherMode;
     this.mode = normalized;
+    this.positionMode = positionMode;
     // Fail-closed on boot: TESTNET/DEMO/LIVE require a signed client.
     if (normalized === "TESTNET" || normalized === "DEMO" || normalized === "LIVE") {
       if (!bitgetClient) {
@@ -150,7 +169,10 @@ export class OrderDispatcher {
 
     const mappedSymbol = mapToVenueSymbol(params.symbol);
     const clientOid = receipt.receiptHash.slice(0, 32);
-    const mixBody = {
+    // `tradeSide` presence is mutually exclusive per Bitget v2 docs:
+    // omitted in one-way mode, required in hedge mode. Sending the wrong one
+    // yields venue error 40774 (GAP-008).
+    const mixBody: Record<string, unknown> = {
       symbol: mappedSymbol,
       productType: "USDT-FUTURES",
       marginMode: "isolated",
@@ -160,6 +182,9 @@ export class OrderDispatcher {
       orderType: "market",
       clientOid,
     };
+    if (this.positionMode === "hedge") {
+      mixBody["tradeSide"] = "open";
+    }
 
     // Preferred path: signed generic request (HMAC-SHA256 inside BitgetClient.request).
     if (typeof this.bitgetClient.request === "function") {
