@@ -6,7 +6,7 @@
 
 **Market regime:** The desk can trade throughout the week when a valid, fresh, verifiable basis dislocation exists. The approximately **65.5-hour TradFi closure window** (Friday 16:00 ET to Monday 09:30 ET) is the primary opportunity regime, not a trading restriction.
 
-**Universe:** Broad and configurable tokenized US-equity markets. rNVDA, rTSLA, and rAAPL are illustrative examples, not fixed initial scope.
+**Universe:** Broad and configurable tokenized real-world asset markets. rNVDA, rTSLA, and rAAPL are illustrative examples, not fixed initial scope.
 
 **Problem:** LLM-direct trading is unsafe and script-only bots do not provide a meaningful agentic research path. Neither adequately combines flexible intelligence with deterministic execution authority and defensible evidence.
 

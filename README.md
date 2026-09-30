@@ -1,6 +1,6 @@
 # Money Boys
 
-Autonomous two-speed agentic trading desk for tokenized US equities, built for Bitget S2.
+Autonomous two-speed agentic trading desk for tokenized real-world assets, built for Bitget S2.
 
 Research proposes. Quant calculates. Risk vetoes. Council decides. A receipt seals. Money Boys dispatches. The venue is read back.
 
@@ -10,7 +10,7 @@ A two-path trading desk. A **warm path** runs agentic research and produces type
 
 ## The opportunity
 
-Tokenized equities keep trading after TradFi closes. The roughly **65.5-hour Friday-close to Monday-open window** is the highest-opportunity regime, but the desk is designed to trade any week whenever a fresh, verifiable basis dislocation exists. The symbol universe is configurable; rNVDA, rTSLA and rAAPL are illustrative.
+Tokenized real-world assets keep trading after TradFi closes. The roughly **65.5-hour Friday-close to Monday-open window** is the highest-opportunity regime, but the desk is designed to trade any week whenever a fresh, verifiable basis dislocation exists. The symbol universe is configurable; rNVDA, rTSLA and rAAPL are illustrative.
 
 ## The problem
 
@@ -104,7 +104,7 @@ Every claim above is checkable against the JSON under `foundry/evidence/`. Two c
 Read this before trusting any number in this repo.
 
 - **No real capital has moved.** Every order was on Bitget Demo Trading (`paptrading: 1`), using Demo-scoped keys and a simulated balance.
-- **The strategy has not run as a system.** Orders exercised the dispatcher, risk, receipt and council gates, but not a continuous tokenized-equity basis campaign.
+- **The strategy has not run as a system.** Orders exercised the dispatcher, risk, receipt and council gates, but not a continuous basis campaign across a tokenized real-world asset universe.
 - **All orders were market orders.** No limit orders, no partial fills, no resting orders, no cancel path, no SL/TP.
 - **No funding was observed.** Every round trip closed within seconds, so no position crossed a funding settlement interval.
 - **The paper daemon has never run against a venue.** No bounded campaign, no continuous loop, no reconciliation evidence.
@@ -149,7 +149,7 @@ Never commit exchange credentials. A repository secret scan covers Bitget key sh
 
 ## Roadmap
 
-1. **Bounded Demo strategy campaign** on the configured tokenized-equity universe: fixed symbols, fixed small notional, explicit order cap, flat after each cycle, every decision captured. Proves the strategy pipeline, not just the dispatcher.
+1. **Bounded Demo strategy campaign** on the configured tokenized real-world asset universe: fixed symbols, fixed small notional, explicit order cap, flat after each cycle, every decision captured. Proves the strategy pipeline, not just the dispatcher.
 2. **Continuous Demo/paper run** once the campaign passes: fixed time window, graceful shutdown, no duplicate intent execution, risk halt behavior.
 3. **Live-read phase**: real data and account reads, no order placement. Confirms benchmark freshness, symbol mapping, basis math, venue permissions, sizing, reconciliation.
 4. **Real-capital trading** is a separate authorization gate, not an automatic consequence of Demo success. It would require explicit environment selection, approved live credentials, a pre-write packet, bounded notional, emergency halt, verified read-back, and approval immediately before submission.

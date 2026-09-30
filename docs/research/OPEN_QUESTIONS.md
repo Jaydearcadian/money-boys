@@ -2,7 +2,7 @@
 
 STATUS: RESEARCH
 
-1. Which Bitget symbols best represent tokenized US equity exposure for S2 demo?
+1. Which Bitget symbols best represent tokenized real-world asset exposure for S2 demo?
 2. Spot vs margin product for first dispatch path?
 3. Is testnet/sandbox available for Bitget private methods used in demo?
 4. DashScope rate limits / region for warm path?

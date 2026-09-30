@@ -10,7 +10,7 @@ Money Boys is an autonomous two-speed agentic trading desk for tokenized US-equi
 
 ## Market opportunity regime
 
-Money Boys can trade throughout the week whenever a valid, fresh, verifiable basis dislocation exists. The approximately **65.5-hour TradFi closure window** (Friday 16:00 ET to Monday 09:30 ET) is the primary opportunity regime, not a trading restriction: traditional equity venues are closed while tokenized-equity markets may continue trading, increasing the chance that news and macro events create observable divergence from the latest reliable benchmark.
+Money Boys can trade throughout the week whenever a valid, fresh, verifiable basis dislocation exists. The approximately **65.5-hour TradFi closure window** (Friday 16:00 ET to Monday 09:30 ET) is the primary opportunity regime, not a trading restriction: traditional equity venues are closed while tokenized real-world asset markets may continue trading, increasing the chance that news and macro events create observable divergence from the latest reliable benchmark.
 
 The symbol universe is broad and configurable. rNVDA, rTSLA, and rAAPL are illustrative examples, not fixed initial scope.
 
@@ -21,7 +21,7 @@ Retail/agentic trading stacks either:
 1. let LLMs call exchange APIs directly (unsafe), or
 2. are pure scripts with no research/council path (not meaningfully agentic).
 
-Neither gives a **demonstrable, auditable** agentic desk that can continuously detect tokenized-equity basis opportunities while remaining safe when benchmarks are stale, unavailable, or unverifiable.
+Neither gives a **demonstrable, auditable** agentic desk that can continuously detect basis opportunities across tokenized real-world assets while remaining safe when benchmarks are stale, unavailable, or unverifiable.
 
 ## Users
 

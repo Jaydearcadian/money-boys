@@ -3,7 +3,7 @@
 > **Install path:** copy/replace this file to repository root as `AGENTS.md`
 > (root write is approval-gated in this environment). Until then, treat this as binding.
 
-Project: Money Boys (Autonomous 24/7 Agentic Trading Desk for Tokenized US Equities)  
+Project: Money Boys (Autonomous 24/7 Agentic Trading Desk for Tokenized Real-World Assets)  <br>
 Governing Standards: `BUILD_FOUNDRY.md` (§34–36, §47) & `docs/Repository_Starter_Virtuous_Build_Cycle.md`  
 Target Substrate: Bitget API v2 (Spot/Margin), Reality rTokens, Alibaba Cloud DashScope (Qwen-Plus)
 
