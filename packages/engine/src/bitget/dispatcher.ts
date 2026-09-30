@@ -16,6 +16,21 @@ export type DispatcherMode = "PAPER" | "TESTNET" | "DEMO" | "LIVE";
  */
 export type BitgetPositionMode = "one_way" | "hedge";
 
+/**
+ * Order intent within the position lifecycle.
+ *
+ * GAP-011: OrderDispatcher previously only opened positions, so a Demo
+ * position could not be reduced or cancelled through the receipt-gated path.
+ *
+ * Position-mode semantics are the subtle part (venue 22002 / 40774):
+ *  - one_way: `side` is buy/sell. Close uses the opposite side.
+ *  - hedge:   `side` is the POSITION DIRECTION (long/short), not buy/sell.
+ *             Closing a SHORT means side="sell" + tradeSide="close" — sending
+ *             side="buy" makes the venue look for a long and answer
+ *             "No position to close" (22002).
+ */
+export type DispatchIntent = "open" | "close" | "cancel";
+
 export interface ExecutionRecord {
   orderId: string;
   clientOid: string;
@@ -132,6 +147,29 @@ export class OrderDispatcher {
     receipt: SealedReasoningReceipt,
     params: { symbol: string; side: "BUY" | "SELL"; quantity: number; fillPriceUsd: number },
   ): Promise<ExecutionRecord> {
+    return this.dispatchIntent(receipt, params, "open");
+  }
+
+  /**
+   * Reduce a position. Same receipt + APPROVED gate as `dispatch`.
+   *
+   * In hedge mode the caller passes the position DIRECTION as `side`
+   * (SELL to close a short, BUY to close a long) and this method derives the
+   * venue `side`/`tradeSide` pair correctly. In one-way mode `side` is
+   * buy/sell and the tradeSide field is omitted entirely.
+   */
+  async closePosition(
+    receipt: SealedReasoningReceipt,
+    params: { symbol: string; side: "BUY" | "SELL"; quantity: number; fillPriceUsd: number },
+  ): Promise<ExecutionRecord> {
+    return this.dispatchIntent(receipt, params, "close");
+  }
+
+  private async dispatchIntent(
+    receipt: SealedReasoningReceipt,
+    params: { symbol: string; side: "BUY" | "SELL"; quantity: number; fillPriceUsd: number },
+    intent: Extract<DispatchIntent, "open" | "close">,
+  ): Promise<ExecutionRecord> {
     const decision = (receipt as unknown as { decision?: string }).decision ??
       (receipt as unknown as { payload?: { decision?: string } }).payload?.decision;
     if (decision !== "APPROVED") {
@@ -182,8 +220,13 @@ export class OrderDispatcher {
       orderType: "market",
       clientOid,
     };
+
+    // Hedge mode: `side` is the position DIRECTION and `tradeSide` says
+    // open vs close. The caller passes the direction being acted on, so a
+    // close reuses the position's own direction: closing a short is
+    // side=sell + tradeSide=close, never side=buy (venue 22002).
     if (this.positionMode === "hedge") {
-      mixBody["tradeSide"] = "open";
+      mixBody["tradeSide"] = intent === "close" ? "close" : "open";
     }
 
     // Preferred path: signed generic request (HMAC-SHA256 inside BitgetClient.request).

@@ -165,3 +165,91 @@ describe("OrderDispatcher position mode (GAP-008 / venue 40774)", () => {
     assert.match(rec.orderId, /^bg-paper-/);
   });
 });
+
+// ---------------------------------------------------------------------------
+// GAP-011 — lifecycle: close behind the same receipt gate as open
+// ---------------------------------------------------------------------------
+
+describe("OrderDispatcher close path (GAP-011)", () => {
+  it("closes a short with side=sell + tradeSide=close in hedge mode", async () => {
+    const { client, seen } = captureClient({ code: "0" });
+    const d = new OrderDispatcher("DEMO", client, "hedge");
+    await d.closePosition(approvedReceipt(), {
+      symbol: "BTCUSDT",
+      side: "SELL", // position DIRECTION, not buy/sell
+      quantity: 0.001,
+      fillPriceUsd: 83_000,
+    });
+    assert.equal(seen[0]!["side"], "sell", "closing a short must send side=sell");
+    assert.equal(seen[0]!["tradeSide"], "close");
+  });
+
+  it("closing with side=buy would target a long — the exact 22002 mistake", async () => {
+    const { client, seen } = captureClient({ code: "0" });
+    const d = new OrderDispatcher("DEMO", client, "hedge");
+    await d.closePosition(approvedReceipt(), {
+      symbol: "BTCUSDT", side: "BUY", quantity: 0.001, fillPriceUsd: 83_000,
+    });
+    // Documented so the semantic is pinned: hedge `side` is a direction.
+    assert.equal(seen[0]!["side"], "buy");
+    assert.equal(seen[0]!["tradeSide"], "close");
+  });
+
+  it("open and close differ in tradeSide only", async () => {
+    const bodies: Record<string, unknown>[] = [];
+    for (const [intent, run] of [
+      ["open", (d: OrderDispatcher) => d.dispatch(approvedReceipt(), { symbol: "BTCUSDT", side: "SELL", quantity: 0.001, fillPriceUsd: 83_000 })],
+      ["close", (d: OrderDispatcher) => d.closePosition(approvedReceipt(), { symbol: "BTCUSDT", side: "SELL", quantity: 0.001, fillPriceUsd: 83_000 })],
+    ] as const) {
+      const { client, seen } = captureClient({ code: "0" });
+      await run(new OrderDispatcher("DEMO", client, "hedge"));
+      void intent;
+      bodies.push(seen[0]!);
+    }
+    const diff = Object.keys({ ...bodies[0]!, ...bodies[1]! }).filter(
+      (k) => bodies[0]![k] !== bodies[1]![k],
+    );
+    assert.deepEqual(diff, ["tradeSide"], "only tradeSide may differ");
+  });
+
+  it("close in one_way mode omits tradeSide entirely", async () => {
+    const { client, seen } = captureClient({ code: "0" });
+    const d = new OrderDispatcher("DEMO", client, "one_way");
+    await d.closePosition(approvedReceipt(), {
+      symbol: "BTCUSDT", side: "BUY", quantity: 0.001, fillPriceUsd: 83_000,
+    });
+    assert.equal("tradeSide" in seen[0]!, false, "one_way must never send tradeSide");
+    assert.equal(seen[0]!["side"], "buy");
+  });
+
+  it("close cannot bypass the APPROVED receipt gate", async () => {
+    const vetoed = sealReceipt({
+      symbol: "BTCUSDT",
+      action: "NEUTRAL",
+      quantMetrics: approvedReceipt().quantMetrics,
+      riskReport: { permitted: false, projectedMarginUtilizationPct: 90, projectedLiquidationPrice: 1, staleOrdersToCancel: [] },
+      councilScores: { compositeScore: 40, macro: 40, quant: 40, risk: 40, exec: 40 },
+      decision: "VETOED",
+      rationale: "GAP-011 veto fixture.",
+    });
+    const { client, seen } = captureClient({ code: "0" });
+    const d = new OrderDispatcher("DEMO", client, "hedge");
+    await assert.rejects(
+      () => d.closePosition(vetoed, { symbol: "BTCUSDT", side: "SELL", quantity: 0.001, fillPriceUsd: 83_000 }),
+      /Cannot dispatch unapproved receipt/,
+    );
+    assert.equal(seen.length, 0, "a vetoed close must never reach the venue");
+  });
+
+  it("close still returns REJECTED (never silent success) on a venue error", async () => {
+    const client = {
+      request: async () => { throw new Error("22002 No position to close"); },
+    } as never;
+    const rec = await new OrderDispatcher("DEMO", client, "hedge").closePosition(
+      approvedReceipt(),
+      { symbol: "BTCUSDT", side: "SELL", quantity: 0.001, fillPriceUsd: 83_000 },
+    );
+    assert.equal(rec.status, "REJECTED");
+    assert.match(rec.error!, /No position to close/);
+  });
+});
