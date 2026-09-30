@@ -1,6 +1,6 @@
 # Phase 01 — Bitget substrate gate
 
-STATUS: IN_PROGRESS  
+STATUS: PASS  
 OWNER: desk/engine
 
 ## Objective
@@ -39,7 +39,7 @@ No trading desk claim is defensible before the exchange client is real. Foundry 
 - [x] BitgetClient with public ticker + sign helper
 - [x] test-auth gate writing `foundry/evidence/p01/auth_test.json`
 - [x] CLM-001 in claims ledger (TESTED public)
-- [ ] LIVE_DEMONSTRATED private auth when keys available
+- [x] LIVE_DEMONSTRATED private auth when keys available — proven 2026-09-30 (`authConfirmed: true`, `authCode: 00000`, evidence `foundry/evidence/p01/auth_test.json`, commit 2077051). Scope: authenticated read only; no order placement.
 
 ## Required verification
 
