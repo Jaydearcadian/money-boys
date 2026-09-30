@@ -1,17 +1,15 @@
 {
   "claimId": "CLM-001",
-  "timestamp": "2026-09-23T07:19:45.308Z",
-  "status": "TESTED",
+  "timestamp": "2026-09-30T06:42:02.692Z",
+  "status": "LIVE_DEMONSTRATED",
   "substrate": "Bitget API v2",
   "tickerSample": {
     "symbol": "BTCUSDT",
-    "lastPr": "86378.1",
-    "bidPr": "86378.09",
-    "askPr": "86378.1"
+    "lastPr": "83056.01",
+    "bidPr": "83056",
+    "askPr": "83056.01"
   },
-  "authConfirmed": false,
-  "authCode": null,
-  "limitations": [
-    "Authenticated private read deferred — BITGET_* env vars not set"
-  ]
+  "authConfirmed": true,
+  "authCode": "00000",
+  "limitations": []
 }
