@@ -24,6 +24,11 @@ import {
   type BenchmarkEvidence,
   type MarketRegime,
 } from "../agents/market-regime.js";
+import {
+  BENCHMARK_PROVIDER,
+  toUnderlyingReferenceSymbol,
+  type RobinhoodBenchmark,
+} from "../integrations/robinhood/benchmark.js";
 
 /** Canonical repo/venue symbol pair for the tokenized-equity campaign. */
 export const REPO_SYMBOL = "rNVDAUSDT";
@@ -62,6 +67,44 @@ export interface BenchmarkGate {
   notes: string;
   usable: boolean;
   blockedReason: string | null;
+  /** Provider-published quote instant type. Never an exchange trade time. */
+  timestampType?: string;
+  cacheWindowMs?: number;
+  priceBasis?: string;
+  multiplierAppliedToPrice?: boolean;
+  bid?: number;
+  ask?: number;
+  symbolMapping?: { repoSymbol: string; venueSymbol: string; referenceSymbol: string };
+}
+
+/**
+ * Convert a Robinhood benchmark into the engine's BenchmarkEvidence shape.
+ *
+ * The provider's `generatedAt` becomes sourceAsOf verbatim. Our own fetch time
+ * stays fetchedAt. They are never merged, and the request/envelope time is
+ * never substituted for the provider instant.
+ */
+export function robinhoodToEvidence(b: RobinhoodBenchmark, maxAgeMs: number): BenchmarkEvidence {
+  const sourceMs = Date.parse(b.sourceAsOf);
+  const fetchedMs = Date.parse(b.fetchedAt);
+  const ageMs = Number.isNaN(sourceMs) || Number.isNaN(fetchedMs) ? null : fetchedMs - sourceMs;
+  let freshness: BenchmarkEvidence["freshness"] = "unverifiable";
+  if (ageMs !== null) {
+    freshness = ageMs < 0 ? "unverifiable" : ageMs >= maxAgeMs ? "verified_stale" : "verified_fresh";
+  }
+  return {
+    price: b.midpoint,
+    source: "EXPLICIT_TS_SOURCE",
+    provider: b.provider,
+    sourceAsOf: b.sourceAsOf,
+    fetchedAt: b.fetchedAt,
+    freshness,
+    ageMs,
+    notes:
+      `Robinhood ${b.symbol} bid/ask midpoint; sourceAsOf is the provider's generatedAt ` +
+      `(PROVIDER_GENERATED_QUOTE), not an exchange trade time. ` +
+      `priceBasis=${b.priceBasis}. multiplierAppliedToPrice=${String(b.multiplierMetadata.appliedToPrice)}.`,
+  };
 }
 
 export interface PreflightPacket {

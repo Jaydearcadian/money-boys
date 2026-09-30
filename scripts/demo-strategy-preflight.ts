@@ -23,12 +23,10 @@ import { BitgetClient, type MixContractConfig } from "../packages/engine/src/bit
 import { mapToVenueSymbol } from "../packages/engine/src/bitget/dispatcher.js";
 import { evaluateBasisSpread } from "../packages/engine/src/agents/quant.js";
 import { buildPacket, sealIntents } from "../packages/engine/src/bitget/strategy-packet.js";
-import {
-  assessBenchmarkFreshness,
-  requiredBenchmarkSourceFor,
-  resolveRegime,
-  type BenchmarkEvidence,
-} from "../packages/engine/src/agents/market-regime.js";
+import { resolveRegime } from "../packages/engine/src/agents/market-regime.js";
+import { createRobinhoodClient } from "../packages/engine/src/integrations/robinhood/client.js";
+import { toUnderlyingReferenceSymbol } from "../packages/engine/src/integrations/robinhood/benchmark.js";
+import { robinhoodToEvidence } from "../packages/engine/src/bitget/strategy-packet.js";
 
 import {
   REPO_SYMBOL,
@@ -43,53 +41,40 @@ import {
 // ---------------------------------------------------------------------------
 
 /**
- * Fetch a benchmark quote.
+ * Fetch the timestamped underlying-equity benchmark.
  *
- * Returns the price AND the upstream source timestamp. The Bitget
- * equity_price_quote entry publishes NO timestamp field, so `sourceAsOf` is
- * null for it — which makes freshness UNPROVABLE and must fail closed rather
- * than being papered over with the local fetch time (GAP-015/GAP-018).
+ * Public, credential-free. sourceAsOf is Robinhood's own `generatedAt`; the
+ * MCP quote surface was replaced because it publishes no per-quote timestamp
+ * (GAP-018).
  */
-async function mcpQuote(ticker: string): Promise<{ price: number; sourceAsOf: string | null }> {
-  const { execFileSync } = await import("node:child_process");
-  const H = ["-H", "Content-Type: application/json", "-H", "Accept: application/json, text/event-stream"];
-  execFileSync("curl", ["-sS", "-D", "/tmp/mb-mcp-hdr.txt", "-X", "POST",
-    "https://agent.bitget.com/mcp", ...H,
-    "-d", JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize",
-      params: { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "mb-preflight", version: "0" } } })],
-    { encoding: "utf8" });
-  const sid = execFileSync("grep", ["-i", "mcp-session-id", "/tmp/mb-mcp-hdr.txt"], { encoding: "utf8" })
-    .split("\n")[0]?.trim().split(/\s+/).pop();
-  execFileSync("curl", ["-sS", "-X", "POST", "https://agent.bitget.com/mcp", ...H, "-H", `Mcp-Session-Id: ${sid}`,
-    "-d", JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" })], { encoding: "utf8" });
-  const raw = execFileSync("curl", ["-sS", "-X", "POST", "https://agent.bitget.com/mcp", ...H,
-    "-H", `Mcp-Session-Id: ${sid}`,
-    "-d", JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/call",
-      params: { name: "do_query", arguments: { entry_id: "equity_price_quote", params: { symbol: ticker } } } })],
-    { encoding: "utf8" });
-  for (const line of raw.split("\n")) {
-    const t = line.startsWith("data:") ? line.slice(5).trim() : "";
-    if (!t.startsWith("{")) continue;
-    const parsed = JSON.parse(t) as { result?: { content?: { text?: string }[] } };
-    const text = parsed.result?.content?.[0]?.text;
-    if (!text) continue;
-    const body = JSON.parse(text) as {
-      data?: { results?: Record<string, unknown>[] };
-    };
-    const row = body.data?.results?.[0] ?? {};
-    const price = row["last_price"];
-    if (typeof price !== "number") continue;
-    // Look for any upstream timestamp this entry might publish.
-    for (const k of ["ts", "timestamp", "as_of", "asOf", "trade_time", "update_time"]) {
-      const v = row[k];
-      if (typeof v === "string" || typeof v === "number") {
-        const ms = typeof v === "number" && v < 1e12 ? v * 1000 : Number(v);
-        if (Number.isFinite(ms)) return { price, sourceAsOf: new Date(ms).toISOString() };
-      }
-    }
-    return { price, sourceAsOf: null };
-  }
-  throw new Error("MCP returned no benchmark price — FAIL CLOSED");
+async function fetchBenchmark(symbol: string): Promise<{
+  evidence: ReturnType<typeof robinhoodToEvidence>;
+  detail: Record<string, unknown>;
+}> {
+  const client = createRobinhoodClient({
+    fetchImpl: (input, init) => fetch(input, init),
+  });
+  const fetchedAt = new Date().toISOString();
+  const b = await client.fetchBenchmark(symbol);
+  return {
+    evidence: robinhoodToEvidence(b, 96 * 60 * 60 * 1000),
+    detail: {
+      provider: b.provider,
+      symbol: b.symbol,
+      bid: b.bid,
+      ask: b.ask,
+      midpoint: b.midpoint,
+      currency: b.currency,
+      sourceAsOf: b.sourceAsOf,
+      fetchedAt: b.fetchedAt,
+      timestampType: b.timestampType,
+      cacheWindowMs: b.cacheWindowMs,
+      isTradingHalt: b.isTradingHalt,
+      sourceUrl: b.sourceUrl,
+      priceBasis: b.priceBasis,
+      multiplierMetadata: b.multiplierMetadata,
+    },
+  };
 }
 
 async function main(): Promise<void> {
@@ -115,18 +100,10 @@ async function main(): Promise<void> {
   const referencePriceUsd = Number(ticker.lastPr);
   const book = await client.getMixOrderbook(venueSymbol, 20, PRODUCT_TYPE);
 
-  const quote = await mcpQuote(BENCHMARK_TICKER);
   const regime = resolveRegime();
-  const benchmark: BenchmarkEvidence = assessBenchmarkFreshness({
-    price: quote.price,
-    source: requiredBenchmarkSourceFor(regime.regime) === "EXPLICIT_TS_SOURCE"
-      ? "EXPLICIT_TS_SOURCE"
-      : "BITGET_MCP_QUOTE",
-    provider: "bitget_data",
-    sourceAsOf: quote.sourceAsOf,
-    fetchedAt: new Date().toISOString(),
-    maxAgeMs: 96 * 60 * 60 * 1000,
-  });
+  const referenceSymbol = toUnderlyingReferenceSymbol(repoSymbol);
+  const bench = await fetchBenchmark(referenceSymbol);
+  const benchmark = bench.evidence;
 
   const config: MixContractConfig = {
     ...contractRaw,
@@ -181,6 +158,13 @@ async function main(): Promise<void> {
       ACCOUNT_FLAT: ((positions.data as unknown[]) ?? []).length === 0,
     },
     venueContract: contractRaw,
+    symbolMapping: {
+      repoSymbol,
+      venueSymbol,
+      referenceSymbol,
+      note: "r-prefixed Bitget spot symbol -> bare Bitget futures symbol -> underlying equity reference",
+    },
+    benchmarkDetail: bench.detail,
     marketRegime: {
       regime: regime.regime,
       etNow: regime.etNowIso,

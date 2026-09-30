@@ -295,11 +295,15 @@ export function assessBenchmarkFreshness(args: {
     provider,
     sourceAsOf,
     fetchedAt,
-    freshness: ageMs > maxAgeMs ? "verified_stale" : "verified_fresh",
+    // Inclusive boundary: a quote AT the max age is already stale. With a
+    // strict `>` a maximum-age quote (ageMs === maxAgeMs) would be classified
+    // fresh, which is exactly the off-by-one that let a 4-day-old reference
+    // through while the ceiling is precisely 96h.
+    freshness: ageMs >= maxAgeMs ? "verified_stale" : "verified_fresh",
     ageMs,
     notes:
-      ageMs > maxAgeMs
-        ? `source data is ${Math.round(ageMs / 60000)}min old, exceeding the max`
+      ageMs >= maxAgeMs
+        ? `source data is ${Math.round(ageMs / 60000)}min old, at or beyond the max`
         : "source timestamp present and within the max age",
   };
 }
@@ -324,7 +328,7 @@ export function assertBenchmarkProvable(
         `regime=${regime}, freshness=unverifiable (${evidence.notes})`,
       );
     }
-    if (evidence.ageMs !== null && evidence.ageMs > closureCeilingMs) {
+    if (evidence.ageMs !== null && evidence.ageMs >= closureCeilingMs) {
       throw new BenchmarkFreshnessUnprovableError(
         `regime=${regime}, age=${evidence.ageMs}ms exceeds the closure ceiling`,
       );
