@@ -8,10 +8,10 @@
   "verification_metadata_commit": "00f9af650929784f9619596852cd1aa835fb08f5",
   "last_verified_at": "2026-09-30T06:42:02.692Z",
   "critical_open_gaps": 0,
-  "high_open_gaps": 1,
-  "external_blockers": 1,
+  "high_open_gaps": 0,
+  "external_blockers": 0,
   "live_evidence_current": true,
-  "notes": "Phase 01 CLOSED: Bitget Demo private auth LIVE_DEMONSTRATED (paptrading:1, authCode 00000, authConfirmed true), evidence commit 2077051. CLM-001 LIVE_DEMONSTRATED; GAP-001 CLOSED. Phase 06 Demo order: ONE explicitly-authorized Demo order submitted 2026-09-30T07:14:11Z and REJECTED by the venue (HTTP 400 / code 40774) before any orderId was allocated. No acceptance, no fill, no position, no settlement. Recorded as foundry/evidence/p06/demo_order_attempt.json; CLM-007 stays TESTED; new GAP-008 HIGH/OPEN. Gate chain (receipt seal -> verify -> risk -> dispatch -> venue call) proven to execute end-to-end; venue order acceptance NOT proven. Demo venue exposes no mix order query routes (404), so post-trade read-back may be impossible. live_evidence_current refers to the auth evidence only. Local baseline: engine 41/41 across 10 suites, desk build 43 modules, secret-scan guard active.",
+  "notes": "Phase 01 CLOSED: Bitget Demo private auth LIVE_DEMONSTRATED (authCode 00000), commit 2077051. CLM-001 LIVE_DEMONSTRATED; GAP-001 CLOSED. Phase 06: first Demo order REJECTED (40774, commit 4e00ef4); root cause confirmed as account posMode=hedge_mode. Fix shipped in commit 543656c (explicit positionMode + tradeSide, regression guard dispatcher-position-mode.test.ts). Second bounded Demo order ACCEPTED and FILLED: venue orderId 1489095619363635201, state 'filled', fill 0.001 BTC @ 83364.4, fee -0.05001864 USDT, open short position confirmed via all-position read-back. CLM-007 promoted TESTED -> LIVE_DEMONSTRATED; GAP-008 CLOSED. ALL of this is Bitget DEMO TRADING (paptrading:1), NOT the live venue. NOT proven: settlement, funding accrual, continuous operation, live-venue execution. OPEN: a short 0.001 BTCUSDT Demo position is still open (GAP-009). CORRECTION: earlier evidence claimed no Demo order query routes exist; that was wrong, correct paths /detail, /orders-pending, /orders-history, /fills all return 00000 on Demo. Local baseline: engine 47/47 across 11 suites, desk build 43 modules, secret-scan guard active.",
   "test_suites": 10,
   "tests_pass": 41,
   "tests_fail": 0

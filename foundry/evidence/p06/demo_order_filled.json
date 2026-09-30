@@ -1,0 +1,131 @@
+{
+  "claimId": "CLM-007",
+  "phase": "06b-demo-order-accepted",
+  "timestamp_utc": "2026-09-30T07:39:42.468Z",
+  "commit_at_time_of_attempt": "543656c30f1b6b7239e7c3e85e573832b0c7c32b",
+  "result_summary": "ACCEPTED and FILLED \u2014 venue orderId issued, fill confirmed, position open",
+  "environment": {
+    "BITGET_ENV": "testnet",
+    "demoTrading_header_sent": true,
+    "base_url": "https://api.bitget.com",
+    "venue_route": "Bitget Demo Trading (paptrading:1)",
+    "position_mode_used": "hedge"
+  },
+  "authenticated_preflight_reads": {
+    "GET_/api/v2/spot/account/assets": "00000"
+  },
+  "request_metadata": {
+    "endpoint": "POST /api/v2/mix/order/place-order",
+    "productType": "USDT-FUTURES",
+    "symbol": "BTCUSDT",
+    "side": "sell",
+    "orderType": "market",
+    "size": "0.001",
+    "marginMode": "isolated",
+    "marginCoin": "USDT",
+    "tradeSide": "open (added because account posMode is hedge_mode)",
+    "reference_price_usd": 83411.4,
+    "estimated_notional_usd": 83.41,
+    "clientOid": "6840f724e0889fad6a44c3212deee6fb"
+  },
+  "gates_passed_before_broadcast": {
+    "I_03_receipt_verified": true,
+    "receipt_hash": "6840f724e0889fad6a44c3212deee6fbb43e3d5d3d67e415be12a0986590e6b3",
+    "I_02_risk_decision": "APPROVED",
+    "risk_exposure_usd": 83.41,
+    "within_5000_cap": true,
+    "risk_account_shape": "synthetic equityUsd=10000 (live Demo balance not read into the local risk model)"
+  },
+  "venue_response": {
+    "venue_code": "00000",
+    "venue_msg": "success",
+    "dispatcher_status": "FILLED",
+    "dispatcher_latency_ms": 139.23,
+    "http_200_treated_as_success": false,
+    "success_criterion_used": "venue code 00000 AND non-empty venue orderId"
+  },
+  "order_identity": {
+    "venue_order_id": "1489095619363635201",
+    "venue_order_id_is_synthetic": false,
+    "clientOid_echoed_by_venue": "6840f724e0889fad6a44c3212deee6fb",
+    "clientOid_matches_receipt_hash_prefix": true
+  },
+  "readback_order_state": {
+    "endpoint": "GET /api/v2/mix/order/detail",
+    "code": "00000",
+    "state": "filled",
+    "size": "0.001",
+    "baseVolume_filled": "0.001",
+    "priceAvg": "83364.4",
+    "quoteVolume": "83.3644",
+    "fee": "-0.05001864",
+    "leverage": "10",
+    "marginMode": "isolated",
+    "posSide": "short",
+    "posMode": "hedge_mode",
+    "tradeSide": "open",
+    "enterPointSource": "API"
+  },
+  "fill_evidence": {
+    "endpoint": "GET /api/v2/mix/order/fills",
+    "code": "00000",
+    "tradeId": "1489095619609079808",
+    "price": "83364.4",
+    "baseVolume": "0.001",
+    "quoteVolume": "83.3644",
+    "fee_coin": "USDT",
+    "total_fee": "-0.05001864",
+    "tradeScope": "taker",
+    "side": "sell"
+  },
+  "position_readback": {
+    "endpoint": "GET /api/v2/mix/position/all-position",
+    "code": "00000",
+    "symbol": "BTCUSDT",
+    "holdSide": "short",
+    "total_size": "0.001",
+    "available": "0.001",
+    "marginSize": "8.33644",
+    "openPriceAvg": "83364.4",
+    "leverage": "10",
+    "marginMode": "isolated",
+    "posMode": "hedge_mode",
+    "deductedFee": "0.05001864",
+    "liquidationPrice": "91280.94764085208043",
+    "marginRatio": "0.0460054633533041",
+    "POSITION_IS_OPEN": true
+  },
+  "root_cause_of_prior_rejection": {
+    "finding": "CONFIRMED by the venue's own order-detail response: the Demo account is posMode=hedge_mode.",
+    "prior_error": "40774 \u2014 The order type for unilateral position must also be the unilateral position type.",
+    "fix": "OrderDispatcher now takes an explicit positionMode; hedge mode sends tradeSide:'open'. Commit 543656c.",
+    "regression_guard": "packages/engine/test/dispatcher-position-mode.test.ts (6 tests)"
+  },
+  "correction_to_earlier_evidence": {
+    "statement": "An earlier evidence file (p06/demo_order_attempt.json) asserted the Demo venue exposes no mix order query routes. THAT WAS WRONG \u2014 the paths used were incorrect.",
+    "correct_paths": [
+      "/api/v2/mix/order/detail",
+      "/api/v2/mix/order/orders-pending",
+      "/api/v2/mix/order/orders-history",
+      "/api/v2/mix/order/fills"
+    ],
+    "demo_support": "All four returned 00000 on Demo. Only /api/v2/mix/order/fill-history is documented as unsupported in Demo."
+  },
+  "authorization_compliance": {
+    "orders_submitted_this_attempt": 1,
+    "total_orders_submitted_this_session": 2,
+    "LIVE_DEMO_RUN_used": false,
+    "retries": 0,
+    "loops": 0,
+    "fabricated_ids_or_fills": false,
+    "paper_runner_started": false
+  },
+  "limitations": [
+    "This is Bitget DEMO TRADING, not the live venue. No real capital is at risk.",
+    "Order ACCEPTED and FILLED on Demo. This is not proof of live-venue execution.",
+    "A POSITION IS CURRENTLY OPEN: short 0.001 BTCUSDT isolated @ 83364.4, leverage 10x, liquidation 91280.95. It has NOT been closed.",
+    "Settlement was not observed: no funding accrual, no liquidation, no withdrawal tested.",
+    "No continuous operation proven \u2014 this was exactly one bounded order.",
+    "The local Risk Boy used a synthetic equity shape; the venue performed the real margin check."
+  ]
+}
