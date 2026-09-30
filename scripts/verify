@@ -33,13 +33,26 @@ do
   if [[ -f "$f" ]]; then pass "$f"; else fail "missing $f"; fi
 done
 
-# secret scan (basic)
+# secret scan (generic: LLM/cloud key shapes, PEM blocks)
 if grep -RInE '(sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' \
   --exclude-dir=node_modules --exclude-dir=.git --exclude='pnpm-lock.yaml' . 2>/dev/null \
   | grep -v 'scripts/verify' | grep -v '.env.example' ; then
   fail "possible secret material"
 else
   pass "secret scan (basic)"
+fi
+
+# secret scan (Bitget credentials: bg_ keys, SECRET_KEY / PASSPHRASE assignments).
+# Scans tracked + staged content only; the gitignored local .env is never read.
+if bash scripts/secret-scan.sh --self-test >/dev/null; then
+  pass "secret-scan guard self-test"
+else
+  fail "secret-scan guard self-test"
+fi
+if bash scripts/secret-scan.sh; then
+  pass "secret scan (Bitget credentials)"
+else
+  fail "secret scan (Bitget credentials)"
 fi
 
 # engine unit tests + typecheck when deps present

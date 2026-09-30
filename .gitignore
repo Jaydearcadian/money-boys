@@ -3,6 +3,9 @@ dist/
 .env
 .env.*
 !.env.example
+.money-boys.env
+.env.local
+.env.*.local
 *.log
 .DS_Store
 .secrets/
