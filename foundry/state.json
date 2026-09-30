@@ -8,11 +8,11 @@
   "verification_metadata_commit": "00f9af650929784f9619596852cd1aa835fb08f5",
   "last_verified_at": "2026-09-30T09:06:00Z",
   "critical_open_gaps": 0,
-  "high_open_gaps": 0,
+  "high_open_gaps": 3,
   "external_blockers": 0,
   "live_evidence_current": true,
-  "notes": "Phase 01 CLOSED (Demo auth LIVE_DEMONSTRATED, 2077051). Phase 06 Demo lifecycle: order 1 rejected 40774 (hedge_mode mismatch, fixed 543656c); order 2 opened+filled; position closed and read back FLAT (739e299). Phase 07 dispatcher lifecycle PROVEN ON VENUE through receipt -> Risk Boy -> dispatcher (cfab9f2): vetoed receipt blocked before any venue call, open filled 1489110830569127937, close filled 1489110831718367233, residual flattened 1489110998534225921, account FLAT. Blocking defect found and fixed en route: clientOid derived from receiptHash alone collided across intents (venue 40786 Duplicate clientOid) \u2014 this CORRECTS an earlier pre-flight claim that the receipt-derived id gave safe retry idempotency. CLM-007 LIVE_DEMONSTRATED; GAP-008/009/011 CLOSED; new GAP-012 LOW/OPEN (no cancel path, no TP/SL, no funding accrual observed). Phase 07 integration adapters read-only + gated Agentic credentials (c37a163) \u2014 ZERO live adapter validation. NOT proven anywhere: live-venue execution, settlement beyond same-second round trips, funding, liquidation, continuous operation. Local baseline: engine 103/103 across 15 suites, secret-scan guard active.",
-  "test_suites": 13,
-  "tests_pass": 103,
+  "notes": "Phase 01 CLOSED (Demo auth LIVE_DEMONSTRATED). Phase 06/07 Demo dispatcher lifecycle proven on venue (open/fill/close/flat, account FLAT, zero real capital). Phase 09 bounded Demo STRATEGY pre-flight on the tokenized-equity universe: STRATEGY_EVALUATED_NO_ACTION. Quant NEUTRAL (basis +0.115% vs 0.1222% hurdle, net edge -0.0072%); Risk APPROVED does not override Quant NEUTRAL; notional also below the venue $5 minimum. ZERO orders submitted, account FLAT before and after. Substrate work: GAP-013 (spot/futures symbol space inversion), GAP-014 (wrong orderbook endpoint, /depth 404s), GAP-015 (stale FRIDAY_CLOSE_SNAPSHOT fallback) all PARTIALLY_CLOSED at code+test level only, deliberately NOT E2E_VERIFIED. GAP-016 CLOSED: minTradeNum vs minTradeUSDT conflict resolved by BitgetClient.sizeToVenueCompliance (honours caller target, steps up in whole multipliers, snaps to volumePlace, revalidates, fails closed on free margin). CLM-001 and CLM-007 remain LIVE_DEMONSTRATED (Demo Trading only); live_evidence_current unchanged. NOT proven: live real-capital execution, settlement beyond same-second round trips, funding accrual, liquidation, continuous operation, any strategy profitability. Local baseline: engine 148/148 across 14 suites.",
+  "test_suites": 14,
+  "tests_pass": 148,
   "tests_fail": 0
 }

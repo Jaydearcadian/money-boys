@@ -20,7 +20,80 @@ export interface TradFiBenchmark {
   source: BenchmarkSource;
 }
 
-/** Verified Friday-close snapshot (fallback when MCP is unreachable). */
+/**
+ * Maximum acceptable benchmark age, in milliseconds.
+ *
+ * A benchmark older than this is STALE and must veto rather than trade. The
+ * repo snapshot is dated 2026-09-18 while the live price has moved ~44% since,
+ * which is exactly the failure mode this bounds.
+ */
+export const BENCHMARK_MAX_AGE_MS = 96 * 60 * 60 * 1000; // one TradFi weekend
+
+export class StaleBenchmarkError extends Error {
+  readonly asOf: string;
+  readonly ageMs: number;
+  readonly maxAgeMs: number;
+  constructor(asOf: string, ageMs: number, maxAgeMs: number) {
+    super(
+      `FAIL_CLOSED: benchmark is stale (asOf=${asOf}, age=${Math.round(ageMs / 60000)}min > max=${Math.round(maxAgeMs / 60000)}min)`,
+    );
+    this.name = "StaleBenchmarkError";
+    this.asOf = asOf;
+    this.ageMs = ageMs;
+    this.maxAgeMs = maxAgeMs;
+  }
+}
+
+/**
+ * Deterministic staleness gate.
+ *
+ * Applies to every benchmark regardless of source. `LOCAL_SNAPSHOT` is only
+ * ever produced for offline fixtures/tests, so a snapshot can never be used
+ * for a live/demo strategy decision (GAP-015).
+ */
+export function assertBenchmarkFresh(
+  benchmark: TradFiBenchmark,
+  now: number = Date.now(),
+  maxAgeMs: number = BENCHMARK_MAX_AGE_MS,
+): TradFiBenchmark {
+  const asOf = Date.parse(benchmark.asOf);
+  if (Number.isNaN(asOf)) {
+    throw new StaleBenchmarkError(benchmark.asOf, Number.POSITIVE_INFINITY, maxAgeMs);
+  }
+  const ageMs = now - asOf;
+  if (ageMs > maxAgeMs) {
+    throw new StaleBenchmarkError(benchmark.asOf, ageMs, maxAgeMs);
+  }
+  return benchmark;
+}
+
+/**
+ * Gate for any live/demo strategy decision.
+ *
+ * Refuses LOCAL_SNAPSHOT outright and refuses stale MCP data. Throws so the
+ * council adapter's existing catch seals HARD_VETO with zero execution.
+ */
+export function assertBenchmarkUsableForTrading(
+  benchmark: TradFiBenchmark,
+  now: number = Date.now(),
+  maxAgeMs: number = BENCHMARK_MAX_AGE_MS,
+): TradFiBenchmark {
+  if (benchmark.source === "LOCAL_SNAPSHOT") {
+    throw new Error(
+      `FAIL_CLOSED: LOCAL_SNAPSHOT benchmark for ${benchmark.symbol} must not be used for live/demo trading`,
+    );
+  }
+  return assertBenchmarkFresh(benchmark, now, maxAgeMs);
+}
+
+/**
+ * OFFLINE TEST FIXTURE ONLY.
+ *
+ * The values are a frozen 2026-09-18 snapshot kept so existing unit tests and
+ * PAPER tooling have a deterministic benchmark. They are ~44% away from the
+ * live market and MUST NOT influence a Demo or live strategy decision. Use
+ * `assertBenchmarkUsableForTrading` to enforce that.
+ */
 export const FRIDAY_CLOSE_SNAPSHOT: Record<string, number> = {
   rNVDAUSDT: 128.8,
   rTSLAUSDT: 218.0,
@@ -29,6 +102,7 @@ export const FRIDAY_CLOSE_SNAPSHOT: Record<string, number> = {
   rAMZNUSDT: 186.4,
 };
 
+/** asOf for FRIDAY_CLOSE_SNAPSHOT. Offline fixtures only; not a live benchmark. */
 export const BENCHMARK_AS_OF = "2026-09-18T20:00:00Z";
 export const BITGET_MCP_URL = "https://agent.bitget.com/mcp";
 export const BENCHMARK_TIMEOUT_MS = 1500;
@@ -167,4 +241,7 @@ export const TradFiBenchmarkService = {
   snapshot: snapshotFor,
   cleanSymbol: cleanUnderlyingSymbol,
   closes: FRIDAY_CLOSE_SNAPSHOT,
+  assertFresh: assertBenchmarkFresh,
+  assertUsableForTrading: assertBenchmarkUsableForTrading,
+  maxAgeMs: BENCHMARK_MAX_AGE_MS,
 };
