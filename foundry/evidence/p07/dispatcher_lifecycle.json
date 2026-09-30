@@ -1,0 +1,110 @@
+{
+  "claimId": "CLM-007",
+  "phase": "07-dispatcher-lifecycle-via-gates",
+  "timestamp_utc": "2026-09-30T09:06:00Z",
+  "commit_at_time_of_attempt": "cc299ea6a93a88c918ffd33e7c6023d8e091275c",
+  "result_summary": "Dispatcher open AND close both proven against Demo through the full receipt -> Risk Boy -> dispatcher path; account FLAT",
+  "environment": {
+    "BITGET_ENV": "testnet",
+    "demoTrading_header_sent": true,
+    "venue_route": "Bitget Demo Trading (paptrading:1)",
+    "position_mode": "hedge"
+  },
+  "gate_chain_proof": {
+    "veto_gate": {
+      "verifyReceipt_passed": true,
+      "decision": "VETOED",
+      "blocked": true,
+      "error": "Error: Cannot dispatch unapproved receipt"
+    },
+    "receipt_I03_verified": true,
+    "risk_boy": {
+      "decision": "APPROVED",
+      "exposureUsd": 83.15,
+      "within_cap": true
+    },
+    "note": "A VETOED receipt was presented to the dispatcher FIRST. It threw 'Cannot dispatch unapproved receipt' and zero venue calls were made. I-02/I-03 hold on the Demo venue."
+  },
+  "open_via_dispatcher": {
+    "orderId": "1489110830569127937",
+    "status": "FILLED",
+    "error": null,
+    "clientOid": "75df5b1970ad830fe48c2e1a52252ca2",
+    "latencyMs": 134.25
+  },
+  "close_via_dispatcher": {
+    "orderId": "1489110831718367233",
+    "status": "FILLED",
+    "error": null,
+    "clientOid": "c10fb11cf6995cfb36a9a721a8546d99",
+    "latencyMs": 137.02
+  },
+  "close_readback": {
+    "code": "00000",
+    "state": "filled",
+    "priceAvg": "83101.1",
+    "fee": "-0.04986066"
+  },
+  "defect_found_and_fixed": {
+    "venue_error": "40786 Duplicate clientOid",
+    "root_cause": "OrderDispatcher derived clientOid from receipt.receiptHash alone. An open and a close built from identical receipt data therefore produced the SAME clientOid, and the venue refused the second call as a duplicate. This made a full dispatcher lifecycle impossible on the venue.",
+    "why_it_matters": "It also invalidated an earlier claim: the Phase D pre-flight packet asserted that a receipt-derived clientOid gives safe retry idempotency. That was true for a RETRY of one intent but wrong for two DIFFERENT intents sharing receipt data. The claim is now corrected in the ledgers.",
+    "fix": "clientOid = sha256(receiptHash + ':' + intent)[0:32] \u2014 stable per intent, distinct across intents",
+    "regression_guard": "packages/engine/test/dispatcher-position-mode.test.ts \u2014 3 clientOid tests",
+    "commit": "pending (fix applied after this attempt)"
+  },
+  "net_position_accounting": {
+    "explanation": "Attempt 1 opened 0.001 via the dispatcher but its close was rejected (40786), leaving a residual short. Attempt 2 opened and closed its own 0.001, netting the account back to one open 0.001. A final dispatcher close flattened it.",
+    "orders_this_phase": [
+      {
+        "orderId": "1489110450099617793",
+        "intent": "open",
+        "status": "filled",
+        "note": "attempt 1 open; its close was rejected 40786"
+      },
+      {
+        "orderId": "1489110830569127937",
+        "intent": "open",
+        "status": "filled",
+        "note": "attempt 2 open (after clientOid fix)"
+      },
+      {
+        "orderId": "1489110831718367233",
+        "intent": "close",
+        "status": "filled",
+        "note": "attempt 2 close \u2014 proves dispatcher close path on venue"
+      },
+      {
+        "orderId": "1489110998534225921",
+        "intent": "close",
+        "status": "filled",
+        "note": "residual flatten via dispatcher closePosition"
+      }
+    ],
+    "attempt_1_close_attempt": {
+      "status": "REJECTED",
+      "venue_code": "40786",
+      "had_position_effect": false
+    }
+  },
+  "final_state": {
+    "endpoint": "GET /api/v2/mix/position/all-position",
+    "ACCOUNT_FLAT": true,
+    "btcusdt_position_present": false
+  },
+  "authorization_compliance": {
+    "orders_submitted": 4,
+    "LIVE_DEMO_RUN_used": false,
+    "rejected_calls_had_no_effect": true,
+    "loops": false,
+    "fabricated_ids_or_fills": false
+  },
+  "limitations": [
+    "Bitget DEMO TRADING only. No real capital.",
+    "Proven on venue: dispatcher open -> fill, dispatcher close -> fill, veto gate blocks before any network call, account returns flat.",
+    "All four orders were 0.001 BTCUSDT (~83 USD notional). No sizing sweep, no partial fills, no limit orders, no multiple symbols.",
+    "NOT proven: cancel path (cancel-order endpoint still unimplemented in the dispatcher), SL/TP, leverage changes, funding accrual across an interval, liquidation.",
+    "NOT proven: live-venue execution of any kind.",
+    "NOT proven: continuous operation. Four bounded orders across two runs; no daemon, no loop, no scheduling."
+  ]
+}

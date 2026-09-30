@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { describe, it } from "node:test";
 import { OrderDispatcher } from "../src/bitget/dispatcher.js";
 import type { BitgetOrderClient } from "../src/bitget/dispatcher.js";
@@ -151,7 +152,13 @@ describe("OrderDispatcher position mode (GAP-008 / venue 40774)", () => {
     assert.equal(body["size"], "0.001");
     assert.equal(body["side"], "sell");
     assert.equal(body["orderType"], "market");
-    assert.equal(body["clientOid"], receipt.receiptHash.slice(0, 32));
+    // clientOid = sha256(receiptHash + ":" + intent)[0:32] — bound to intent so
+    // an open and a close cannot collide into a venue duplicate (40786).
+    const expected = createHash("sha256")
+      .update(`${receipt.receiptHash}:open`)
+      .digest("hex")
+      .slice(0, 32);
+    assert.equal(body["clientOid"], expected);
   });
 
   it("does not mutate PAPER-mode behaviour", async () => {
@@ -209,7 +216,9 @@ describe("OrderDispatcher close path (GAP-011)", () => {
     const diff = Object.keys({ ...bodies[0]!, ...bodies[1]! }).filter(
       (k) => bodies[0]![k] !== bodies[1]![k],
     );
-    assert.deepEqual(diff, ["tradeSide"], "only tradeSide may differ");
+    // tradeSide separates open from close; clientOid must also differ or the
+    // venue rejects the second call as a duplicate.
+    assert.deepEqual(diff.sort(), ["clientOid", "tradeSide"]);
   });
 
   it("close in one_way mode omits tradeSide entirely", async () => {
@@ -239,6 +248,39 @@ describe("OrderDispatcher close path (GAP-011)", () => {
       /Cannot dispatch unapproved receipt/,
     );
     assert.equal(seen.length, 0, "a vetoed close must never reach the venue");
+  });
+
+  it("open and close produce DIFFERENT clientOids from the same receipt (venue 40786)", async () => {
+    // Regression: deriving clientOid from receiptHash alone made an open and
+    // a close built from identical receipt data collide, and the venue
+    // refused the second call with "Duplicate clientOid".
+    const receipt = approvedReceipt();
+    const { client, seen } = captureClient({ code: "0" });
+    const d = new OrderDispatcher("DEMO", client, "hedge");
+    await d.dispatch(receipt, { symbol: "BTCUSDT", side: "SELL", quantity: 0.001, fillPriceUsd: 83_000 });
+    await d.closePosition(receipt, { symbol: "BTCUSDT", side: "SELL", quantity: 0.001, fillPriceUsd: 83_000 });
+    const openOid = seen[0]!["clientOid"];
+    const closeOid = seen[1]!["clientOid"];
+    assert.notEqual(openOid, closeOid, "open and close must not share a clientOid");
+    assert.equal(typeof openOid, "string");
+  });
+
+  it("the same intent twice is retry-idempotent (stable clientOid)", async () => {
+    const receipt = approvedReceipt();
+    const { client, seen } = captureClient({ code: "0" });
+    const d = new OrderDispatcher("DEMO", client, "hedge");
+    await d.dispatch(receipt, { symbol: "BTCUSDT", side: "SELL", quantity: 0.001, fillPriceUsd: 83_000 });
+    await d.dispatch(receipt, { symbol: "BTCUSDT", side: "SELL", quantity: 0.001, fillPriceUsd: 83_000 });
+    assert.equal(seen[0]!["clientOid"], seen[1]!["clientOid"],
+      "a retry of the same intent must reuse its clientOid so the venue dedupes it");
+  });
+
+  it("a different receipt produces a different clientOid", async () => {
+    const { client, seen } = captureClient({ code: "0" });
+    const d = new OrderDispatcher("DEMO", client, "hedge");
+    await d.dispatch(approvedReceipt(), { symbol: "BTCUSDT", side: "SELL", quantity: 0.001, fillPriceUsd: 83_000 });
+    await d.closePosition(approvedReceipt(), { symbol: "BTCUSDT", side: "SELL", quantity: 0.001, fillPriceUsd: 83_000 });
+    assert.notEqual(seen[0]!["clientOid"], seen[1]!["clientOid"]);
   });
 
   it("close still returns REJECTED (never silent success) on a venue error", async () => {

@@ -206,7 +206,16 @@ export class OrderDispatcher {
     }
 
     const mappedSymbol = mapToVenueSymbol(params.symbol);
-    const clientOid = receipt.receiptHash.slice(0, 32);
+    // clientOid must be stable per INTENT, not per receipt alone. Deriving it
+    // from receiptHash alone collides when an open and a close are built from
+    // identical receipt data: the venue then answers 40786 "Duplicate
+    // clientOid" and refuses the second call. Binding the intent into the
+    // digest keeps retry-idempotency (same intent -> same id) while letting a
+    // distinct intent through.
+    const clientOid = createHash("sha256")
+      .update(`${receipt.receiptHash}:${intent}`)
+      .digest("hex")
+      .slice(0, 32);
     // `tradeSide` presence is mutually exclusive per Bitget v2 docs:
     // omitted in one-way mode, required in hedge mode. Sending the wrong one
     // yields venue error 40774 (GAP-008).
