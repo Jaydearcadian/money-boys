@@ -6,16 +6,22 @@
 
 ## One-line thesis
 
-An autonomous desk that **proposes** trades on tokenized US equity exposure via Bitget, but only **dispatches** orders after deterministic risk veto + sealed SHA-256 ReasoningReceipt — never from raw LLM authority.
+Money Boys is an autonomous two-speed agentic trading desk for tokenized US-equity markets, continuously searching for verifiable synthetic basis dislocations and exploiting the heightened opportunity created when traditional equity markets are closed, while separating agentic research from deterministic risk-gated execution.
+
+## Market opportunity regime
+
+Money Boys can trade throughout the week whenever a valid, fresh, verifiable basis dislocation exists. The approximately **65.5-hour TradFi closure window** (Friday 16:00 ET to Monday 09:30 ET) is the primary opportunity regime, not a trading restriction: traditional equity venues are closed while tokenized-equity markets may continue trading, increasing the chance that news and macro events create observable divergence from the latest reliable benchmark.
+
+The symbol universe is broad and configurable. rNVDA, rTSLA, and rAAPL are illustrative examples, not fixed initial scope.
 
 ## Problem
 
 Retail/agentic trading stacks either:
 
-1. let LLMs call exchange APIs directly (unsafe), or  
-2. are pure scripts with no research/council path (dumb).
+1. let LLMs call exchange APIs directly (unsafe), or
+2. are pure scripts with no research/council path (not meaningfully agentic).
 
-Neither gives a **demonstrable, auditable** agentic desk under Bitget S2 constraints.
+Neither gives a **demonstrable, auditable** agentic desk that can continuously detect tokenized-equity basis opportunities while remaining safe when benchmarks are stale, unavailable, or unverifiable.
 
 ## Users
 
