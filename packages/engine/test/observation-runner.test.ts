@@ -849,8 +849,9 @@ describe("six-role model — Bitget MCP is venue data, not rejected research", (
   it("records the benchmark rejection reason explicitly on the source record", () => {
     const r = run({ adapters: [adapterFor(bitgetObs()), adapterFor(robinhoodObs())] });
     const bitget = r.record.sources.find((s) => s.provider === "bitget_mcp")!;
-    assert.match(bitget.benchmarkRejectionReason!, /ROLE_NOT_BENCHMARK_ELIGIBLE/);
-    assert.match(bitget.benchmarkRejectionReason!, /independent/i);
+    // Reported verbatim so a consumer can match on it without parsing prose.
+    assert.equal(bitget.benchmarkRejectionReason, "INDEPENDENCE_FAILURE");
+    assert.equal(bitget.benchmarkEligibility, "NOT_ELIGIBLE_INDEPENDENCE");
     // A REFERENCE_BENCHMARK admitted cleanly carries NO rejection reason.
     const rh = r.record.sources.find((s) => s.provider === "robinhood_stock_token_api")!;
     assert.equal(rh.benchmarkRejectionReason, null);

@@ -54,7 +54,30 @@ import {
 } from "./source-model.js";
 import { createHash } from "node:crypto";
 
-export type PredictionMode = "BASIS_PREDICTION" | "VENUE_CONTEXT_ONLY" | "NO_PREDICTION";
+/**
+ * Prediction modes.
+ *
+ * Each non-BASIS mode exists to name WHAT was observed, so a record is never
+ * reduced to "nothing happened":
+ *
+ *   BASIS_PREDICTION       An independent benchmark AND a venue price were
+ *                          admitted. The deterministic Quant path may run.
+ *   VENUE_CONTEXT_ONLY     Venue market data was admitted.
+ *   RESEARCH_CONTEXT_ONLY  A research signal was admitted.
+ *   ARTIFACT_CONTEXT_ONLY  One or more external artifacts were admitted.
+ *   NO_PREDICTION          Nothing admissible, or the required combination is
+ *                          incomplete.
+ *
+ * When several non-benchmark inputs are present the mode names the strongest,
+ * and the full set is always visible in `sources[]` plus `blockedReason`. None
+ * of these modes carries any execution authority.
+ */
+export type PredictionMode =
+  | "BASIS_PREDICTION"
+  | "VENUE_CONTEXT_ONLY"
+  | "RESEARCH_CONTEXT_ONLY"
+  | "ARTIFACT_CONTEXT_ONLY"
+  | "NO_PREDICTION";
 
 /** Directional forecast. Mirrors the deterministic Quant vocabulary. */
 export type PredictionAction = "BUY_BASIS" | "SELL_BASIS" | "NEUTRAL" | "NONE";
@@ -141,8 +164,15 @@ export function buildSourceAdmissionRecord(
     artifactKind: artifactKindFor(o.role),
     artifactHash: o.artifactHash,
     strategyVersion: o.strategyVersion,
+    // The independence refusal is reported verbatim as INDEPENDENCE_FAILURE
+    // rather than the composite `code: detail` form, so a consumer can match on
+    // it without parsing prose.
     benchmarkRejectionReason:
-      benchmark.ok || benchmark.detail === undefined ? null : `${benchmark.code}: ${benchmark.detail}`,
+      benchmark.ok || benchmark.detail === undefined
+        ? null
+        : o.role === "VENUE_MARKET_DATA"
+          ? "INDEPENDENCE_FAILURE"
+          : `${benchmark.code}: ${benchmark.detail}`,
     provenanceHash: sha256(canonicalJson(o)),
   };
 }

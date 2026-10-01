@@ -32,6 +32,7 @@ import { evaluateBasisSpread } from "../agents/quant.js";
 import {
   admitBenchmark,
   allowedDownstreamUsesFor,
+  artifactKindFor,
   benchmarkEligibilityForRole,
   failureToObservation,
   isFailure,
@@ -161,11 +162,15 @@ export function runOnce(args: RunOnceOptions): RunOnceResult {
     return uses.includes("VENUE_CONTEXT_AND_FEATURES");
   });
   // Artifacts and signals inform the record without becoming a price source.
+  // Split by kind so the mode can name whether the strongest input was a
+  // signal or an artifact, rather than collapsing them.
   const nonMarketSources = sources.filter((s) => {
     const uses = allowedDownstreamUsesFor(s.role);
     return uses.includes("PROPOSAL_INPUT") || uses.includes("STRATEGY_DEFINITION_INPUT")
       || uses.includes("BACKTEST_CONTEXT_INPUT") || uses.includes("EXTERNAL_PAPER_EVIDENCE_REFERENCE");
   });
+  const researchInputs = sources.filter((s) => s.role === "RESEARCH_SIGNAL");
+  const artifactInputs = sources.filter((s) => artifactKindFor(s.role) !== null);
 
   // Exactly one independent candidate is expected. If several are supplied, the
   // first admitted one wins and the rest are recorded but not used, so the
@@ -264,7 +269,7 @@ export function runOnce(args: RunOnceOptions): RunOnceResult {
       "NO_PREDICTION: an independent benchmark was admitted but no usable venue price was supplied, " +
       "so no basis can be expressed. OBSERVATION_ONLY.";
   } else if (hasVenue && (admission === null || !admission.ok)) {
-    // ---- VENUE_CONTEXT_ONLY: context exists, no valid independent benchmark. ----
+    // ---- VENUE_CONTEXT_ONLY: venue data, no valid independent benchmark. ----
     mode = "VENUE_CONTEXT_ONLY";
     blockedReason =
       `VENUE_CONTEXT_ONLY: venue context from ${venueContext?.provider} was recorded, but no valid ` +
@@ -272,10 +277,31 @@ export function runOnce(args: RunOnceOptions): RunOnceResult {
       (admission !== null && !admission.ok ? ` (${admission.code}: ${admission.detail})` : "") +
       `. No basis, hurdle or net edge is emitted: a basis computed against venue data would be the ` +
       `strategy agreeing with itself. OBSERVATION_ONLY.`;
+  } else if (researchInputs.length > 0 && (admission === null || !admission.ok)) {
+    // ---- RESEARCH_CONTEXT_ONLY: a research signal is the strongest input. ----
+    mode = "RESEARCH_CONTEXT_ONLY";
+    blockedReason =
+      `RESEARCH_CONTEXT_ONLY: research signal input from ${researchInputs.map((r) => r.provider).join(", ")} ` +
+      `was recorded, but no valid independent underlying-equity benchmark was admitted` +
+      (admission !== null && !admission.ok ? ` (${admission.code}: ${admission.detail})` : "") +
+      `. A signal informs the desk; it is never the basis reference, and its presence alone ` +
+      `does not make it a benchmark. OBSERVATION_ONLY.`;
+  } else if (artifactInputs.length > 0 && (admission === null || !admission.ok)) {
+    // ---- ARTIFACT_CONTEXT_ONLY: external artifacts only. ----
+    // No venue price is required here: a proposal or an artifact is a
+    // legitimate input even when it cannot be expressed as a basis.
+    mode = "ARTIFACT_CONTEXT_ONLY";
+    blockedReason =
+      `ARTIFACT_CONTEXT_ONLY: recorded ${researchInputs.map((r) => `${r.provider} (${r.role})`).join(", ")} ` +
+      `as research/artifact context, but no valid independent underlying-equity benchmark was admitted` +
+      (admission !== null && !admission.ok ? ` (${admission.code}: ${admission.detail})` : "") +
+      `. External artifacts inform the desk; they are never the basis reference and never ` +
+      `authorise execution. OBSERVATION_ONLY.`;
   } else {
     mode = "NO_PREDICTION";
     blockedReason =
-      "NO_PREDICTION: no valid venue context and no valid independent benchmark were supplied" +
+      "NO_PREDICTION: no admissible venue, research or artifact input and no valid independent " +
+      "benchmark were supplied" +
       (admission !== null && !admission.ok ? ` (${admission.code}: ${admission.detail})` : "") +
       `. OBSERVATION_ONLY.`;
   }
