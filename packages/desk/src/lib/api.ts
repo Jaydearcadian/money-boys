@@ -72,12 +72,12 @@ export interface EvidenceResponse {
    */
   freshness: {
     status: "verified_fresh" | "verified_stale" | "unverifiable";
-    /** Gate-deciding age: sourceAsOf -> requestedAt. NOT receipt-relative. */
+    /** THE ADMISSION BASIS: sourceAsOf -> responseReceivedAt. */
     ageMs: number | null;
-    ageAtRequestStartMs: number | null;
-    /** sourceAsOf -> responseReceivedAt. True elapsed provider latency. */
     ageAtReceiptMs: number | null;
-    freshnessBasis: "request-start-relative";
+    /** sourceAsOf -> requestedAt. Diagnostics only; gates nothing. */
+    ageAtRequestStartMs: number | null;
+    freshnessBasis: "receipt-relative";
     /** responseReceivedAt - requestedAt. */
     receiptLatencyMs: number | null;
     /** The gate that was applied. Provider cache/freshness limit. */
@@ -112,7 +112,15 @@ export interface EvidenceResponse {
     vwapPrice: number | null;
     reasons: string[];
   } | null;
-  gate: { usable: boolean; blockedReason: string | null };
+  gate: {
+    usable: boolean;
+    blockedReason: string | null;
+    /** Phase 1 Option 4: closed session is a hard veto on Quant. */
+    closedSessionVeto: string | null;
+    policy: string;
+  };
+  /** ELIGIBLE_FOR_DISPATCH_DESIGN is still NOT an authorization. */
+  decision: "ELIGIBLE_FOR_DISPATCH_DESIGN" | "NO_TRADE";
   executable: false;
   blockingReasons: string[];
   bridge: { packetToDispatch: "absent" };

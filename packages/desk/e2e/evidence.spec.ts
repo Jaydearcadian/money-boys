@@ -34,21 +34,28 @@ test.describe("benchmark evidence — provenance", () => {
     await expect(page.getByTestId("fetched-at")).toHaveText("2026-09-30T14:00:00.000Z");
   });
 
-  test("states the freshness basis and shows the receipt-relative age as ungated", async ({ page }) => {
+  test("gates on the receipt-relative age and reports the request-start age as diagnostics", async ({ page }) => {
     await gotoEvidence(page);
-    await expect(page.getByTestId("freshness-basis")).toHaveText("request-start-relative");
-    // The gate basis: 486ms (sourceAsOf -> requestedAt).
-    await expect(page.getByTestId("freshness-age")).toHaveText("486ms");
-    // The receipt-relative age is larger and is reported, not gated.
-    await expect(page.getByTestId("freshness-age-at-receipt")).toHaveText("660ms");
+    await expect(page.getByTestId("freshness-basis")).toHaveText("receipt-relative");
+    // THE ADMISSION BASIS: sourceAsOf -> responseReceivedAt (660ms).
+    await expect(page.getByTestId("freshness-age")).toHaveText("660ms");
+    // Diagnostics only: sourceAsOf -> requestedAt (486ms). Gates nothing.
+    await expect(page.getByTestId("freshness-age-at-request-start")).toHaveText("486ms");
     // Receipt latency is exactly the difference between them.
     await expect(page.getByTestId("receipt-latency")).toHaveText("174ms");
   });
 
-  test("never presents the gate basis as receipt-relative", async ({ page }) => {
+  test("never presents the gate basis as request-start-relative", async ({ page }) => {
     await gotoEvidence(page);
-    await expect(page.getByTestId("freshness-basis")).not.toHaveText("receipt-relative");
-    await expect(page.locator('body')).not.toContainText("receipt-relative");
+    await expect(page.getByTestId("freshness-basis")).not.toHaveText("request-start-relative");
+    await expect(page.locator("body")).not.toContainText("request-start-relative");
+  });
+
+  test("renders the decision and the closed-session policy", async ({ page }) => {
+    await gotoEvidence(page);
+    await expect(page.getByTestId("decision")).toHaveText("ELIGIBLE_FOR_DISPATCH_DESIGN");
+    await expect(page.getByTestId("closed-session-policy")).toHaveText("BLOCK_QUANT_WHEN_TRADFI_CLOSED");
+    await expect(page.getByTestId("closed-session-veto")).toContainText("TradFi open");
   });
 
   test("labels the timestamp as provider-generated, not an exchange trade time", async ({ page }) => {
@@ -58,7 +65,8 @@ test.describe("benchmark evidence — provenance", () => {
 
   test("renders freshness age, the effective gate and the inherited ceiling distinctly", async ({ page }) => {
     await gotoEvidence(page);
-    await expect(page.getByTestId("freshness-age")).toHaveText("486ms");
+    // The admission age: receipt-relative, 660ms.
+    await expect(page.getByTestId("freshness-age")).toHaveText("660ms");
     // The EFFECTIVE gate is the provider cache window: 15s, NOT 96h.
     await expect(page.getByTestId("freshness-effective-threshold")).toHaveText("15.00s");
     // The inherited 96h ceiling is still displayed, explicitly marked as NOT

@@ -190,19 +190,37 @@ export function EvidencePage() {
                   <Field label="ask" value={fmt(b?.ask, 3)} testId="ask" />
                   <Field label="midpoint" value={fmt(b?.midpoint, 3)} testId="midpoint" />
                   <Field
-                    label="age at request start (GATE BASIS)"
-                    value={fmtAge(f?.ageAtRequestStartMs)}
+                    label="age at receipt (ADMISSION BASIS)"
+                    value={fmtAge(f?.ageAtReceiptMs)}
                     testId="freshness-age"
                     tone={f?.status === "verified_fresh" ? "ok" : f?.status === "verified_stale" ? "warn" : "bad"}
                   />
                   <Field
-                    label="age at receipt (reported, not gated)"
-                    value={fmtAge(f?.ageAtReceiptMs)}
-                    testId="freshness-age-at-receipt"
+                    label="age at request start (diagnostics only)"
+                    value={fmtAge(f?.ageAtRequestStartMs)}
+                    testId="freshness-age-at-request-start"
                     tone="warn"
                   />
                   <Field label="receipt latency (responseReceivedAt − requestedAt)" value={fmtAge(f?.receiptLatencyMs)} testId="receipt-latency" />
                   <Field label="freshness basis" value={f?.freshnessBasis ?? "—"} testId="freshness-basis" />
+                  <Field
+                    label="decision"
+                    value={ev.decision}
+                    testId="decision"
+                    tone={ev.decision === "NO_TRADE" ? "warn" : "ok"}
+                  />
+                  <Field
+                    label="closed-session policy"
+                    value={ev.gate.policy}
+                    testId="closed-session-policy"
+                  />
+                  <Field
+                    label="closed-session veto"
+                    value={ev.gate.closedSessionVeto ?? "none — TradFi open"}
+                    testId="closed-session-veto"
+                    tone={ev.gate.closedSessionVeto ? "warn" : "ok"}
+                    mono={false}
+                  />
                   <Field label="effective freshness gate (provider cache limit)" value={fmtAge(f?.effectiveThresholdMs)} testId="freshness-effective-threshold" />
                   <Field
                     label="inherited benchmark max age (NOT the gate)"

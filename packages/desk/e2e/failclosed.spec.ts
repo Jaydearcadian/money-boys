@@ -56,6 +56,45 @@ test.describe("benchmark evidence — stale benchmark blocks the gate", () => {
   });
 });
 
+test.describe("benchmark evidence — closed-session veto (Phase 1 Option 4)", () => {
+  test.beforeEach(async ({ page }) => { await stubEvidence(page, "closed"); });
+
+  test("blocks Quant while TradFi is closed even though the quote is fresh", async ({ page }) => {
+    await gotoEvidence(page);
+    // The trap: the quote is genuinely fresh, and it still must not trade.
+    await expect(page.getByTestId("freshness-status")).toHaveText("verified_fresh");
+    await expect(page.getByTestId("regime")).toHaveText("tradfi_closed");
+    await expect(page.getByTestId("quant-evaluated")).toHaveText("no");
+    await expect(page.getByTestId("decision")).toHaveText("NO_TRADE");
+    await expect(page.getByTestId("quant-action")).toHaveCount(0);
+  });
+
+  test("names the closed-session veto as the blocking reason", async ({ page }) => {
+    await gotoEvidence(page);
+    await expect(page.getByTestId("closed-session-veto")).toContainText("CLOSED_SESSION_VETO");
+    await expect(page.getByTestId("closed-session-veto")).toContainText("not underlying tradability");
+    await expect(page.getByTestId("blocking-reasons")).toContainText("CLOSED_SESSION_VETO");
+  });
+
+  test("displays the closed-session policy that produced the veto", async ({ page }) => {
+    await gotoEvidence(page);
+    await expect(page.getByTestId("closed-session-policy")).toHaveText("BLOCK_QUANT_WHEN_TRADFI_CLOSED");
+  });
+
+  test("reports carry to the next reopen, which is why the veto applies", async ({ page }) => {
+    await gotoEvidence(page);
+    await expect(page.getByTestId("carry-horizon")).not.toHaveText("0");
+    await expect(page.getByTestId("next-reopen")).not.toHaveText("—");
+  });
+
+  test("remains non-executable and carries no authority", async ({ page }) => {
+    await gotoEvidence(page);
+    await expect(page.getByTestId("executable-state")).toHaveText("executable: false");
+    await expect(page.getByTestId("execution-authority")).toContainText("execution authority: none");
+    await expect(page.getByTestId("authority-label")).toContainText("no execution authority");
+  });
+});
+
 test.describe("benchmark evidence — provider read failure", () => {
   test("surfaces a typed provider failure and no benchmark", async ({ page }) => {
     await stubEvidence(page, "error");

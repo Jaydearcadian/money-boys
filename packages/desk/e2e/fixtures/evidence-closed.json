@@ -1,7 +1,7 @@
 {
   "authority": "read_only",
   "executionAuthority": "none",
-  "generatedAt": "2026-09-30T14:00:00.000Z",
+  "generatedAt": "2026-09-30T20:00:00.000Z",
   "symbolMapping": {
     "repoSymbol": "rNVDAUSDT",
     "venueSymbol": "NVDAUSDT",
@@ -21,10 +21,10 @@
     "ask": 132.82,
     "midpoint": 132.71,
     "currency": "USD",
-    "sourceAsOf": "2026-09-21T13:59:59.514Z",
-    "fetchedAt": "2026-09-30T14:00:00.000Z",
-    "requestedAt": "2026-09-30T14:00:00.000Z",
-    "responseReceivedAt": "2026-09-30T14:00:00.174Z",
+    "sourceAsOf": "2026-09-30T19:59:59.514Z",
+    "fetchedAt": "2026-09-30T20:00:00.000Z",
+    "requestedAt": "2026-09-30T20:00:00.000Z",
+    "responseReceivedAt": "2026-09-30T20:00:00.174Z",
     "timestampType": "PROVIDER_GENERATED_QUOTE",
     "cacheWindowMs": 15000,
     "isTradingHalt": false,
@@ -34,10 +34,10 @@
     "multiplierAppliedToPrice": false
   },
   "freshness": {
-    "status": "verified_stale",
-    "ageMs": 777600660,
-    "ageAtReceiptMs": 777600660,
-    "ageAtRequestStartMs": 777600486,
+    "status": "verified_fresh",
+    "ageMs": 660,
+    "ageAtReceiptMs": 660,
+    "ageAtRequestStartMs": 486,
     "freshnessBasis": "receipt-relative",
     "receiptLatencyMs": 174,
     "effectiveThresholdMs": 15000,
@@ -45,25 +45,25 @@
     "providerCacheWindowMs": 15000
   },
   "regime": {
-    "regime": "tradfi_open",
-    "etNowIso": "2026-09-30T14:00:00.000Z",
-    "hoursToNextReopen": 0,
-    "nextReopenAtIso": null,
-    "requiredBenchmarkSource": "live_intraday",
+    "regime": "tradfi_closed",
+    "etNowIso": "2026-09-30T20:00:00.000Z",
+    "hoursToNextReopen": 17.5,
+    "nextReopenAtIso": "2026-10-01T13:30:00.000Z",
+    "requiredBenchmarkSource": "latest_close",
     "holidayCalendarSupported": false,
     "limitation": "Holidays and early closes are NOT modelled. A market holiday or early close before 16:00 ET will be reported as tradfi_open when the venue is actually shut. Treat an unrecognized market day as suspect (GAP-017)."
   },
   "quant": null,
   "gate": {
     "usable": false,
-    "blockedReason": "FAIL_CLOSED: benchmark freshness cannot be established — regime=tradfi_open, freshness=verified_stale (Robinhood NVDA bid/ask midpoint; sourceAsOf is the provider's generatedAt (PROVIDER_GENERATED_QUOTE), not an exchange trade time. priceBasis=RAW_UNDERLYING_EQUITY_NOT_MULTIPLIER_ADJUSTED. multiplierAppliedToPrice=false.)",
-    "closedSessionVeto": null,
+    "blockedReason": "CLOSED_SESSION_VETO: TradFi is closed; a provider quote proves provider responsiveness, not underlying tradability. Quant is blocked by Phase 1 policy (Option 4) until an overnight or latest-close policy is explicitly designed and authorized.",
+    "closedSessionVeto": "CLOSED_SESSION_VETO: TradFi is closed; a provider quote proves provider responsiveness, not underlying tradability. Quant is blocked by Phase 1 policy (Option 4) until an overnight or latest-close policy is explicitly designed and authorized.",
     "policy": "BLOCK_QUANT_WHEN_TRADFI_CLOSED"
   },
   "decision": "NO_TRADE",
   "executable": false,
   "blockingReasons": [
-    "FAIL_CLOSED: benchmark freshness cannot be established — regime=tradfi_open, freshness=verified_stale (Robinhood NVDA bid/ask midpoint; sourceAsOf is the provider's generatedAt (PROVIDER_GENERATED_QUOTE), not an exchange trade time. priceBasis=RAW_UNDERLYING_EQUITY_NOT_MULTIPLIER_ADJUSTED. multiplierAppliedToPrice=false.)",
+    "CLOSED_SESSION_VETO: TradFi is closed; a provider quote proves provider responsiveness, not underlying tradability. Quant is blocked by Phase 1 policy (Option 4) until an overnight or latest-close policy is explicitly designed and authorized.",
     "READ_ONLY_SURFACE: this evidence endpoint has no execution authority and cannot dispatch an order",
     "NO_PACKET_TO_DISPATCH_BRIDGE: no typed path exists from a benchmark packet to OrderDispatcher; the benchmark half and the venue half are proven separately, not end-to-end"
   ],

@@ -35,10 +35,10 @@
   },
   "freshness": {
     "status": "verified_fresh",
-    "ageMs": 486,
-    "ageAtRequestStartMs": 486,
+    "ageMs": 660,
     "ageAtReceiptMs": 660,
-    "freshnessBasis": "request-start-relative",
+    "ageAtRequestStartMs": 486,
+    "freshnessBasis": "receipt-relative",
     "receiptLatencyMs": 174,
     "effectiveThresholdMs": 15000,
     "inheritedBenchmarkMaxAgeMs": 345600000,
@@ -73,8 +73,11 @@
   },
   "gate": {
     "usable": true,
-    "blockedReason": null
+    "blockedReason": null,
+    "closedSessionVeto": null,
+    "policy": "BLOCK_QUANT_WHEN_TRADFI_CLOSED"
   },
+  "decision": "ELIGIBLE_FOR_DISPATCH_DESIGN",
   "executable": false,
   "blockingReasons": [
     "READ_ONLY_SURFACE: this evidence endpoint has no execution authority and cannot dispatch an order",

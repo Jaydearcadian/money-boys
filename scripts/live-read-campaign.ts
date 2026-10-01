@@ -178,7 +178,7 @@ async function main(): Promise<void> {
       conflated: false,
     },
     freshness: {
-      // The gate basis. NOT receipt-relative: see freshnessBasis.
+      // THE ADMISSION BASIS: receipt-relative.
       ageMs: f?.ageMs ?? null,
       ageAtRequestStartMs: f?.ageAtRequestStartMs ?? null,
       ageAtReceiptMs: f?.ageAtReceiptMs ?? null,
@@ -195,7 +195,9 @@ async function main(): Promise<void> {
        * the gate basis UNDER-reports true provider latency by the round trip,
        * so it is the MORE PERMISSIVE of the two ages, not the conservative one.
        */
-      gateBasisIsMorePermissive: (f?.ageAtReceiptMs ?? 0) >= (f?.ageAtRequestStartMs ?? 0),
+      // Admission now uses the LARGER age, so the gate is the stricter of the
+      // two bases. This inverts the prior artifact, which gated on the smaller.
+      gateBasisIsStricter: (f?.ageAtReceiptMs ?? 0) >= (f?.ageAtRequestStartMs ?? 0),
     },
     regime: ev.regime,
     benchmark: b
@@ -252,10 +254,14 @@ async function main(): Promise<void> {
     { name: "account_flat_after", ok: after.accountFlat === true, detail: `positions=${after.positionCount}` },
     { name: "account_unchanged_by_run", ok: after.positionCount === before.positionCount, detail: `${before.positionCount} -> ${after.positionCount}` },
     { name: "bridge_still_absent", ok: ev.bridge.packetToDispatch === "absent", detail: ev.bridge.packetToDispatch },
-    { name: "freshness_basis_is_request_start", ok: f?.freshnessBasis === "request-start-relative", detail: String(f?.freshnessBasis) },
-    { name: "never_labeled_receipt_relative", ok: !JSON.stringify(ev).includes('"receipt-relative"'), detail: "no receipt-relative basis in payload" },
+    { name: "freshness_basis_is_receipt_relative", ok: f?.freshnessBasis === "receipt-relative", detail: String(f?.freshnessBasis) },
+    { name: "never_labeled_request_start", ok: !JSON.stringify(ev).includes('"request-start-relative"'), detail: "no request-start-relative basis in payload" },
+    { name: "admission_age_equals_receipt_age", ok: f?.ageMs === f?.ageAtReceiptMs, detail: `ageMs=${String(f?.ageMs)} ageAtReceiptMs=${String(f?.ageAtReceiptMs)}` },
+    { name: "no_trade_when_tradfi_closed", ok: ev.regime.regime !== "tradfi_closed" || (ev.decision === "NO_TRADE" && ev.quant === null), detail: `regime=${ev.regime.regime} decision=${ev.decision} quant=${ev.quant === null ? "null" : "present"}` },
+    { name: "closed_session_never_executes", ok: ev.regime.regime !== "tradfi_closed" || ev.executable === false, detail: `executable=${String(ev.executable)}` },
     { name: "three_instants_present_and_distinct", ok: b !== null && b.sourceAsOf !== b.requestedAt && b.requestedAt !== b.responseReceivedAt, detail: `${b?.sourceAsOf} / ${b?.requestedAt} / ${b?.responseReceivedAt}` },
     { name: "receipt_latency_consistent", ok: (f?.ageAtReceiptMs ?? 0) - (f?.ageAtRequestStartMs ?? 0) === f?.receiptLatencyMs, detail: `Δage=${(f?.ageAtReceiptMs ?? 0) - (f?.ageAtRequestStartMs ?? 0)} latency=${String(f?.receiptLatencyMs)}` },
+    { name: "no_bridge_no_order", ok: ev.bridge.packetToDispatch === "absent" && ev.executable === false, detail: `bridge=${ev.bridge.packetToDispatch} executable=${String(ev.executable)}` },
     { name: "usedMargin_null_documented_not_zero", ok: after.usedMarginUsd === null, detail: "reconciliation basis is equity/freeMargin; null preserved, not coerced" },
   ];
 

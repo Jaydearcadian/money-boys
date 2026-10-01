@@ -27,8 +27,11 @@
   "quant": null,
   "gate": {
     "usable": false,
-    "blockedReason": "TRADING_HALT: NVDA is under a trading halt"
+    "blockedReason": "TRADING_HALT: NVDA is under a trading halt",
+    "closedSessionVeto": null,
+    "policy": "BLOCK_QUANT_WHEN_TRADFI_CLOSED"
   },
+  "decision": "NO_TRADE",
   "executable": false,
   "blockingReasons": [
     "BENCHMARK_UNAVAILABLE: TRADING_HALT: NVDA is under a trading halt",

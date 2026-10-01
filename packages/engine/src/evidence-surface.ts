@@ -73,6 +73,27 @@ const EVIDENCE_ORDER_SIZE_USD = 25;
 
 export type EvidenceStatus = "ok" | "unusable" | "error";
 
+/**
+ * Closed-session execution policy: PHASE 1, OPTION 4.
+ *
+ * While `tradfi_closed` the benchmark is NOT admitted and Quant does NOT run.
+ * This yields NO_TRADE -> executable: false -> no bridge -> no order.
+ *
+ * WHY, because the alternative was the default until now: the provider quotes
+ * the underlying continuously, so a `tradfi_closed` read can carry a
+ * `sourceAsOf` seconds old and look perfectly fresh. That freshness describes
+ * the PROVIDER's responsiveness, not the tradability of the underlying. A
+ * ~0.03% edge is thin against hours of unmodelled overnight gap risk, so
+ * admitting it would let the current closure behaviour silently become an
+ * undeclared overnight strategy.
+ *
+ * This is a safe Phase 1 execution policy, NOT the final product thesis.
+ * Either a latest-close strategy or a separately designed overnight policy
+ * (own hurdle, sizing, expiry and risk limits) may replace it later, by
+ * explicit product/risk decision.
+ */
+export const CLOSED_SESSION_POLICY = "BLOCK_QUANT_WHEN_TRADFI_CLOSED" as const;
+
 export interface EvidenceSymbolMapping {
   repoSymbol: string;
   venueSymbol: string;
@@ -109,22 +130,19 @@ export interface EvidenceBenchmark {
 export interface EvidenceFreshness {
   status: "verified_fresh" | "verified_stale" | "unverifiable";
   /**
-   * The gate-deciding age: sourceAsOf -> requestedAt.
+   * The gate-deciding age: sourceAsOf -> responseReceivedAt.
    *
-   * This is the pre-existing behaviour, preserved deliberately. It is the
-   * SMALLER of the two available ages (see ageAtReceiptMs) and therefore the
-   * MORE PERMISSIVE basis: it under-reports true provider latency by the
-   * request duration, so it admits quotes a receipt-relative gate would reject.
-   * It is retained because changing the gate is a policy decision, not an
-   * implementation detail. Do not describe it as conservative.
+   * Admission is receipt-relative. A quote that was fresh when we issued the
+   * request may be stale by the time we are able to act on it, so the age that
+   * matters is the one measured when the response landed in our hands.
    */
   ageMs: number | null;
-  /** sourceAsOf -> requestedAt. Identical to ageMs; named for readability. */
-  ageAtRequestStartMs: number | null;
-  /** sourceAsOf -> responseReceivedAt. True elapsed provider latency. */
+  /** sourceAsOf -> responseReceivedAt. THE ADMISSION BASIS. */
   ageAtReceiptMs: number | null;
-  /** Which basis the gate used. Never "receipt-relative". */
-  freshnessBasis: "request-start-relative";
+  /** sourceAsOf -> requestedAt. Diagnostics only; gates nothing. */
+  ageAtRequestStartMs: number | null;
+  /** Which basis the gate used. */
+  freshnessBasis: "receipt-relative";
   /** responseReceivedAt - requestedAt. Network round-trip. */
   receiptLatencyMs: number | null;
   /** The gate that was actually applied. Provider cache/freshness limit. */
@@ -176,7 +194,15 @@ export interface EvidenceResponse {
   freshness: EvidenceFreshness | null;
   regime: EvidenceRegime;
   quant: EvidenceQuant | null;
-  gate: { usable: boolean; blockedReason: string | null };
+  gate: {
+    usable: boolean;
+    blockedReason: string | null;
+    /** Phase 1 Option 4: closed session is a hard veto on Quant. */
+    closedSessionVeto: string | null;
+    policy: typeof CLOSED_SESSION_POLICY;
+  };
+  /** True only when every gate passed. Still never an authorization. */
+  decision: "ELIGIBLE_FOR_DISPATCH_DESIGN" | "NO_TRADE";
   /** Hard-coded false. See the module header. */
   executable: false;
   blockingReasons: string[];
@@ -187,6 +213,17 @@ export interface EvidenceResponse {
   bridge: { packetToDispatch: "absent" };
   error: { code: string; message: string } | null;
   notes: string[];
+}
+
+/**
+ * Age of the provider instant measured from a given local reference.
+ * Returns null when either side is unparseable, so an unprovable timestamp can
+ * never be silently coerced into a fresh one.
+ */
+function evidence0Age(benchmark: { sourceAsOf: string }, reference: Date): number | null {
+  const s = Date.parse(benchmark.sourceAsOf);
+  if (Number.isNaN(s)) return null;
+  return reference.getTime() - s;
 }
 
 /**
@@ -256,17 +293,29 @@ export async function buildEvidenceResponse(args: {
     "NO_PACKET_TO_DISPATCH_BRIDGE: no typed path exists from a benchmark packet to OrderDispatcher; the benchmark half and the venue half are proven separately, not end-to-end",
   ];
 
+  /**
+   * Closed-session veto, computed BEFORE any I/O so it applies to every exit
+   * path including the error branch. A closed TradFi session means NO_TRADE
+   * regardless of how fresh or profitable the provider quote looks.
+   */
+  const closedSessionVeto =
+    regime.regime === "tradfi_closed"
+      ? "CLOSED_SESSION_VETO: TradFi is closed; a provider quote proves provider responsiveness, not underlying tradability. Quant is blocked by Phase 1 policy (Option 4) until an overnight or latest-close policy is explicitly designed and authorized."
+      : null;
+
   try {
     // ---- Benchmark: public, credential-free ---------------------------------
     // TIMING SEMANTICS — two distinct local instants, never conflated:
     //
     //   requestedAt         local clock when we issued /rhj/prices
     //   responseReceivedAt  local clock when that response was RECEIVED
-    //
-    // `fetchedAt` in the benchmark is `requestedAt`. The gate is evaluated on
-    // sourceAsOf -> requestedAt (the pre-existing basis), NOT on the
-    // receipt-relative age. Both ages are reported so the difference is
-    // visible, but the policy basis is unchanged.
+    // `fetchedAt` in the benchmark is `requestedAt`, retained for diagnostics
+     // only.
+     //
+     // ADMISSION GATE IS RECEIPT-RELATIVE. `ageAtReceiptMs` (sourceAsOf ->
+     // responseReceivedAt) decides admission, because a quote that was fresh
+     // when we asked can be stale by the time we are able to act on it. The
+     // request-start age is still reported, but it no longer gates anything.
     const requestedAt = new Date(now.getTime());
     /**
      * Stamped the moment the /rhj/prices response lands, before /assets.
@@ -290,9 +339,10 @@ export async function buildEvidenceResponse(args: {
     const receipt = responseReceivedAt ?? requestedAt;
     const sourceMs = Date.parse(b.sourceAsOf);
     const sourceParsed = !Number.isNaN(sourceMs);
-    // The two ages differ only by the round trip. The gate uses the
-    // request-start basis; the receipt basis is reported for transparency.
+    // The two ages differ by the round trip. The RECEIPT-RELATIVE age is the
+    // one that decides admission; the request-start age is diagnostics only.
     const ageAtReceiptMs = sourceParsed ? receipt.getTime() - sourceMs : null;
+    const ageAtRequestStartMs = evidence0Age(b, requestedAt);
     const receiptLatencyMs = receipt.getTime() - requestedAt.getTime();
 
     // Public Bitget market data only. No key, no signing, no private route.
@@ -306,19 +356,51 @@ export async function buildEvidenceResponse(args: {
     // THE operative gate. Must be the effective (provider cache window)
     // value, never the inherited 96h ceiling.
     const evidence = robinhoodToEvidence(b, effectiveMaxAgeMs);
+
+    // ADMISSION RE-EVALUATION on the RECEIPT-RELATIVE age.
+    // robinhoodToEvidence derived `freshness` from the request-start age. We
+    // overwrite ageMs/freshness with the receipt-relative pair BEFORE the gate
+    // runs, so admission reflects how old the quote actually is at the moment
+    // we could act on it. The request-start values are preserved separately.
+    if (ageAtReceiptMs !== null) {
+      evidence.ageMs = ageAtReceiptMs;
+      // A sourceAsOf in the FUTURE relative to our own receipt clock cannot be
+      // proven fresh: it means the provider instant and our clock disagree, so
+      // freshness is unverifiable rather than fresh. Must be checked BEFORE the
+      // staleness comparison, otherwise a negative age silently passes.
+      evidence.freshness =
+        ageAtReceiptMs < 0
+          ? "unverifiable"
+          : ageAtReceiptMs >= effectiveMaxAgeMs
+            ? "verified_stale"
+            : "verified_fresh";
+    } else {
+      // Unparseable sourceAsOf can never be proven fresh.
+      evidence.ageMs = null;
+      evidence.freshness = "unverifiable";
+    }
     let gateUsable = true;
     let gateBlockedReason: string | null = null;
     let quant: EvidenceQuant | null = null;
     let status: EvidenceStatus = "ok";
     const blockingReasons: string[] = [];
 
-    try {
+    if (closedSessionVeto !== null) blockingReasons.push(closedSessionVeto);
+
+  try {
       assertBenchmarkProvable(evidence, regime.regime);
     } catch (err) {
       gateUsable = false;
       gateBlockedReason = err instanceof Error ? err.message : String(err);
       status = "unusable";
       blockingReasons.push(gateBlockedReason);
+    }
+    // The closed-session veto is independent of freshness: even a perfectly
+    // fresh quote is refused outside TradFi hours.
+    if (closedSessionVeto !== null) {
+      gateUsable = false;
+      if (gateBlockedReason === null) gateBlockedReason = closedSessionVeto;
+      status = "unusable";
     }
 
     // Quant does not run at all when the benchmark gate blocks.
@@ -382,19 +464,26 @@ export async function buildEvidenceResponse(args: {
       // can mistake the inherited 96h ceiling for the gate that was applied.
       freshness: {
         status: evidence.freshness,
-        // Gate-deciding age: sourceAsOf -> requestedAt (pre-existing basis).
+        // THE ADMISSION BASIS: receipt-relative (sourceAsOf -> receipt).
         ageMs: evidence.ageMs,
-        ageAtRequestStartMs: evidence.ageMs,
-        ageAtReceiptMs: ageAtReceiptMs,
-        freshnessBasis: "request-start-relative",
-        receiptLatencyMs: receiptLatencyMs,
+        ageAtReceiptMs,
+        // Diagnostics only; gates nothing.
+        ageAtRequestStartMs,
+        freshnessBasis: "receipt-relative",
+        receiptLatencyMs,
         effectiveThresholdMs: effectiveMaxAgeMs,
         inheritedBenchmarkMaxAgeMs: EVIDENCE_INHERITED_BENCHMARK_MAX_AGE_MS,
         providerCacheWindowMs: EVIDENCE_EFFECTIVE_MAX_AGE_MS,
       },
       regime: regimeBlock,
       quant,
-      gate: { usable: gateUsable, blockedReason: gateBlockedReason },
+      gate: {
+        usable: gateUsable,
+        blockedReason: gateBlockedReason,
+        closedSessionVeto,
+        policy: CLOSED_SESSION_POLICY,
+      },
+      decision: gateUsable && quant !== null ? "ELIGIBLE_FOR_DISPATCH_DESIGN" : "NO_TRADE",
       executable: false,
       blockingReasons: [...blockingReasons, ...ALWAYS_BLOCKED],
       error: null,
@@ -416,9 +505,19 @@ export async function buildEvidenceResponse(args: {
       freshness: null,
       regime: regimeBlock,
       quant: null,
-      gate: { usable: false, blockedReason: message },
+      gate: {
+        usable: false,
+        blockedReason: message,
+        closedSessionVeto,
+        policy: CLOSED_SESSION_POLICY,
+      },
+      decision: "NO_TRADE",
       executable: false,
-      blockingReasons: [`BENCHMARK_UNAVAILABLE: ${message}`, ...ALWAYS_BLOCKED],
+      blockingReasons: [
+        ...(closedSessionVeto !== null ? [closedSessionVeto] : []),
+        `BENCHMARK_UNAVAILABLE: ${message}`,
+        ...ALWAYS_BLOCKED,
+      ],
       error: { code, message },
       notes: ["No benchmark was read. No Quant verdict was produced. Nothing was dispatched."],
     };
