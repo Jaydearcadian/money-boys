@@ -61,6 +61,15 @@ if [[ -d packages/engine/node_modules ]] || [[ -d node_modules ]]; then
   if pnpm --filter @money-boys/desk typecheck; then pass "desk typecheck"; else fail "desk typecheck"; fi
   if pnpm --filter @money-boys/engine test; then pass "engine unit tests"; else fail "engine unit tests"; fi
   if pnpm --filter @money-boys/desk build; then pass "desk build"; else fail "desk build"; fi
+  # Browser E2E. Runs against the built bundle and a local fixture server, so
+  # it needs no network and no credentials. Skipped (loudly) when the Chromium
+  # build is absent, so a fresh clone without `playwright install` still gets a
+  # full verify signal rather than a hard failure.
+  if [[ -d "${PLAYWRIGHT_BROWSERS_PATH:-$HOME/.cache/ms-playwright}" ]]; then
+    if pnpm --filter @money-boys/desk test:e2e; then pass "desk browser E2E (playwright)"; else fail "desk browser E2E (playwright)"; fi
+  else
+    echo "SKIP: desk browser E2E — no Playwright browsers installed (run: npx playwright install chromium)"
+  fi
 else
   fail "dependencies not installed — run pnpm install"
 fi

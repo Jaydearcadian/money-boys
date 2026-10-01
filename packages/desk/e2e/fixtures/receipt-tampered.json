@@ -1,0 +1,50 @@
+{
+  "symbol": "rNVDAUSDT",
+  "action": "SELL_BASIS",
+  "quantMetrics": {
+    "rawBasis": 0.030357,
+    "rawBasisPct": 3.0357,
+    "midPrice": 132.71,
+    "vwapPrice": 132.6702,
+    "vwapSlippage": 0.0003,
+    "vwapSlippagePct": 0.03,
+    "fundingCarry": 0.0001,
+    "fundingCarryPct": 0.01,
+    "hurdleRate": 0.0016,
+    "hurdleRatePct": 0.16,
+    "netEdge": 0.028757,
+    "netEdgePct": 4.1102,
+    "zScore": 2.8757,
+    "availableDepthUsd": 52996.41,
+    "depthCoverage": 1,
+    "quantScore": 97.9,
+    "action": "SELL_BASIS",
+    "sideWalked": "bids",
+    "filledUsd": 2500,
+    "completeFill": true,
+    "reasons": []
+  },
+  "riskReport": {
+    "permitted": true,
+    "projectedMarginUtilizationPct": 36,
+    "projectedLiquidationPrice": 33.18,
+    "staleOrdersToCancel": []
+  },
+  "councilScores": {
+    "compositeScore": 86.4,
+    "macro": 88,
+    "quant": 97.9,
+    "risk": 87.5,
+    "exec": 82
+  },
+  "decision": "APPROVED",
+  "rationale": "Playwright fixture receipt. Deterministic; not submitted anywhere.",
+  "metadata": {
+    "passNumber": 1,
+    "originalQuantity": 18,
+    "executedQuantity": 18
+  },
+  "receiptId": "948988e6-4808-4295-bbf1-4cca05ac033e",
+  "sealedAt": "2026-09-30T14:27:10.191Z",
+  "receiptHash": "7c9b5de0dc7c872fa49b4b06e4572a2d6e23847edc25717ca075cecd9138cfb5"
+}

@@ -17,7 +17,7 @@ export function AuditLedger({ receipts }: { receipts: SealedReasoningReceipt[] }
   const open = receipts.find((r) => r.receiptId === openId) ?? null;
   return (
     <section className="border border-zinc-200 bg-white p-4">
-      <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-500">Audit Ledger · live ({receipts.length})</h2>
+      <h2 data-testid="audit-count" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Audit Ledger · live ({receipts.length})</h2>
       <div className="mt-2 overflow-x-auto">
         <table className="w-full font-mono text-xs tabular-nums">
           <thead><tr className="text-left text-zinc-500"><th className="py-1">TIME</th><th>SYMBOL</th><th>ACTION</th><th>SCORE</th><th>MARGIN%</th><th>HASH</th><th>STATUS</th></tr></thead>
@@ -26,7 +26,7 @@ export function AuditLedger({ receipts }: { receipts: SealedReasoningReceipt[] }
               const scores = r.councilScores as Record<string, number>;
               const risk = r.riskReport as Record<string, unknown>;
               return (
-                <tr key={r.receiptId} onClick={() => { setOpenId(r.receiptId); setCopied(false); }} className="cursor-pointer border-t border-zinc-200 hover:bg-orange-50/40">
+                <tr data-testid="audit-row" data-receipt-id={r.receiptId} key={r.receiptId} onClick={() => { setOpenId(r.receiptId); setCopied(false); }} className="cursor-pointer border-t border-zinc-200 hover:bg-orange-50/40">
                   <td className="py-1 text-zinc-500">{new Date(r.sealedAt).toLocaleTimeString("en-GB")}</td>
                   <td className="text-zinc-950">{r.symbol}</td>
                   <td>{actionOf(r)}</td>

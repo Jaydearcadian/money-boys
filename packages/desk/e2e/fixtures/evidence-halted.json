@@ -1,0 +1,45 @@
+{
+  "authority": "read_only",
+  "executionAuthority": "none",
+  "generatedAt": "2026-09-30T14:00:00.000Z",
+  "symbolMapping": {
+    "repoSymbol": "rNVDAUSDT",
+    "venueSymbol": "NVDAUSDT",
+    "referenceSymbol": "NVDA",
+    "note": "r-prefixed Bitget spot symbol -> bare Bitget futures symbol -> underlying equity reference"
+  },
+  "bridge": {
+    "packetToDispatch": "absent"
+  },
+  "ok": false,
+  "status": "error",
+  "benchmark": null,
+  "freshness": null,
+  "regime": {
+    "regime": "tradfi_open",
+    "etNowIso": "2026-09-30T14:00:00.000Z",
+    "hoursToNextReopen": 0,
+    "nextReopenAtIso": null,
+    "requiredBenchmarkSource": "live_intraday",
+    "holidayCalendarSupported": false,
+    "limitation": "Holidays and early closes are NOT modelled. A market holiday or early close before 16:00 ET will be reported as tradfi_open when the venue is actually shut. Treat an unrecognized market day as suspect (GAP-017)."
+  },
+  "quant": null,
+  "gate": {
+    "usable": false,
+    "blockedReason": "TRADING_HALT: NVDA is under a trading halt"
+  },
+  "executable": false,
+  "blockingReasons": [
+    "BENCHMARK_UNAVAILABLE: TRADING_HALT: NVDA is under a trading halt",
+    "READ_ONLY_SURFACE: this evidence endpoint has no execution authority and cannot dispatch an order",
+    "NO_PACKET_TO_DISPATCH_BRIDGE: no typed path exists from a benchmark packet to OrderDispatcher; the benchmark half and the venue half are proven separately, not end-to-end"
+  ],
+  "error": {
+    "code": "TRADING_HALT",
+    "message": "TRADING_HALT: NVDA is under a trading halt"
+  },
+  "notes": [
+    "No benchmark was read. No Quant verdict was produced. Nothing was dispatched."
+  ]
+}

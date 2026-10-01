@@ -30,6 +30,86 @@ export interface DeskState {
   recentCount: number;
 }
 
+/**
+ * Phase 1 read-only benchmark evidence surface.
+ *
+ * Mirrors engine `EvidenceResponse`. `executable` is typed as the literal
+ * `false` and `executionAuthority` as `"none"` on purpose: this type has no
+ * variant in which the display surface could be read as an authorization
+ * surface.
+ */
+export interface EvidenceResponse {
+  ok: boolean;
+  status: "ok" | "unusable" | "error";
+  authority: "read_only";
+  executionAuthority: "none";
+  generatedAt: string;
+  symbolMapping: { repoSymbol: string; venueSymbol: string; referenceSymbol: string; note: string };
+  benchmark: {
+    provider: string;
+    source: string;
+    symbol: string;
+    bid: number;
+    ask: number;
+    midpoint: number;
+    currency: string;
+    sourceAsOf: string;
+    fetchedAt: string;
+    timestampType: string;
+    cacheWindowMs: number;
+    isTradingHalt: boolean;
+    sourceUrl: string;
+    priceBasis: string;
+    multiplierCurrent: string | null;
+    multiplierAppliedToPrice: false;
+  } | null;
+  /**
+   * Both freshness limits are carried explicitly so the UI cannot present the
+   * inherited 96h ceiling as the gate that was actually applied.
+   */
+  freshness: {
+    status: "verified_fresh" | "verified_stale" | "unverifiable";
+    ageMs: number | null;
+    /** The gate that was applied. Provider cache/freshness limit. */
+    effectiveThresholdMs: number;
+    /** Inherited generic benchmark ceiling. NOT the operative gate. */
+    inheritedBenchmarkMaxAgeMs: number;
+    /** Provider's documented cache window. Equals the effective gate. */
+    providerCacheWindowMs: number;
+  } | null;
+  regime: {
+    regime: string;
+    etNowIso: string;
+    hoursToNextReopen: number;
+    nextReopenAtIso: string | null;
+    requiredBenchmarkSource: string;
+    holidayCalendarSupported: false;
+    limitation: string;
+  };
+  quant: {
+    action: string;
+    rawBasis: number;
+    rawBasisPct: number;
+    hurdleRate: number;
+    hurdleRatePct: number;
+    netEdge: number;
+    netEdgePct: number;
+    quantScore: number;
+    zScore: number;
+    tokenPrice: number;
+    benchmarkPrice: number;
+    midPrice: number;
+    vwapPrice: number | null;
+    reasons: string[];
+  } | null;
+  gate: { usable: boolean; blockedReason: string | null };
+  executable: false;
+  blockingReasons: string[];
+  bridge: { packetToDispatch: "absent" };
+  error: { code: string; message: string } | null;
+  notes: string[];
+}
+
 export interface SimulateParams {
   symbol?: string;
   side?: string;
@@ -64,6 +144,13 @@ export interface DeliberationOutput {
 export const API_BASE =
   (import.meta as unknown as { env?: Record<string, string> }).env?.["VITE_API_BASE"] ??
   "http://localhost:3001";
+
+export async function fetchEvidence(symbol?: string): Promise<EvidenceResponse> {
+  const qs = symbol ? "?symbol=" + encodeURIComponent(symbol) : "";
+  const res = await fetch(API_BASE + "/api/desk/evidence" + qs);
+  if (!res.ok) throw new Error("evidence " + res.status);
+  return (await res.json()) as EvidenceResponse;
+}
 
 export async function fetchState(): Promise<DeskState> {
   const res = await fetch(API_BASE + "/api/desk/state");

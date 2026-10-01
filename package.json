@@ -9,7 +9,8 @@
     "check-foundry:node": "node scripts/check-foundry.mjs",
     "engine:typecheck": "pnpm --filter @money-boys/engine typecheck",
     "engine:test": "pnpm --filter @money-boys/engine test",
-    "engine:auth": "pnpm --filter @money-boys/engine test:auth"
+    "engine:auth": "pnpm --filter @money-boys/engine test:auth",
+    "test:e2e": "pnpm --filter @money-boys/desk test:e2e"
   },
   "devDependencies": {
     "tsx": "^4.19.0"

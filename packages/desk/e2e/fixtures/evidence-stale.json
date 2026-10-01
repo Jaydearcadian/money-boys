@@ -1,0 +1,66 @@
+{
+  "authority": "read_only",
+  "executionAuthority": "none",
+  "generatedAt": "2026-09-30T14:00:00.000Z",
+  "symbolMapping": {
+    "repoSymbol": "rNVDAUSDT",
+    "venueSymbol": "NVDAUSDT",
+    "referenceSymbol": "NVDA",
+    "note": "r-prefixed Bitget spot symbol -> bare Bitget futures symbol -> underlying equity reference"
+  },
+  "bridge": {
+    "packetToDispatch": "absent"
+  },
+  "ok": false,
+  "status": "unusable",
+  "benchmark": {
+    "provider": "robinhood_stock_token_api",
+    "source": "EXPLICIT_TS_SOURCE",
+    "symbol": "NVDA",
+    "bid": 132.6,
+    "ask": 132.82,
+    "midpoint": 132.71,
+    "currency": "USD",
+    "sourceAsOf": "2026-09-21T13:59:59.514Z",
+    "fetchedAt": "2026-09-30T14:00:00.000Z",
+    "timestampType": "PROVIDER_GENERATED_QUOTE",
+    "cacheWindowMs": 15000,
+    "isTradingHalt": false,
+    "sourceUrl": "https://api.robinhood.com/rhj/prices/NVDA",
+    "priceBasis": "RAW_UNDERLYING_EQUITY_NOT_MULTIPLIER_ADJUSTED",
+    "multiplierCurrent": "1.000775159164630595",
+    "multiplierAppliedToPrice": false
+  },
+  "freshness": {
+    "status": "verified_stale",
+    "ageMs": 777600486,
+    "effectiveThresholdMs": 15000,
+    "inheritedBenchmarkMaxAgeMs": 345600000,
+    "providerCacheWindowMs": 15000
+  },
+  "regime": {
+    "regime": "tradfi_open",
+    "etNowIso": "2026-09-30T14:00:00.000Z",
+    "hoursToNextReopen": 0,
+    "nextReopenAtIso": null,
+    "requiredBenchmarkSource": "live_intraday",
+    "holidayCalendarSupported": false,
+    "limitation": "Holidays and early closes are NOT modelled. A market holiday or early close before 16:00 ET will be reported as tradfi_open when the venue is actually shut. Treat an unrecognized market day as suspect (GAP-017)."
+  },
+  "quant": null,
+  "gate": {
+    "usable": false,
+    "blockedReason": "FAIL_CLOSED: benchmark freshness cannot be established — regime=tradfi_open, freshness=verified_stale (Robinhood NVDA bid/ask midpoint; sourceAsOf is the provider's generatedAt (PROVIDER_GENERATED_QUOTE), not an exchange trade time. priceBasis=RAW_UNDERLYING_EQUITY_NOT_MULTIPLIER_ADJUSTED. multiplierAppliedToPrice=false.)"
+  },
+  "executable": false,
+  "blockingReasons": [
+    "FAIL_CLOSED: benchmark freshness cannot be established — regime=tradfi_open, freshness=verified_stale (Robinhood NVDA bid/ask midpoint; sourceAsOf is the provider's generatedAt (PROVIDER_GENERATED_QUOTE), not an exchange trade time. priceBasis=RAW_UNDERLYING_EQUITY_NOT_MULTIPLIER_ADJUSTED. multiplierAppliedToPrice=false.)",
+    "READ_ONLY_SURFACE: this evidence endpoint has no execution authority and cannot dispatch an order",
+    "NO_PACKET_TO_DISPATCH_BRIDGE: no typed path exists from a benchmark packet to OrderDispatcher; the benchmark half and the venue half are proven separately, not end-to-end"
+  ],
+  "error": null,
+  "notes": [
+    "Robinhood NVDA bid/ask midpoint; sourceAsOf is the provider's generatedAt (PROVIDER_GENERATED_QUOTE), not an exchange trade time. priceBasis=RAW_UNDERLYING_EQUITY_NOT_MULTIPLIER_ADJUSTED. multiplierAppliedToPrice=false.",
+    "effectiveGateMs=15000 (provider cache/freshness limit); inheritedBenchmarkMaxAgeMs=345600000 (NOT the operative gate)"
+  ]
+}

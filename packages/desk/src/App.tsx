@@ -2,9 +2,19 @@ import { useEffect, useState } from "react";
 import { fetchState, type DeskState } from "./lib/api";
 import { LandingPage } from "./pages/Landing";
 import { DeskPage } from "./pages/Desk";
+import { EvidencePage } from "./pages/Evidence";
 
-function route(): string {
-  return window.location.hash.startsWith("#/desk") ? "desk" : "landing";
+/**
+ * Three surfaces, deliberately separate routes rather than tabs: a tab would
+ * visually imply one pipeline with two panels, and these are not one pipeline.
+ * #/evidence is the read-only benchmark pre-flight. #/desk is the Bitget Demo
+ * venue lifecycle. Neither is connected end-to-end to the other.
+ */
+function route(): "desk" | "evidence" | "landing" {
+  const h = window.location.hash;
+  if (h.startsWith("#/desk")) return "desk";
+  if (h.startsWith("#/evidence")) return "evidence";
+  return "landing";
 }
 
 export default function App() {
@@ -17,5 +27,6 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
   if (r === "desk") return <DeskPage />;
+  if (r === "evidence") return <EvidencePage />;
   return <LandingPage latest={desk?.latestReceipt ?? null} />;
 }

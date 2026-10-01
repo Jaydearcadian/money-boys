@@ -69,6 +69,15 @@ export type BitgetClientConfig = {
   passphrase: string;
   baseUrl?: string;
   /**
+   * Transport override. Defaults to the global `fetch`.
+   *
+   * Exists so PUBLIC, unauthenticated market reads can be exercised against a
+   * deterministic stub with zero network access. It carries no credentials and
+   * grants no capability: a private route still signs with the configured keys
+   * and still talks to `baseUrl`. Do not use it to reach a different venue.
+   */
+  fetchImpl?: typeof fetch;
+  /**
    * Bitget Demo Trading routes to the SAME base URL (https://api.bitget.com)
    * with the SAME HMAC signing — the only wire difference is the extra
    * `paptrading: 1` request header plus a Demo-scoped API key.
@@ -89,6 +98,8 @@ export class BitgetClient {
   readonly passphrase: string;
   readonly baseUrl: string;
   readonly demoTrading: boolean;
+  /** Undefined means "use the current global fetch", resolved per call. */
+  private readonly fetchOverride?: typeof fetch;
 
   constructor(cfg: BitgetClientConfig) {
     this.apiKey = cfg.apiKey;
@@ -96,6 +107,7 @@ export class BitgetClient {
     this.passphrase = cfg.passphrase;
     this.baseUrl = (cfg.baseUrl ?? "https://api.bitget.com").replace(/\/$/, "");
     this.demoTrading = cfg.demoTrading ?? false;
+    this.fetchOverride = cfg.fetchImpl;
   }
 
   /**
@@ -144,7 +156,10 @@ export class BitgetClient {
         headers["paptrading"] = "1";
       }
     }
-    const res = await fetch(`${this.baseUrl}${pathWithQuery}`, {
+    // Resolved per call, not captured at construction: callers that swap
+    // globalThis.fetch (test doubles, instrumented transports) must still work.
+    const doFetch = this.fetchOverride ?? globalThis.fetch;
+    const res = await doFetch(`${this.baseUrl}${pathWithQuery}`, {
       method,
       headers,
       body: method === "GET" ? undefined : body || undefined,
