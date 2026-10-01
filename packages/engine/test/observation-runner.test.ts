@@ -11,7 +11,9 @@ import {
 } from "../src/observability/observation-runner.js";
 import {
   admitBenchmark,
-  eligibilityForRole,
+  allowedDownstreamUsesFor,
+  benchmarkEligibilityForRole,
+  sourceAdmissionFor,
   provenanceHash,
   type SourceAdapter,
   type SourceObservation,
@@ -49,7 +51,7 @@ const GATE = OBSERVATION_FRESHNESS_GATE_MS;
 function robinhoodObs(over: Partial<SourceObservation> = {}): SourceObservation {
   return {
     provider: "robinhood_stock_token_api",
-    role: "INDEPENDENT_REFERENCE_BENCHMARK",
+    role: "REFERENCE_BENCHMARK",
     symbol: "NVDA",
     bid: 228.82,
     ask: 228.86,
@@ -61,6 +63,11 @@ function robinhoodObs(over: Partial<SourceObservation> = {}): SourceObservation 
     timestampNote: "provider generatedAt; not an exchange trade time",
     failureReason: null,
     provenance: {},
+    artifactHash: null,
+    strategyVersion: null,
+    metrics: null,
+    expiresAt: null,
+    externalExecution: false,
     ...over,
   };
 }
@@ -68,7 +75,7 @@ function robinhoodObs(over: Partial<SourceObservation> = {}): SourceObservation 
 function bitgetObs(over: Partial<SourceObservation> = {}): SourceObservation {
   return {
     provider: "bitget_mcp",
-    role: "VENUE_CONTEXT_OR_RESEARCH",
+    role: "VENUE_MARKET_DATA",
     symbol: "NVDAUSDT",
     bid: 229.04,
     ask: 229.12,
@@ -81,6 +88,11 @@ function bitgetObs(over: Partial<SourceObservation> = {}): SourceObservation {
     timestampNote: "venue match-engine instant; describes the traded instrument, not an independent reference",
     failureReason: null,
     provenance: {},
+    artifactHash: null,
+    strategyVersion: null,
+    metrics: null,
+    expiresAt: null,
+    externalExecution: false,
     ...over,
   };
 }
@@ -195,19 +207,26 @@ describe("observation runner — venue data is never a benchmark", () => {
     assert.match(r.record.blockedReason, /independent underlying-equity benchmark/);
   });
 
-  it("derives eligibility from role, not from adapter declaration", () => {
-    assert.equal(eligibilityForRole("VENUE_CONTEXT_OR_RESEARCH"), "CONTEXT_ONLY");
-    assert.equal(eligibilityForRole("INDEPENDENT_REFERENCE_BENCHMARK"), "ELIGIBLE_BENCHMARK");
-    assert.equal(eligibilityForRole("UNTRUSTED_RESEARCH"), "REJECTED");
+  it("derives benchmark eligibility from role, not from adapter declaration", () => {
+    assert.equal(benchmarkEligibilityForRole("REFERENCE_BENCHMARK"), "ELIGIBLE_PENDING_TIMESTAMP_GATE");
+    assert.equal(benchmarkEligibilityForRole("VENUE_MARKET_DATA"), "NOT_ELIGIBLE_INDEPENDENCE");
+    assert.equal(benchmarkEligibilityForRole("RESEARCH_SIGNAL"), "NOT_ELIGIBLE_ROLE");
+    assert.equal(benchmarkEligibilityForRole("STRATEGY_ARTIFACT"), "NOT_ELIGIBLE_ARTIFACT_SOURCE");
+    assert.equal(benchmarkEligibilityForRole("BACKTEST_ARTIFACT"), "NOT_ELIGIBLE_ARTIFACT_SOURCE");
+    assert.equal(benchmarkEligibilityForRole("PAPER_TRADING_ARTIFACT"), "NOT_ELIGIBLE_ARTIFACT_SOURCE");
   });
 
-  it("rejects an UNTRUSTED_RESEARCH source outright", () => {
-    const a = admitBenchmark({
-      observation: robinhoodObs({ role: "UNTRUSTED_RESEARCH", provider: "getagent_playbook" }),
-      now: NOW,
-      freshnessGateMs: GATE,
-    });
-    assert.equal(a.ok, false);
+  it("rejects each artifact role as a benchmark", () => {
+    for (const role of ["STRATEGY_ARTIFACT", "BACKTEST_ARTIFACT", "PAPER_TRADING_ARTIFACT"] as const) {
+      const a = admitBenchmark({
+        observation: robinhoodObs({ role, provider: "getagent_playbook" }),
+        now: NOW,
+        freshnessGateMs: GATE,
+      });
+      assert.equal(a.ok, false, `${role} must not be a benchmark`);
+      assert.equal(a.ok === false && a.code, "ROLE_NOT_BENCHMARK_ELIGIBLE");
+      assert.equal(a.ok === false && a.eligibility, "NOT_ELIGIBLE_ARTIFACT_SOURCE");
+    }
   });
 });
 
@@ -332,9 +351,9 @@ describe("observation runner — provider failure is recorded, not swallowed", (
   it("records an explicit blocked record when the benchmark source fails", () => {
     const failing: SourceAdapter = {
       provider: "robinhood_stock_token_api",
-      role: "INDEPENDENT_REFERENCE_BENCHMARK",
+      role: "REFERENCE_BENCHMARK",
       offline: true,
-      observe: () => ({ provider: "robinhood_stock_token_api", role: "INDEPENDENT_REFERENCE_BENCHMARK", symbol: "NVDA", code: "HTTP", message: "provider returned HTTP 503" }),
+      observe: () => ({ provider: "robinhood_stock_token_api", role: "REFERENCE_BENCHMARK", symbol: "NVDA", code: "HTTP", message: "provider returned HTTP 503" }),
     };
     const r = run({ adapters: [adapterFor(bitgetObs()), failing] });
     // The failure is visible: venue context alone cannot produce a basis.
@@ -347,9 +366,9 @@ describe("observation runner — provider failure is recorded, not swallowed", (
   it("reports the failure on the normalized observation, not as a missing entry", () => {
     const failing: SourceAdapter = {
       provider: "robinhood_stock_token_api",
-      role: "INDEPENDENT_REFERENCE_BENCHMARK",
+      role: "REFERENCE_BENCHMARK",
       offline: true,
-      observe: () => ({ provider: "p", role: "INDEPENDENT_REFERENCE_BENCHMARK", symbol: "NVDA", code: "TRANSPORT", message: "ECONNRESET" }),
+      observe: () => ({ provider: "p", role: "REFERENCE_BENCHMARK", symbol: "NVDA", code: "TRANSPORT", message: "ECONNRESET" }),
     };
     const r = run({ adapters: [failing] });
     const src = r.sources.find((s) => s.failureReason !== null);
@@ -360,9 +379,9 @@ describe("observation runner — provider failure is recorded, not swallowed", (
   it("records NO_PREDICTION when every source fails", () => {
     const failing: SourceAdapter = {
       provider: "robinhood_stock_token_api",
-      role: "INDEPENDENT_REFERENCE_BENCHMARK",
+      role: "REFERENCE_BENCHMARK",
       offline: true,
-      observe: () => ({ provider: "p", role: "INDEPENDENT_REFERENCE_BENCHMARK", symbol: "NVDA", code: "TRANSPORT", message: "down" }),
+      observe: () => ({ provider: "p", role: "REFERENCE_BENCHMARK", symbol: "NVDA", code: "TRANSPORT", message: "down" }),
     };
     const r = run({ adapters: [failing] });
     assert.equal(r.mode, "NO_PREDICTION");
@@ -783,5 +802,318 @@ describe("observation runner — offline guarantee", () => {
     const hashes = readLineHashes(p);
     assert.equal(hashes.length, 2);
     for (const h of hashes) assert.match(h, /^[0-9a-f]{64}$/);
+  });
+});
+// ---------------------------------------------------------------------------
+// 11. Six-role model: the required corrections
+//
+// The previous revision lumped venue data and third-party artifacts into one
+// rejected bucket. These cases prove the corrected model: each role is admitted
+// for its own purpose, benchmark ineligibility is role-scoped rather than a
+// blanket rejection, and NO role can reach execution.
+// ---------------------------------------------------------------------------
+
+describe("six-role model — Bitget MCP is venue data, not rejected research", () => {
+  it("Bitget MCP can inform a venue-context prediction", () => {
+    const r = run({ adapters: [adapterFor(bitgetObs())] });
+    assert.equal(r.mode, "VENUE_CONTEXT_ONLY");
+    const bitget = r.record.sources.find((s) => s.provider === "bitget_mcp");
+    assert.ok(bitget, "Bitget must appear in the source records");
+    assert.equal(bitget.role, "VENUE_MARKET_DATA");
+    // ADMITTED as an input, while ineligible as the basis benchmark.
+    assert.equal(bitget.sourceAdmission, "ADMITTED");
+    assert.equal(bitget.admissionDecision, "ADMITTED_NON_BENCHMARK");
+    assert.ok(bitget.allowedDownstreamUse.includes("VENUE_CONTEXT_AND_FEATURES"));
+  });
+
+  it("preserves Bitget provenance and timestamps in the record", () => {
+    const r = run({ adapters: [adapterFor(bitgetObs()), adapterFor(robinhoodObs())] });
+    const bitget = r.record.sources.find((s) => s.provider === "bitget_mcp")!;
+    assert.match(bitget.provenanceHash, /^[0-9a-f]{64}$/);
+    assert.equal(r.record.inputHashes.venueProvenanceHash, provenanceHash(bitgetObs()));
+  });
+
+  it("a missing Bitget sourceAsOf prevents benchmark admission and says so", () => {
+    // The reason must be explicit and specific, not a generic rejection.
+    const a = admitBenchmark({
+      observation: bitgetObs({ sourceAsOf: null, timestampType: "NONE_SUPPLIED" }),
+      now: NOW,
+      freshnessGateMs: GATE,
+    });
+    assert.equal(a.ok, false);
+    const r = run({ adapters: [adapterFor(bitgetObs({ sourceAsOf: null })), adapterFor(robinhoodObs())] });
+    const bitget = r.record.sources.find((s) => s.provider === "bitget_mcp")!;
+    assert.ok(bitget.benchmarkRejectionReason !== null, "rejection reason must be recorded");
+  });
+
+  it("records the benchmark rejection reason explicitly on the source record", () => {
+    const r = run({ adapters: [adapterFor(bitgetObs()), adapterFor(robinhoodObs())] });
+    const bitget = r.record.sources.find((s) => s.provider === "bitget_mcp")!;
+    assert.match(bitget.benchmarkRejectionReason!, /ROLE_NOT_BENCHMARK_ELIGIBLE/);
+    assert.match(bitget.benchmarkRejectionReason!, /independent/i);
+    // A REFERENCE_BENCHMARK admitted cleanly carries NO rejection reason.
+    const rh = r.record.sources.find((s) => s.provider === "robinhood_stock_token_api")!;
+    assert.equal(rh.benchmarkRejectionReason, null);
+    assert.equal(rh.admissionDecision, "ADMITTED_BENCHMARK");
+  });
+
+  it("uses NOT_ELIGIBLE_INDEPENDENCE, not a generic role rejection", () => {
+    const a = admitBenchmark({ observation: bitgetObs(), now: NOW, freshnessGateMs: GATE });
+    assert.equal(a.ok === false && a.eligibility, "NOT_ELIGIBLE_INDEPENDENCE");
+  });
+});
+
+describe("six-role model — bitget-signal reaches Quant input but cannot dispatch", () => {
+  function signalObs(over: Partial<SourceObservation> = {}): SourceObservation {
+    return {
+      provider: "bitget_signal",
+      role: "RESEARCH_SIGNAL",
+      symbol: "NVDAUSDT",
+      bid: null,
+      ask: null,
+      price: null,
+      // A signal may carry its own issued-at instant; it is still not a benchmark.
+      sourceAsOf: "2026-10-01T14:29:59.950Z",
+      fetchedAt: NOW.toISOString(),
+      responseReceivedAt: "2026-10-01T14:30:00.050Z",
+      timestampType: "PROVIDER_GENERATED_QUOTE",
+      timestampNote: "signal issued-at instant",
+      failureReason: null,
+      provenance: { strategy: "momentum", confidence: 0.7 },
+      artifactHash: null,
+      strategyVersion: null,
+      metrics: null,
+      expiresAt: "2026-10-01T14:45:00.000Z",
+      externalExecution: false,
+      ...over,
+    };
+  }
+
+  it("is admitted as a research signal with proposal-input use", () => {
+    const r = run({ adapters: [adapterFor(bitgetObs()), adapterFor(signalObs()), adapterFor(robinhoodObs())] });
+    const sig = r.record.sources.find((s) => s.provider === "bitget_signal");
+    assert.ok(sig, "the signal must be recorded");
+    assert.equal(sig.role, "RESEARCH_SIGNAL");
+    assert.equal(sig.sourceAdmission, "ADMITTED");
+    assert.ok(sig.allowedDownstreamUse.includes("PROPOSAL_INPUT"));
+  });
+
+  it("is bound into the prediction input hash without becoming a price source", () => {
+    const withSignal = run({ adapters: [adapterFor(signalObs()), adapterFor(bitgetObs()), adapterFor(robinhoodObs())] });
+    const without = run({ adapters: [adapterFor(bitgetObs()), adapterFor(robinhoodObs())] });
+    // The signal is an extra non-market input, so it must move the identity.
+    assert.notEqual(
+      withSignal.record.inputHashes.combinedInputHash,
+      without.record.inputHashes.combinedInputHash,
+      "the signal must be bound into the prediction identity",
+    );
+    // Yet it changed NOTHING about which sources priced the decision.
+    assert.equal(withSignal.record.predictionMode, "BASIS_PREDICTION");
+    assert.equal(withSignal.record.benchmarkSymbol, "NVDA");
+    assert.equal(withSignal.record.basis !== null, true);
+  });
+
+  it("retains identity, fetch time, hash and expiry", () => {
+    const sig = signalObs();
+    assert.equal(sig.fetchedAt, NOW.toISOString());
+    assert.ok(sig.expiresAt !== null);
+    assert.match(provenanceHash(sig), /^[0-9a-f]{64}$/);
+    assert.equal(provenanceHash(sig), provenanceHash({ ...sig }));
+  });
+
+  it("never carries execution authority", () => {
+    const r = run({ adapters: [adapterFor(bitgetObs()), adapterFor(signalObs()), adapterFor(robinhoodObs())] });
+    assert.equal(r.record.dispatchEligible, false);
+    assert.equal(r.record.wouldHaveExecuted, false);
+    assert.equal(r.record.executionAuthority, "none");
+    assert.equal(r.record.orderSubmitted, false);
+  });
+
+  it("cannot be a benchmark regardless of its timestamp quality", () => {
+    const a = admitBenchmark({ observation: signalObs(), now: NOW, freshnessGateMs: GATE });
+    assert.equal(a.ok, false);
+    assert.equal(a.ok === false && a.eligibility, "NOT_ELIGIBLE_ROLE");
+  });
+});
+
+describe("six-role model — validated GetAgent/Playbook artifacts are recorded", () => {
+  const ARTIFACT_HASH = "a".repeat(64);
+
+  function artifactObs(role: "STRATEGY_ARTIFACT" | "BACKTEST_ARTIFACT" | "PAPER_TRADING_ARTIFACT"): SourceObservation {
+    return {
+      provider: "getagent_playbook",
+      role,
+      symbol: "NVDAUSDT",
+      bid: null,
+      ask: null,
+      price: null,
+      sourceAsOf: "2026-09-01T00:00:00.000Z",
+      fetchedAt: NOW.toISOString(),
+      responseReceivedAt: NOW.toISOString(),
+      timestampType: "ARTIFACT_ISSUED_AT",
+      timestampNote: "artifact issued-at instant",
+      failureReason: null,
+      provenance: { submitted: true },
+      artifactHash: ARTIFACT_HASH,
+      strategyVersion: "v1.2.3",
+      metrics: { sharpe: 1.4, trades: 812 },
+      expiresAt: null,
+      // External paper evidence is explicitly NOT Money Boys execution.
+      externalExecution: role === "PAPER_TRADING_ARTIFACT",
+    };
+  }
+
+  it("records a strategy artifact with hash, version, metrics and provenance", () => {
+    const r = run({ adapters: [adapterFor(bitgetObs()), adapterFor(artifactObs("STRATEGY_ARTIFACT")), adapterFor(robinhoodObs())] });
+    const art = r.record.sources.find((s) => s.provider === "getagent_playbook");
+    assert.ok(art, "the artifact must be recorded");
+    assert.equal(art.sourceAdmission, "ADMITTED");
+    assert.equal(art.artifactKind, "STRATEGY");
+    assert.equal(art.artifactHash, ARTIFACT_HASH);
+    assert.equal(art.strategyVersion, "v1.2.3");
+    assert.ok(art.allowedDownstreamUse.includes("STRATEGY_DEFINITION_INPUT"));
+  });
+
+  it("records a backtest artifact under BACKTEST_CONTEXT_INPUT", () => {
+    const r = run({ adapters: [adapterFor(artifactObs("BACKTEST_ARTIFACT"))] });
+    const art = r.record.sources.find((s) => s.provider === "getagent_playbook")!;
+    assert.equal(art.artifactKind, "BACKTEST");
+    assert.ok(art.allowedDownstreamUse.includes("BACKTEST_CONTEXT_INPUT"));
+  });
+
+  it("distinguishes external paper evidence from Money Boys execution", () => {
+    const r = run({ adapters: [adapterFor(artifactObs("PAPER_TRADING_ARTIFACT"))] });
+    const art = r.record.sources.find((s) => s.provider === "getagent_playbook")!;
+    assert.equal(art.artifactKind, "PAPER_TRADING");
+    assert.ok(art.allowedDownstreamUse.includes("EXTERNAL_PAPER_EVIDENCE_REFERENCE"));
+    // The distinction is EXPLICIT, not implied: these are not our fills.
+    assert.equal(art.allowedDownstreamUse.includes("VENUE_CONTEXT_AND_FEATURES"), false);
+  });
+
+  it("marks the external-execution flag on the observation itself", () => {
+    assert.equal(artifactObs("PAPER_TRADING_ARTIFACT").externalExecution, true);
+    assert.equal(artifactObs("STRATEGY_ARTIFACT").externalExecution, false);
+  });
+
+  it("binds an artifact hash into the prediction identity", () => {
+    const a = run({ adapters: [adapterFor(bitgetObs()), adapterFor(artifactObs("STRATEGY_ARTIFACT"))] });
+    const b = run({ adapters: [adapterFor(bitgetObs()), adapterFor(artifactObs("STRATEGY_ARTIFACT"))] });
+    assert.equal(a.record.inputHashes.combinedInputHash, b.record.inputHashes.combinedInputHash);
+    const different = run({
+      adapters: [adapterFor(bitgetObs()), adapterFor({ ...artifactObs("STRATEGY_ARTIFACT"), artifactHash: "b".repeat(64) })],
+    });
+    assert.notEqual(a.record.inputHashes.combinedInputHash, different.record.inputHashes.combinedInputHash);
+  });
+
+  it("never confers order or portfolio authority", () => {
+    for (const role of ["STRATEGY_ARTIFACT", "BACKTEST_ARTIFACT", "PAPER_TRADING_ARTIFACT"] as const) {
+      const r = run({ adapters: [adapterFor(artifactObs(role)), adapterFor(bitgetObs()), adapterFor(robinhoodObs())] });
+      assert.equal(r.record.dispatchEligible, false);
+      assert.equal(r.record.executionAuthority, "none");
+      assert.equal(r.record.wouldHaveExecuted, false);
+      assert.equal(r.record.logMode, "OBSERVATION_ONLY");
+    }
+  });
+});
+
+describe("six-role model — benchmark rejection is NOT source rejection", () => {
+  it("admits every role as a source even when it is ineligible as a benchmark", () => {
+    for (const role of [
+      "VENUE_MARKET_DATA", "REFERENCE_BENCHMARK", "RESEARCH_SIGNAL",
+      "STRATEGY_ARTIFACT", "BACKTEST_ARTIFACT", "PAPER_TRADING_ARTIFACT",
+    ] as const) {
+      assert.equal(sourceAdmissionFor({ ...robinhoodObs(), role }), "ADMITTED", `${role} must be admissible`);
+    }
+  });
+
+  it("records ADMITTED_NON_BENCHMARK rather than REJECTED for ineligible roles", () => {
+    const r = run({
+      adapters: [
+        adapterFor(bitgetObs()),
+        adapterFor({ ...robinhoodObs(), role: "RESEARCH_SIGNAL", provider: "bitget_signal" }),
+        adapterFor(robinhoodObs()),
+      ],
+    });
+    for (const provider of ["bitget_mcp", "bitget_signal", "robinhood_stock_token_api"]) {
+      const s = r.record.sources.find((x) => x.provider === provider)!;
+      assert.equal(s.admissionDecision !== "REJECTED", true, `${provider} must not be rejected as a source`);
+      assert.equal(s.sourceAdmission, "ADMITTED");
+    }
+  });
+
+  it("only rejects a source for a FAILED or MALFORMED read", () => {
+    const failed = run({
+      adapters: [{
+        provider: "bitget_signal",
+        role: "RESEARCH_SIGNAL",
+        offline: true,
+        observe: () => ({ provider: "bitget_signal", role: "RESEARCH_SIGNAL" as const, symbol: "NVDAUSDT", code: "TRANSPORT", message: "timeout" }),
+      }],
+    });
+    const sig = failed.record.sources[0]!;
+    assert.equal(sig.sourceAdmission, "REJECTED_SOURCE_FAILED");
+    assert.equal(sig.admissionDecision, "REJECTED");
+  });
+
+  it("gives every role a permitted downstream use and none is an execution use", () => {
+    for (const role of [
+      "VENUE_MARKET_DATA", "REFERENCE_BENCHMARK", "RESEARCH_SIGNAL",
+      "STRATEGY_ARTIFACT", "BACKTEST_ARTIFACT", "PAPER_TRADING_ARTIFACT",
+    ] as const) {
+      const uses = allowedDownstreamUsesFor(role);
+      assert.ok(uses.length > 0, `${role} must have at least one permitted use`);
+      for (const u of uses) {
+        assert.notEqual(u, "EXECUTE" as never);
+        assert.match(u, /INPUT|REFERENCE|CONTEXT/, `${role} use '${u}' must be a read, not an action`);
+      }
+    }
+  });
+});
+
+describe("six-role model — no source can reach the dispatcher", () => {
+  it("every role's permitted uses exclude execution", () => {
+    // The strongest form: there is no EXECUTE-like capability anywhere in the
+    // AllowedDownstreamUse union, so no role can be granted one.
+    const allUses: string[] = [];
+    for (const role of [
+      "VENUE_MARKET_DATA", "REFERENCE_BENCHMARK", "RESEARCH_SIGNAL",
+      "STRATEGY_ARTIFACT", "BACKTEST_ARTIFACT", "PAPER_TRADING_ARTIFACT",
+    ] as const) {
+      allUses.push(...allowedDownstreamUsesFor(role));
+    }
+    for (const u of allUses) {
+      assert.ok(!/EXECUTE|DISPATCH|ORDER|SIGN|MUTATE/i.test(u), `use '${u}' must not imply execution`);
+    }
+  });
+
+  it("imports no dispatcher, Bitget client, receipt or network module", () => {
+    for (const name of ["observation-runner", "source-model", "prediction", "outcome", "prediction-log"]) {
+      const src = readFileSync(join(process.cwd(), "src", "observability", `${name}.ts`), "utf8");
+      for (const forbidden of ["OrderDispatcher", "place-order", "integrations/bitget", "council/receipts", "node:https", "node:net"]) {
+        assert.ok(!src.includes(forbidden), `${name} must not reference ${forbidden}`);
+      }
+    }
+  });
+
+  it("produces zero-authority records for every role combination", () => {
+    // One source of EVERY role, so this proves the boundary holds when the
+    // runner is saturated with inputs. Only the REFERENCE_BENCHMARK is admitted
+    // as the basis; the rest contribute context without authority.
+    const everything = [
+      adapterFor(bitgetObs()),
+      adapterFor({ ...robinhoodObs(), role: "RESEARCH_SIGNAL", provider: "bitget_signal", symbol: "NVDAUSDT" }),
+      adapterFor({ ...robinhoodObs(), role: "STRATEGY_ARTIFACT", provider: "getagent_playbook", symbol: "NVDAUSDT" }),
+      adapterFor({ ...robinhoodObs(), role: "BACKTEST_ARTIFACT", provider: "getagent_playbook", symbol: "NVDAUSDT" }),
+      adapterFor({ ...robinhoodObs(), role: "PAPER_TRADING_ARTIFACT", provider: "getagent_playbook", symbol: "NVDAUSDT" }),
+      adapterFor(robinhoodObs()),
+    ];
+    const r = run({ adapters: everything });
+    assert.equal(r.record.predictionMode, "BASIS_PREDICTION");
+    assert.equal(r.record.dispatchEligible, false);
+    assert.equal(r.record.wouldHaveExecuted, false);
+    assert.equal(r.record.executionAuthority, "none");
+    assert.equal(r.record.orderSubmitted, false);
+    assert.equal(r.record.logMode, "OBSERVATION_ONLY");
+    assert.equal(r.record.phaseTransition, null);
   });
 });

@@ -39,7 +39,19 @@
  *   types. A prediction is a forecast; whether it was right is decided by the
  *   evaluation record, not asserted here.
  */
-import { canonicalJson, type SourceObservation } from "./source-model.js";
+import {
+  allowedDownstreamUsesFor,
+  artifactKindFor,
+  benchmarkEligibilityForRole,
+  canonicalJson,
+  sourceAdmissionFor,
+  type AllowedDownstreamUse,
+  type ArtifactKind,
+  type BenchmarkEligibility,
+  type SourceAdmission,
+  type SourceObservation,
+  type SourceRole,
+} from "./source-model.js";
 import { createHash } from "node:crypto";
 
 export type PredictionMode = "BASIS_PREDICTION" | "VENUE_CONTEXT_ONLY" | "NO_PREDICTION";
@@ -74,6 +86,67 @@ export interface PredictionInputHashes {
   readonly combinedInputHash: string;
 }
 
+/**
+ * Per-source record of what was admitted, what it may be used for, and — when
+ * it is not benchmark-eligible — exactly why.
+ *
+ * The point of separating ADMISSION from BENCHMARK ELIGIBILITY is that a source
+ * rejected as a benchmark is still a legitimate input. Bitget market data is
+ * admitted as venue context and refused as the basis reference; both facts are
+ * recorded here rather than collapsed into a single "rejected" verdict.
+ */
+export interface SourceAdmissionRecord {
+  readonly provider: string;
+  readonly role: SourceRole;
+  readonly symbol: string;
+  /** Whether this source is a legitimate input at all. */
+  readonly sourceAdmission: SourceAdmission;
+  /** Whether it may serve as the independent basis benchmark. */
+  readonly benchmarkEligibility: BenchmarkEligibility;
+  /** ADMITTED_BENCHMARK | ADMITTED_NON_BENCHMARK | REJECTED */
+  readonly admissionDecision: "ADMITTED_BENCHMARK" | "ADMITTED_NON_BENCHMARK" | "REJECTED";
+  /** What this source is permitted to influence downstream. */
+  readonly allowedDownstreamUse: readonly AllowedDownstreamUse[];
+  /** Artifact identity, for the three artifact roles. Null otherwise. */
+  readonly artifactKind: ArtifactKind | null;
+  readonly artifactHash: string | null;
+  readonly strategyVersion: string | null;
+  /** Populated only when this source was refused for benchmark use. */
+  readonly benchmarkRejectionReason: string | null;
+  /** Hash binding this record to the exact source content reviewed. */
+  readonly provenanceHash: string;
+}
+
+/** Build the admission record for one normalized source. */
+export function buildSourceAdmissionRecord(
+  o: SourceObservation,
+  benchmark: { ok: boolean; code?: string; detail?: string },
+): SourceAdmissionRecord {
+  const admission = sourceAdmissionFor(o);
+  const eligibility = benchmarkEligibilityForRole(o.role);
+  const decision: SourceAdmissionRecord["admissionDecision"] =
+    admission !== "ADMITTED"
+      ? "REJECTED"
+      : benchmark.ok
+        ? "ADMITTED_BENCHMARK"
+        : "ADMITTED_NON_BENCHMARK";
+  return {
+    provider: o.provider,
+    role: o.role,
+    symbol: o.symbol,
+    sourceAdmission: admission,
+    benchmarkEligibility: eligibility,
+    admissionDecision: decision,
+    allowedDownstreamUse: allowedDownstreamUsesFor(o.role),
+    artifactKind: artifactKindFor(o.role),
+    artifactHash: o.artifactHash,
+    strategyVersion: o.strategyVersion,
+    benchmarkRejectionReason:
+      benchmark.ok || benchmark.detail === undefined ? null : `${benchmark.code}: ${benchmark.detail}`,
+    provenanceHash: sha256(canonicalJson(o)),
+  };
+}
+
 export interface PredictionRecord {
   readonly recordType: "PREDICTION";
   readonly recordId: string;
@@ -100,6 +173,11 @@ export interface PredictionRecord {
   readonly confidenceScore: number | null;
 
   readonly inputHashes: PredictionInputHashes;
+  /**
+   * Per-source role, identity, artifact hash, admission decision, permitted
+   * downstream use and benchmark rejection reason.
+   */
+  readonly sources: readonly SourceAdmissionRecord[];
 
   readonly benchmarkStatus: BenchmarkStatus;
   readonly benchmarkSourceAsOf: string | null;
@@ -158,6 +236,8 @@ export function computePredictionId(args: {
 export function combinedInputHash(args: {
   benchmark: SourceObservation | null;
   venue: SourceObservation | null;
+  /** Non-market sources that informed the prediction, e.g. artifacts. */
+  artifacts?: readonly SourceObservation[];
 }): string {
   return sha256(
     canonicalJson({
@@ -174,6 +254,11 @@ export function combinedInputHash(args: {
         bid: args.venue.bid,
         ask: args.venue.ask,
       },
+      // Artifact hashes and roles participate, so recording a different
+      // artifact or reclassifying a source changes the prediction identity.
+      artifacts: (args.artifacts ?? [])
+        .map((a) => ({ provider: a.provider, role: a.role, artifactHash: a.artifactHash }))
+        .sort((x, y) => (x.provider < y.provider ? -1 : 1)),
     }),
   );
 }

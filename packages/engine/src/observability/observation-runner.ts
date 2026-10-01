@@ -31,7 +31,8 @@
 import { evaluateBasisSpread } from "../agents/quant.js";
 import {
   admitBenchmark,
-  eligibilityForRole,
+  allowedDownstreamUsesFor,
+  benchmarkEligibilityForRole,
   failureToObservation,
   isFailure,
   provenanceHash,
@@ -42,10 +43,12 @@ import {
 import {
   combinedInputHash,
   computePredictionId,
+  buildSourceAdmissionRecord,
   computeRecordHash,
   type BenchmarkStatus,
   type PredictionAction,
   type PredictionBasis,
+  type SourceAdmissionRecord,
   type PredictionMode,
   type PredictionDraft,
   type PredictionRecord,
@@ -142,11 +145,27 @@ export function runOnce(args: RunOnceOptions): RunOnceResult {
   const horizonMs = args.forecastHorizonMs ?? DEFAULT_FORECAST_HORIZON_MS;
   const sources = observeAll({ adapters: args.adapters, symbol: args.benchmarkSymbol, now: args.now });
 
-  // ---- Partition by role. Venue data can never become a benchmark. ----
+  // ---- Partition by role.
+  //
+  // Benchmark candidacy is decided by benchmarkEligibilityForRole, not by a
+  // hard-coded role string, so adding a role cannot silently widen or narrow
+  // benchmark use. VENUE_MARKET_DATA lands in `venueContexts` and is therefore
+  // eligible for venue context and research input while remaining ineligible as
+  // the independent reference — which is the distinction the role model exists
+  // to express.
   const benchmarkCandidates = sources.filter(
-    (s) => s.role === "INDEPENDENT_REFERENCE_BENCHMARK",
+    (s) => benchmarkEligibilityForRole(s.role) === "ELIGIBLE_PENDING_TIMESTAMP_GATE",
   );
-  const venueContexts = sources.filter((s) => eligibilityForRole(s.role) === "CONTEXT_ONLY");
+  const venueContexts = sources.filter((s) => {
+    const uses = allowedDownstreamUsesFor(s.role);
+    return uses.includes("VENUE_CONTEXT_AND_FEATURES");
+  });
+  // Artifacts and signals inform the record without becoming a price source.
+  const nonMarketSources = sources.filter((s) => {
+    const uses = allowedDownstreamUsesFor(s.role);
+    return uses.includes("PROPOSAL_INPUT") || uses.includes("STRATEGY_DEFINITION_INPUT")
+      || uses.includes("BACKTEST_CONTEXT_INPUT") || uses.includes("EXTERNAL_PAPER_EVIDENCE_REFERENCE");
+  });
 
   // Exactly one independent candidate is expected. If several are supplied, the
   // first admitted one wins and the rest are recorded but not used, so the
@@ -170,12 +189,26 @@ export function runOnce(args: RunOnceOptions): RunOnceResult {
 
   const admissions: Record<string, { ok: boolean; code?: string; detail?: string }> = {};
   for (const s of sources) {
-    if (s.role !== "INDEPENDENT_REFERENCE_BENCHMARK") continue;
     const a = admitBenchmark({ observation: s, now: args.now, freshnessGateMs: gateMs });
     admissions[s.provider] = a.ok ? { ok: true } : { ok: false, code: a.code, detail: a.detail };
   }
 
-  const combinedHash = combinedInputHash({ benchmark: admittedFrom, venue: venueContext });
+  // Per-source admission records: role, identity, artifact hash, admission
+  // decision, permitted downstream use, and the benchmark rejection reason when
+  // one applies. A source refused as a benchmark is still recorded as admitted.
+  const sourceRecords: SourceAdmissionRecord[] = sources.map((s) =>
+    buildSourceAdmissionRecord(s, {
+      ok: admissions[s.provider]?.ok === true,
+      ...(admissions[s.provider]?.code !== undefined ? { code: admissions[s.provider]!.code } : {}),
+      ...(admissions[s.provider]?.detail !== undefined ? { detail: admissions[s.provider]!.detail } : {}),
+    }),
+  );
+
+  const combinedHash = combinedInputHash({
+    benchmark: admittedFrom,
+    venue: venueContext,
+    artifacts: nonMarketSources,
+  });
 
   // ---- Derive the mode from admission results, never from a caller flag. ----
   let mode: PredictionMode;
@@ -276,6 +309,7 @@ export function runOnce(args: RunOnceOptions): RunOnceResult {
       venueProvenanceHash: venueContext === null ? null : provenanceHash(venueContext),
       combinedInputHash: combinedHash,
     },
+    sources: sourceRecords,
     benchmarkStatus: statusFor(admission, benchmarkCandidates.length > 0),
     benchmarkSourceAsOf: admittedFrom?.sourceAsOf ?? null,
     benchmarkAgeAtReceiptMs: admission !== null && admission.ok ? admission.ageAtReceiptMs : null,
