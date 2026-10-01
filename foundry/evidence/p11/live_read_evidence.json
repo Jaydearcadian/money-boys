@@ -14,9 +14,9 @@
     "credentialsPrinted": false
   },
   "request": {
-    "startIso": "2026-10-01T08:23:20.846Z",
-    "endIso": "2026-10-01T08:23:21.713Z",
-    "wallClockMs": 867,
+    "startIso": "2026-10-01T13:32:41.767Z",
+    "endIso": "2026-10-01T13:32:42.454Z",
+    "wallClockMs": 687,
     "url": "https://api.robinhood.com/rhj/prices/NVDA"
   },
   "symbolMapping": {
@@ -32,58 +32,75 @@
     "isTradingHalt": false
   },
   "provenance": {
-    "sourceAsOf": "2026-10-01T08:23:13.420389945Z",
-    "sourceAsOfVerbatim": "2026-10-01T08:23:13.420389945Z",
+    "sourceAsOf": "2026-10-01T13:32:30.457475138Z",
+    "sourceAsOfVerbatim": "2026-10-01T13:32:30.457475138Z",
     "timestampType": "PROVIDER_GENERATED_QUOTE",
-    "requestedAt": "2026-10-01T08:23:20.846Z",
-    "responseReceivedAt": "2026-10-01T08:23:20.958Z",
-    "fetchedAt": "2026-10-01T08:23:20.846Z",
+    "requestedAt": "2026-10-01T13:32:41.768Z",
+    "responseReceivedAt": "2026-10-01T13:32:41.902Z",
+    "fetchedAt": "2026-10-01T13:32:41.768Z",
     "conflated": false
   },
   "freshness": {
-    "ageMs": 7426,
-    "ageAtRequestStartMs": 7426,
-    "ageAtReceiptMs": 7538,
-    "freshnessBasis": "request-start-relative",
-    "receiptLatencyMs": 112,
+    "ageMs": 11445,
+    "ageAtRequestStartMs": 11311,
+    "ageAtReceiptMs": 11445,
+    "freshnessBasis": "receipt-relative",
+    "receiptLatencyMs": 134,
     "effectiveGateMs": 15000,
     "inheritedCeilingMs": 345600000,
     "inheritedIsOperative": false,
     "providerCacheWindowMs": 15000,
     "status": "verified_fresh",
     "withinEffectiveGate": true,
-    "gateBasisIsMorePermissive": true
+    "gateBasisIsStricter": true
   },
   "regime": {
-    "regime": "tradfi_closed",
-    "etNowIso": "2026-10-01T08:23:20.846Z",
-    "hoursToNextReopen": 5.1109,
-    "nextReopenAtIso": "2026-10-01T13:30:00.000Z",
-    "requiredBenchmarkSource": "latest_close",
+    "regime": "tradfi_open",
+    "etNowIso": "2026-10-01T13:32:41.768Z",
+    "hoursToNextReopen": 0,
+    "nextReopenAtIso": null,
+    "requiredBenchmarkSource": "live_intraday",
     "holidayCalendarSupported": false,
     "limitation": "Holidays and early closes are NOT modelled. A market holiday or early close before 16:00 ET will be reported as tradfi_open when the venue is actually shut. Treat an unrecognized market day as suspect (GAP-017)."
   },
+  "sessionVerification": {
+    "sessionVerification": "ANNUAL_CALENDAR_ONLY",
+    "sameDayAlertsChecked": false,
+    "calendarBasis": "ANNUAL_CALENDAR_ONLY",
+    "dispatchEligible": false,
+    "sameDayChecklistComplete": false,
+    "calendarDatasetId": "nasdaq-2026.operator-reviewed.r1",
+    "calendarAdmissionOk": true,
+    "calendarAdmissionCode": null,
+    "sessionVerdictCode": "TRADABLE",
+    "sessionTradable": true,
+    "sessionWindowEt": "570-960",
+    "doesNotEstablishDispatchEligibility": true,
+    "doesNotCloseGap017": true
+  },
   "benchmark": {
-    "bid": 229.87,
-    "ask": 230,
-    "midpoint": 229.935,
+    "bid": 228.82,
+    "ask": 228.86,
+    "midpoint": 228.84,
     "currency": "USD",
     "priceBasis": "RAW_UNDERLYING_EQUITY_NOT_MULTIPLIER_ADJUSTED",
     "multiplierCurrent": "1.000775159164630595",
     "multiplierAppliedToPrice": false
   },
   "quant": {
-    "action": "SELL_BASIS",
-    "rawBasisPct": 0.1587,
+    "action": "NEUTRAL",
+    "rawBasisPct": 0.1049,
     "hurdleRatePct": 0.1222,
-    "netEdgePct": 0.0366,
-    "quantScore": 50.6,
-    "tokenPrice": 230.3,
-    "benchmarkPrice": 229.935
+    "netEdgePct": -0.0173,
+    "quantScore": 49.8,
+    "tokenPrice": 229.08,
+    "benchmarkPrice": 228.84
   },
   "gate": {
     "usable": true,
-    "blockedReason": null
+    "blockedReason": null,
+    "closedSessionVeto": null,
+    "policy": "BLOCK_QUANT_WHEN_TRADFI_CLOSED"
   },
   "surfaceResult": {
     "ok": true,
@@ -105,7 +122,7 @@
       "equityDeltaVerifiedZero": true
     },
     "before": {
-      "capturedAt": "2026-10-01T08:23:20.846Z",
+      "capturedAt": "2026-10-01T13:32:41.755Z",
       "equityUsd": 9364.2040197,
       "freeMarginUsd": 9364.2040197,
       "usedMarginUsd": null,
@@ -115,7 +132,7 @@
       "spotAssetCount": 4
     },
     "after": {
-      "capturedAt": "2026-10-01T08:23:22.068Z",
+      "capturedAt": "2026-10-01T13:32:42.854Z",
       "equityUsd": 9364.2040197,
       "freeMarginUsd": 9364.2040197,
       "usedMarginUsd": null,
@@ -160,7 +177,7 @@
     {
       "name": "sourceAsOf_not_conflated_with_fetchedAt",
       "ok": true,
-      "detail": "2026-10-01T08:23:13.420389945Z vs 2026-10-01T08:23:20.846Z"
+      "detail": "2026-10-01T13:32:30.457475138Z vs 2026-10-01T13:32:41.768Z"
     },
     {
       "name": "effective_gate_is_15s",
@@ -188,24 +205,74 @@
       "detail": "absent"
     },
     {
-      "name": "freshness_basis_is_request_start",
+      "name": "freshness_basis_is_receipt_relative",
       "ok": true,
-      "detail": "request-start-relative"
+      "detail": "receipt-relative"
     },
     {
-      "name": "never_labeled_receipt_relative",
+      "name": "never_labeled_request_start",
       "ok": true,
-      "detail": "no receipt-relative basis in payload"
+      "detail": "no request-start-relative basis in payload"
+    },
+    {
+      "name": "admission_age_equals_receipt_age",
+      "ok": true,
+      "detail": "ageMs=11445 ageAtReceiptMs=11445"
+    },
+    {
+      "name": "no_trade_when_tradfi_closed",
+      "ok": true,
+      "detail": "regime=tradfi_open decision=ELIGIBLE_FOR_DISPATCH_DESIGN quant=present"
+    },
+    {
+      "name": "closed_session_never_executes",
+      "ok": true,
+      "detail": "executable=false"
     },
     {
       "name": "three_instants_present_and_distinct",
       "ok": true,
-      "detail": "2026-10-01T08:23:13.420389945Z / 2026-10-01T08:23:20.846Z / 2026-10-01T08:23:20.958Z"
+      "detail": "2026-10-01T13:32:30.457475138Z / 2026-10-01T13:32:41.768Z / 2026-10-01T13:32:41.902Z"
     },
     {
       "name": "receipt_latency_consistent",
       "ok": true,
-      "detail": "Δage=112 latency=112"
+      "detail": "Δage=134 latency=134"
+    },
+    {
+      "name": "no_bridge_no_order",
+      "ok": true,
+      "detail": "bridge=absent executable=false"
+    },
+    {
+      "name": "session_verified_from_annual_calendar_only",
+      "ok": true,
+      "detail": "ANNUAL_CALENDAR_ONLY"
+    },
+    {
+      "name": "same_day_alerts_not_checked",
+      "ok": true,
+      "detail": "sameDayAlertsChecked=false"
+    },
+    {
+      "name": "not_dispatch_eligible",
+      "ok": true,
+      "detail": "dispatchEligible=false"
+    },
+    {
+      "name": "calendar_admitted",
+      "ok": true,
+      "detail": "nasdaq-2026.operator-reviewed.r1"
+    },
+    {
+      "name": "session_was_tradable",
+      "ok": true,
+      "detail": "REGULAR"
+    },
+    {
+      "name": "open_hours_read_not_closed_session",
+      "ok": true,
+      "detail": "regime=tradfi_open carry=0h"
     },
     {
       "name": "usedMargin_null_documented_not_zero",

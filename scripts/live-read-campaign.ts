@@ -33,9 +33,17 @@ import { fileURLToPath } from "node:url";
 import { BitgetClient } from "../packages/engine/src/bitget/client.js";
 import { buildEvidenceResponse } from "../packages/engine/src/evidence-surface.js";
 import { PRODUCT_TYPE } from "../packages/engine/src/bitget/strategy-packet.js";
+import {
+  admitCalendarForDate,
+  buildSessionVerification,
+  type CalendarDatasetV1,
+} from "../packages/engine/src/agents/calendar-dataset.js";
+import { resolveSession, type CalendarDay, type TradingCalendar } from "../packages/engine/src/agents/session-calendar.js";
+import { readFileSync, existsSync } from "node:fs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(HERE, "..", "foundry", "evidence", "p11");
+const CALENDAR_PATH = join(OUT_DIR, "calendar", "nasdaq-2026.operator-reviewed.json");
 
 /** Times ONE Robinhood benchmark read was made. Never called again. */
 let robinhoodReadCount = 0;
@@ -96,6 +104,47 @@ async function reconcile(client: BitgetClient): Promise<Reconciliation> {
   };
 }
 
+/**
+ * Classify the session from the OPERATOR_REVIEWED artifact.
+ *
+ * Returns UNKNOWN rather than assuming a regular session when the dataset is
+ * absent, stale, or the date is outside its horizon. Nothing here fetches a
+ * calendar: the artifact is read from disk and its hash is verified.
+ */
+function classifySession(now: Date): {
+  verdict: ReturnType<typeof resolveSession>;
+  datasetId: string | null;
+  admission: ReturnType<typeof admitCalendarForDate>;
+} {
+  if (!existsSync(CALENDAR_PATH)) {
+    return {
+      verdict: resolveSession({ now, calendar: { id: "none", exchange: "NASDAQ", days: {} } }),
+      datasetId: null,
+      admission: { ok: false, code: "DATASET_MISSING" as const, detail: "calendar artifact not found on disk" },
+    };
+  }
+  const ds = JSON.parse(readFileSync(CALENDAR_PATH, "utf8")) as CalendarDatasetV1;
+  const days: Record<string, CalendarDay> = {};
+  for (const e of ds.entries) {
+    days[e.date] = {
+      date: e.date,
+      type: e.status === "OPEN" ? "REGULAR" : e.status === "CLOSED" ? "HOLIDAY" : "EARLY_CLOSE",
+      ...(e.closeMinute !== undefined ? { closeMinute: e.closeMinute } : {}),
+      note: e.note ?? "",
+    };
+  }
+  const calendar: TradingCalendar = { id: ds.datasetId, exchange: ds.exchange, days };
+  const wc = { y: now.getUTCFullYear() };
+  void wc;
+  // ET calendar date, derived the same way the resolver does.
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
+  });
+  const etDate = fmt.format(now);
+  const admission = admitCalendarForDate({ dataset: ds, date: etDate, now });
+  return { verdict: resolveSession({ now, calendar }), datasetId: ds.datasetId, admission };
+}
+
 async function main(): Promise<void> {
   const demo = (process.env.BITGET_ENV ?? "").toLowerCase() === "testnet" || (process.env.BITGET_ENV ?? "").toLowerCase() === "demo";
   const client = new BitgetClient({
@@ -118,6 +167,9 @@ async function main(): Promise<void> {
    * surface's internal receipt stamp can be cross-checked against a
    * wall-clock bracket around the whole call.
    */
+  const sessionCheck = classifySession(new Date());
+  const sessionVerification = buildSessionVerification({});
+
   const requestStartMs = Date.now();
   const requestStart = new Date(requestStartMs).toISOString();
   const ev = await buildEvidenceResponse({
@@ -200,6 +252,28 @@ async function main(): Promise<void> {
       gateBasisIsStricter: (f?.ageAtReceiptMs ?? 0) >= (f?.ageAtRequestStartMs ?? 0),
     },
     regime: ev.regime,
+    sessionVerification: {
+      ...sessionVerification,
+      calendarDatasetId: sessionCheck.datasetId,
+      calendarAdmissionOk: sessionCheck.admission.ok,
+      calendarAdmissionCode: sessionCheck.admission.ok ? null : sessionCheck.admission.code,
+      sessionVerdictCode: sessionCheck.verdict.tradable
+        ? "TRADABLE"
+        : (sessionCheck.verdict as { code: string }).code,
+      sessionTradable: sessionCheck.verdict.tradable,
+      sessionWindowEt: sessionCheck.verdict.tradable
+        ? `${sessionCheck.verdict.openMinute}-${sessionCheck.verdict.closeMinute}`
+        : null,
+      dispatchEligible: false,
+      /**
+       * Explicit: this read establishes NOTHING about dispatch eligibility and
+       * closes nothing. A first order would additionally require same-day alert
+       * verification, a complete checklist, and explicit bounded Demo
+       * authorization.
+       */
+      doesNotEstablishDispatchEligibility: true,
+      doesNotCloseGap017: true,
+    },
     benchmark: b
       ? {
           bid: b.bid, ask: b.ask, midpoint: b.midpoint, currency: b.currency,
@@ -262,6 +336,12 @@ async function main(): Promise<void> {
     { name: "three_instants_present_and_distinct", ok: b !== null && b.sourceAsOf !== b.requestedAt && b.requestedAt !== b.responseReceivedAt, detail: `${b?.sourceAsOf} / ${b?.requestedAt} / ${b?.responseReceivedAt}` },
     { name: "receipt_latency_consistent", ok: (f?.ageAtReceiptMs ?? 0) - (f?.ageAtRequestStartMs ?? 0) === f?.receiptLatencyMs, detail: `Δage=${(f?.ageAtReceiptMs ?? 0) - (f?.ageAtRequestStartMs ?? 0)} latency=${String(f?.receiptLatencyMs)}` },
     { name: "no_bridge_no_order", ok: ev.bridge.packetToDispatch === "absent" && ev.executable === false, detail: `bridge=${ev.bridge.packetToDispatch} executable=${String(ev.executable)}` },
+    { name: "session_verified_from_annual_calendar_only", ok: sessionVerification.sessionVerification === "ANNUAL_CALENDAR_ONLY", detail: sessionVerification.sessionVerification },
+    { name: "same_day_alerts_not_checked", ok: sessionVerification.sameDayAlertsChecked === false, detail: `sameDayAlertsChecked=${String(sessionVerification.sameDayAlertsChecked)}` },
+    { name: "not_dispatch_eligible", ok: sessionVerification.dispatchEligible === false, detail: `dispatchEligible=${String(sessionVerification.dispatchEligible)}` },
+    { name: "calendar_admitted", ok: sessionCheck.admission.ok, detail: sessionCheck.admission.ok ? String(sessionCheck.datasetId) : `${sessionCheck.admission.code}: ${sessionCheck.admission.detail}` },
+    { name: "session_was_tradable", ok: sessionCheck.verdict.tradable === true, detail: sessionCheck.verdict.tradable ? `${(sessionCheck.verdict as { type: string }).type}` : `NOT TRADABLE ${(sessionCheck.verdict as { code: string }).code}` },
+    { name: "open_hours_read_not_closed_session", ok: ev.regime.regime === "tradfi_open", detail: `regime=${ev.regime.regime} carry=${ev.regime.hoursToNextReopen}h` },
     { name: "usedMargin_null_documented_not_zero", ok: after.usedMarginUsd === null, detail: "reconciliation basis is equity/freeMargin; null preserved, not coerced" },
   ];
 
