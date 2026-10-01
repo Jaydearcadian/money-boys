@@ -54,7 +54,10 @@ export interface EvidenceResponse {
     midpoint: number;
     currency: string;
     sourceAsOf: string;
+    /** Local request instant (= requestedAt). */
     fetchedAt: string;
+    requestedAt: string;
+    responseReceivedAt: string;
     timestampType: string;
     cacheWindowMs: number;
     isTradingHalt: boolean;
@@ -69,7 +72,14 @@ export interface EvidenceResponse {
    */
   freshness: {
     status: "verified_fresh" | "verified_stale" | "unverifiable";
+    /** Gate-deciding age: sourceAsOf -> requestedAt. NOT receipt-relative. */
     ageMs: number | null;
+    ageAtRequestStartMs: number | null;
+    /** sourceAsOf -> responseReceivedAt. True elapsed provider latency. */
+    ageAtReceiptMs: number | null;
+    freshnessBasis: "request-start-relative";
+    /** responseReceivedAt - requestedAt. */
+    receiptLatencyMs: number | null;
     /** The gate that was applied. Provider cache/freshness limit. */
     effectiveThresholdMs: number;
     /** Inherited generic benchmark ceiling. NOT the operative gate. */

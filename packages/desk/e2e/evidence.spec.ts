@@ -22,15 +22,33 @@ test.describe("benchmark evidence — provenance", () => {
     await expect(page.getByTestId("midpoint")).toHaveText("132.710");
   });
 
-  test("renders sourceAsOf and fetchedAt as two distinct instants", async ({ page }) => {
+  test("renders sourceAsOf, requestedAt and responseReceivedAt as three distinct instants", async ({ page }) => {
     await gotoEvidence(page);
-    const source = page.getByTestId("source-asof");
-    const fetched = page.getByTestId("fetched-at");
-    // The provider instant, verbatim, never rewritten to our clock.
-    await expect(source).toHaveText("2026-09-30T13:59:59.514Z");
-    // Our own local request time. Distinct, and displayed as such.
-    await expect(fetched).toHaveText("2026-09-30T14:00:00.000Z");
-    await expect(source).not.toHaveText(await fetched.textContent() ?? "");
+    // Provider instant, verbatim, never rewritten to our clock.
+    await expect(page.getByTestId("source-asof")).toHaveText("2026-09-30T13:59:59.514Z");
+    // Local request start.
+    await expect(page.getByTestId("requested-at")).toHaveText("2026-09-30T14:00:00.000Z");
+    // Local receipt, strictly after the request start.
+    await expect(page.getByTestId("response-received-at")).toHaveText("2026-09-30T14:00:00.174Z");
+    // fetchedAt is an explicit alias of requestedAt, not a third instant.
+    await expect(page.getByTestId("fetched-at")).toHaveText("2026-09-30T14:00:00.000Z");
+  });
+
+  test("states the freshness basis and shows the receipt-relative age as ungated", async ({ page }) => {
+    await gotoEvidence(page);
+    await expect(page.getByTestId("freshness-basis")).toHaveText("request-start-relative");
+    // The gate basis: 486ms (sourceAsOf -> requestedAt).
+    await expect(page.getByTestId("freshness-age")).toHaveText("486ms");
+    // The receipt-relative age is larger and is reported, not gated.
+    await expect(page.getByTestId("freshness-age-at-receipt")).toHaveText("660ms");
+    // Receipt latency is exactly the difference between them.
+    await expect(page.getByTestId("receipt-latency")).toHaveText("174ms");
+  });
+
+  test("never presents the gate basis as receipt-relative", async ({ page }) => {
+    await gotoEvidence(page);
+    await expect(page.getByTestId("freshness-basis")).not.toHaveText("receipt-relative");
+    await expect(page.locator('body')).not.toContainText("receipt-relative");
   });
 
   test("labels the timestamp as provider-generated, not an exchange trade time", async ({ page }) => {

@@ -38,6 +38,7 @@ import {
   toUnderlyingReferenceSymbol,
   type FetchLike,
 } from "./integrations/robinhood/benchmark.js";
+import { RH_PRICES_PATH } from "./integrations/robinhood/schemas.js";
 import { BenchmarkSourceError } from "./integrations/robinhood/benchmark.js";
 import { robinhoodToEvidence, REPO_SYMBOL, PRODUCT_TYPE } from "./bitget/strategy-packet.js";
 
@@ -89,8 +90,12 @@ export interface EvidenceBenchmark {
   currency: string;
   /** Provider-published quote instant. Never a fetch time. */
   sourceAsOf: string;
-  /** Local request time. Never a substitute for sourceAsOf. */
+  /** Local REQUEST instant. Never a substitute for sourceAsOf. */
   fetchedAt: string;
+  /** Local clock when the provider request was issued. */
+  requestedAt: string;
+  /** Local clock when the provider response was RECEIVED. */
+  responseReceivedAt: string;
   timestampType: string;
   cacheWindowMs: number;
   /** False on every successful read; a halt fails the read instead. */
@@ -103,7 +108,25 @@ export interface EvidenceBenchmark {
 
 export interface EvidenceFreshness {
   status: "verified_fresh" | "verified_stale" | "unverifiable";
+  /**
+   * The gate-deciding age: sourceAsOf -> requestedAt.
+   *
+   * This is the pre-existing behaviour, preserved deliberately. It is the
+   * SMALLER of the two available ages (see ageAtReceiptMs) and therefore the
+   * MORE PERMISSIVE basis: it under-reports true provider latency by the
+   * request duration, so it admits quotes a receipt-relative gate would reject.
+   * It is retained because changing the gate is a policy decision, not an
+   * implementation detail. Do not describe it as conservative.
+   */
   ageMs: number | null;
+  /** sourceAsOf -> requestedAt. Identical to ageMs; named for readability. */
+  ageAtRequestStartMs: number | null;
+  /** sourceAsOf -> responseReceivedAt. True elapsed provider latency. */
+  ageAtReceiptMs: number | null;
+  /** Which basis the gate used. Never "receipt-relative". */
+  freshnessBasis: "request-start-relative";
+  /** responseReceivedAt - requestedAt. Network round-trip. */
+  receiptLatencyMs: number | null;
   /** The gate that was actually applied. Provider cache/freshness limit. */
   effectiveThresholdMs: number;
   /** Inherited generic benchmark ceiling. NOT the operative gate. */
@@ -176,7 +199,13 @@ export interface EvidenceResponse {
 export async function buildEvidenceResponse(args: {
   symbol?: string;
   fetchImpl?: FetchLike;
+  /** Local request instant. Also the regime clock. */
   now?: Date;
+  /**
+   * Receipt clock. Called once, when the provider response is received.
+   * Injectable for deterministic fixtures; defaults to the real clock.
+   */
+  clock?: () => Date;
   maxAgeMs?: number;
 }): Promise<EvidenceResponse> {
   const repoSymbol = args.symbol ?? REPO_SYMBOL;
@@ -229,14 +258,42 @@ export async function buildEvidenceResponse(args: {
 
   try {
     // ---- Benchmark: public, credential-free ---------------------------------
-    // fetchRobinhoodBenchmark (not the client factory) so `fetchedAt` is the
-    // injected instant: keeps fixtures deterministic and makes the local
-    // request time an explicit, auditable input rather than ambient state.
+    // TIMING SEMANTICS — two distinct local instants, never conflated:
+    //
+    //   requestedAt         local clock when we issued /rhj/prices
+    //   responseReceivedAt  local clock when that response was RECEIVED
+    //
+    // `fetchedAt` in the benchmark is `requestedAt`. The gate is evaluated on
+    // sourceAsOf -> requestedAt (the pre-existing basis), NOT on the
+    // receipt-relative age. Both ages are reported so the difference is
+    // visible, but the policy basis is unchanged.
+    const requestedAt = new Date(now.getTime());
+    /**
+     * Stamped the moment the /rhj/prices response lands, before /assets.
+     * Injected so fixtures stay deterministic; defaults to the real clock.
+     */
+    let responseReceivedAt: Date | null = null;
+    const clock = args.clock ?? (() => new Date());
+    const timingFetchImpl: FetchLike = async (input, init) => {
+      const res = await fetchImpl(input, init);
+      if (String(input).includes(RH_PRICES_PATH)) responseReceivedAt = clock();
+      return res;
+    };
+
+    // fetchRobinhoodBenchmark (not the client factory) so the request instant
+    // is an explicit, auditable input rather than ambient state.
     const b = await fetchRobinhoodBenchmark({
       symbol: referenceSymbol,
-      fetchImpl,
-      fetchedAt: now.toISOString(),
+      fetchImpl: timingFetchImpl,
+      fetchedAt: requestedAt.toISOString(),
     });
+    const receipt = responseReceivedAt ?? requestedAt;
+    const sourceMs = Date.parse(b.sourceAsOf);
+    const sourceParsed = !Number.isNaN(sourceMs);
+    // The two ages differ only by the round trip. The gate uses the
+    // request-start basis; the receipt basis is reported for transparency.
+    const ageAtReceiptMs = sourceParsed ? receipt.getTime() - sourceMs : null;
+    const receiptLatencyMs = receipt.getTime() - requestedAt.getTime();
 
     // Public Bitget market data only. No key, no signing, no private route.
     const client = new BitgetClient({ apiKey: "", secretKey: "", passphrase: "", fetchImpl: venueFetch });
@@ -309,7 +366,10 @@ export async function buildEvidenceResponse(args: {
         midpoint: b.midpoint,
         currency: b.currency,
         sourceAsOf: b.sourceAsOf,
+        // `fetchedAt` is our REQUEST instant. Kept for back-compatibility.
         fetchedAt: b.fetchedAt,
+        requestedAt: requestedAt.toISOString(),
+        responseReceivedAt: receipt.toISOString(),
         timestampType: b.timestampType,
         cacheWindowMs: b.cacheWindowMs,
         isTradingHalt: b.isTradingHalt,
@@ -322,7 +382,12 @@ export async function buildEvidenceResponse(args: {
       // can mistake the inherited 96h ceiling for the gate that was applied.
       freshness: {
         status: evidence.freshness,
+        // Gate-deciding age: sourceAsOf -> requestedAt (pre-existing basis).
         ageMs: evidence.ageMs,
+        ageAtRequestStartMs: evidence.ageMs,
+        ageAtReceiptMs: ageAtReceiptMs,
+        freshnessBasis: "request-start-relative",
+        receiptLatencyMs: receiptLatencyMs,
         effectiveThresholdMs: effectiveMaxAgeMs,
         inheritedBenchmarkMaxAgeMs: EVIDENCE_INHERITED_BENCHMARK_MAX_AGE_MS,
         providerCacheWindowMs: EVIDENCE_EFFECTIVE_MAX_AGE_MS,

@@ -183,6 +183,54 @@ describe("evidence surface — provenance timestamps", () => {
     assert.notEqual(ev.benchmark?.sourceAsOf, ev.benchmark?.fetchedAt);
   });
 
+  /**
+   * Timing semantics. Two distinct local instants must both be present and
+   * must never be collapsed into one another.
+   *
+   * NOTE ON DIRECTION: the gate uses ageAtRequestStartMs, which is the SMALLER
+   * of the two ages and therefore the MORE PERMISSIVE basis. It is retained
+   * because it is pre-existing behaviour and changing the gate is a policy
+   * decision. These tests pin that behaviour AND pin the fact that the
+   * receipt-relative age is strictly larger, so nobody can later describe the
+   * gate basis as conservative.
+   */
+  it("reports requestedAt and responseReceivedAt as distinct local instants", async () => {
+    const ev = await buildEvidenceResponse({ now: NOW, fetchImpl: stub() });
+    assert.equal(ev.benchmark?.requestedAt, NOW.toISOString());
+    assert.equal(ev.benchmark?.fetchedAt, NOW.toISOString(), "fetchedAt is an alias of requestedAt");
+    // Receipt is stamped when the response lands, so it is >= request start.
+    assert.ok(
+      Date.parse(ev.benchmark!.responseReceivedAt) >= Date.parse(ev.benchmark!.requestedAt),
+      "responseReceivedAt must not precede requestedAt",
+    );
+    assert.equal(ev.freshness?.freshnessBasis, "request-start-relative");
+  });
+
+  it("gates on ageAtRequestStartMs and reports ageAtReceiptMs separately", async () => {
+    const ev = await buildEvidenceResponse({ now: NOW, fetchImpl: stub() });
+    assert.equal(ev.freshness?.ageAtRequestStartMs, 486);
+    // Gate-deciding age equals the request-start basis.
+    assert.equal(ev.freshness?.ageMs, ev.freshness?.ageAtRequestStartMs);
+    // The receipt-relative age is strictly greater: the round trip is added.
+    assert.ok(
+      (ev.freshness?.ageAtReceiptMs ?? 0) >= (ev.freshness?.ageAtRequestStartMs ?? 0),
+      "ageAtReceiptMs must be >= ageAtRequestStartMs",
+    );
+    // Receipt latency is exactly the difference between the two.
+    assert.equal(
+      (ev.freshness?.ageAtReceiptMs ?? 0) - (ev.freshness?.ageAtRequestStartMs ?? 0),
+      ev.freshness?.receiptLatencyMs,
+      "receiptLatencyMs must equal the gap between the two ages",
+    );
+  });
+
+  it("never labels the gate basis as receipt-relative", async () => {
+    const ev = await buildEvidenceResponse({ now: NOW, fetchImpl: stub() });
+    assert.notEqual(ev.freshness?.freshnessBasis, "receipt-relative");
+    const serialised = JSON.stringify(ev);
+    assert.ok(!serialised.includes('"receipt-relative"'), "receipt-relative must never appear as a basis");
+  });
+
   it("labels the timestamp as provider-generated, never an exchange trade time", async () => {
     const ev = await buildEvidenceResponse({ now: NOW, fetchImpl: stub() });
     assert.equal(ev.benchmark?.timestampType, "PROVIDER_GENERATED_QUOTE");

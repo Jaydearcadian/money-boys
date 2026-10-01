@@ -173,7 +173,9 @@ export function EvidencePage() {
                     testId="source-asof"
                     tone={b ? "ok" : "bad"}
                   />
-                  <Field label="fetchedAt (local request)" value={b?.fetchedAt ?? "—"} testId="fetched-at" />
+                  <Field label="requestedAt (local request start)" value={b?.requestedAt ?? "—"} testId="requested-at" />
+                  <Field label="responseReceivedAt (local receipt)" value={b?.responseReceivedAt ?? "—"} testId="response-received-at" />
+                  <Field label="fetchedAt (= requestedAt)" value={b?.fetchedAt ?? "—"} testId="fetched-at" />
                   <Field label="timestampType" value={b?.timestampType ?? "—"} testId="timestamp-type" />
                   <Field label="trading halt" value={b ? (b.isTradingHalt ? "HALTED" : "no") : "—"} testId="halt-status" tone={b?.isTradingHalt ? "bad" : "ok"} />
                   <Field label="price basis" value={b?.priceBasis ?? "—"} testId="price-basis" mono={false} />
@@ -188,11 +190,19 @@ export function EvidencePage() {
                   <Field label="ask" value={fmt(b?.ask, 3)} testId="ask" />
                   <Field label="midpoint" value={fmt(b?.midpoint, 3)} testId="midpoint" />
                   <Field
-                    label="freshness age"
-                    value={fmtAge(f?.ageMs)}
+                    label="age at request start (GATE BASIS)"
+                    value={fmtAge(f?.ageAtRequestStartMs)}
                     testId="freshness-age"
                     tone={f?.status === "verified_fresh" ? "ok" : f?.status === "verified_stale" ? "warn" : "bad"}
                   />
+                  <Field
+                    label="age at receipt (reported, not gated)"
+                    value={fmtAge(f?.ageAtReceiptMs)}
+                    testId="freshness-age-at-receipt"
+                    tone="warn"
+                  />
+                  <Field label="receipt latency (responseReceivedAt − requestedAt)" value={fmtAge(f?.receiptLatencyMs)} testId="receipt-latency" />
+                  <Field label="freshness basis" value={f?.freshnessBasis ?? "—"} testId="freshness-basis" />
                   <Field label="effective freshness gate (provider cache limit)" value={fmtAge(f?.effectiveThresholdMs)} testId="freshness-effective-threshold" />
                   <Field
                     label="inherited benchmark max age (NOT the gate)"

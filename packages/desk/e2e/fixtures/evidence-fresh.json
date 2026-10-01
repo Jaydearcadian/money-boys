@@ -23,6 +23,8 @@
     "currency": "USD",
     "sourceAsOf": "2026-09-30T13:59:59.514Z",
     "fetchedAt": "2026-09-30T14:00:00.000Z",
+    "requestedAt": "2026-09-30T14:00:00.000Z",
+    "responseReceivedAt": "2026-09-30T14:00:00.174Z",
     "timestampType": "PROVIDER_GENERATED_QUOTE",
     "cacheWindowMs": 15000,
     "isTradingHalt": false,
@@ -34,6 +36,10 @@
   "freshness": {
     "status": "verified_fresh",
     "ageMs": 486,
+    "ageAtRequestStartMs": 486,
+    "ageAtReceiptMs": 660,
+    "freshnessBasis": "request-start-relative",
+    "receiptLatencyMs": 174,
     "effectiveThresholdMs": 15000,
     "inheritedBenchmarkMaxAgeMs": 345600000,
     "providerCacheWindowMs": 15000
