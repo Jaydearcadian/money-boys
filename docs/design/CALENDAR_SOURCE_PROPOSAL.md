@@ -187,3 +187,120 @@ This is a known, deliberate gap, not an oversight. The resolver already fails cl
 Not done, per instruction: no calendar wired into production, no guessed holiday list, no live read, no Robinhood polling, no order, no GAP-017/019 change, no claim promotion, no fixture evidence promoted to campaign evidence.
 
 The `Trading_Days.pdf` 2028 count of **257** is recorded as unexplained rather than reconciled — an unresolved anomaly in an official source is worth flagging rather than quietly discarding.
+
+---
+
+## 8. Addendum — dataset-age guard and the reviewed artifact (implemented)
+
+### 8.1 Age and horizon guard
+
+`admitCalendarForDate({ dataset, date, now, checklist })` answers the question
+that actually matters before acting: **may this dataset be trusted today for
+this date?** Every failure resolves to `UNKNOWN` and therefore `NO_TRADE`.
+
+| Condition | Refusal code |
+|---|---|
+| no dataset supplied | `DATASET_MISSING` |
+| malformed dataset | `DATASET_MALFORMED` |
+| content hash ≠ entries | `DATASET_HASH_MISMATCH` |
+| `derivedAt` older than 400 days | `DATASET_TOO_OLD` |
+| `derivedAt` in the future (clock skew) | `DATASET_TOO_OLD` |
+| date outside `coverageStart..coverageEnd` | `DATE_OUTSIDE_HORIZON` |
+| covered date with no entry | `DATE_OUTSIDE_HORIZON` |
+| same-day checklist incomplete | `REVIEW_INCOMPLETE` |
+
+`MAX_DATASET_AGE_DAYS = 400`. Deliberately not 365: exchanges publish ~1.5
+years forward, so a dataset is normally fresh, and an annual cycle plus
+revisions means a 13-month-old dataset may already predate an amendment.
+
+**Age and horizon are independent controls.** A still-fresh dataset may
+legitimately resolve a covered date even when the wall clock has moved on. What
+must never happen is resolving an *uncovered* date, which the horizon check
+prevents. Two tests pin both directions.
+
+### 8.2 Operator-reviewed artifact
+
+`foundry/evidence/p11/calendar/nasdaq-2026.operator-reviewed.json`
+
+| | |
+|---|---|
+| Label | `OPERATOR_REVIEWED_CALENDAR` |
+| `automatedProviderData` | `false` |
+| Source | `https://www.nasdaqtrader.com/trader.aspx?id=Calendar` |
+| Source doc | U.S. Equity and Options Markets Holiday Schedule 2026 |
+| `sourceVersion` | **`null`** — Nasdaq publishes none; not fabricated |
+| Coverage | 2026-01-01 … 2026-12-31 |
+| Entries | 261 (249 OPEN, 10 CLOSED, 2 EARLY_CLOSE) |
+| Content hash | `1d8a2172…fad5acc` |
+| Reproduced by | `scripts/derive-calendar-2026.mjs` (not in `pnpm verify`) |
+
+Derivation: the **12 dated rows** of the published table were transcribed
+verbatim as the only holiday input. Every other weekday is a regular
+09:30–16:00 ET session, derived arithmetically. Re-derivation is
+byte-identical.
+
+Cross-check: 261 weekdays − 10 closures = **251 trading days**, which matches
+NYSE's independently published 2026 total of 251. The 2028 figure of 257
+remains unexplained.
+
+### 8.3 Same-day operator checklist
+
+```
+annual calendar reviewed            -> yes
+current Trader Alerts checked       -> yes
+no unscheduled closure/early close  -> yes
+operator confirms session           -> yes
+(signed: confirmedBy + confirmedAt)
+```
+
+Incomplete → `UNKNOWN_SESSION` → `NO_TRADE`.
+
+This is a **real control, not ceremony.** Nasdaq's own page directs readers to
+Trader Alerts for all per-day information, and those alerts are not
+machine-readable. An annual calendar therefore **cannot** detect a closure
+announced on the morning of. The checklist is the only thing standing between a
+valid-but-stale calendar and an unscheduled closure.
+
+`complete` is **computed** from the four confirmations, not asserted by the
+caller, so ticking three boxes and setting `complete: true` is impossible.
+A checklist with every box ticked but no signature is still incomplete.
+
+### 8.4 Verification
+
+47 tests. Mutation results:
+
+| Mutation | Failures |
+|---|---|
+| Age branch removed | 1 |
+| Horizon + entry lookup removed | 4 |
+| Checklist enforcement removed | 3 |
+| Artifact `review` block removed | (schema validation) |
+
+Derived-session tests pin every one of the 11 published 2026 exceptions plus
+DST correctness on both sides of the November transition.
+
+### 8.5 Corrections made during this work
+
+Two of my own assertions were wrong and I fixed the tests, not the code:
+
+- The age test set `derivedAt` in the **future**, so it exercised the clock-skew
+  branch and left the age comparison unproven. Removing the age branch then
+  produced **zero** failures — which is how I found it.
+- A test asserted a 2026 dataset was refused in mid-2027 by age. At ~243 days
+  it is inside the 400-day limit; what actually refuses it is the **horizon**.
+  Age and horizon are separate controls.
+
+---
+
+## 9. Disposition — controlled path vs production
+
+| Path | Status |
+|---|---|
+| **Controlled Demo / operator-triggered** | Supported, with a reviewed artifact + age guard + same-day checklist |
+| **Unattended / production** | **BLOCKED** until an authorized machine-readable calendar source exists |
+| **GAP-017** | Remains **PARTIAL / BLOCKED_EXTERNAL**. Not closed. |
+| **GAP-019** | Remains **BLOCKED_EXTERNAL**. Independent of calendar status. |
+
+The reviewed artifact is sufficient for a bounded operator-triggered
+read-only run. It is **not** sufficient for unattended operation, and nothing
+here should be read as closing either external gap.

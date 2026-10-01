@@ -249,11 +249,16 @@ describe("calendar dataset — scope limit is explicit", () => {
   it("proves no production calendar is installed", async () => {
     // There must be no module exporting a ready-made authoritative calendar.
     const mod = await import("../src/agents/calendar-dataset.js") as Record<string, unknown>;
-    const exported = Object.keys(mod).sort();
-    assert.deepEqual(
-      exported.filter((k) => /CALENDAR|DEFAULT|REAL|AUTHOR/i.test(k) && !k.startsWith("validate") && !k.startsWith("compute") && !k.startsWith("stamp")),
-      [],
-      "no authoritative/default calendar may be exported",
+    const exported = Object.keys(mod);
+    // The real invariant: no module may export a ready-made CALENDAR VALUE.
+    // (A bare function whose name merely contains "calendar" is fine -- it
+    //  admits or validates a caller-supplied dataset rather than carrying one.)
+    const exportedDataValues = exported.filter(
+      (k) => !/^(validate|compute|verify|admit|stamp|build|incomplete|SAME_DAY|MAX_DATASET)/.test(k),
     );
+    assert.deepEqual(exportedDataValues, [], "no authoritative/default calendar value may be exported");
+    // And explicitly: the artifact must live on disk, not be baked into code.
+    assert.ok(!exported.includes("NASDAQ_2026"), "no baked-in dataset constant");
+    assert.ok(!exported.includes("CALENDAR_2026"), "no baked-in dataset constant");
   });
 });
