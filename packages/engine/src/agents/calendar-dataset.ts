@@ -326,9 +326,12 @@ export function admitCalendarForDate(args: {
   now: Date;
   maxAgeDays?: number;
   /**
-   * Same-day operator checklist. Required when the caller is an operator-
-   * triggered path, because a same-day closure announced outside the annual
-   * calendar is not detectable from the dataset alone.
+   * Same-day operator checklist. NOT required here — see the note below.
+   *
+   * The checklist is enforced at the DISPATCH boundary (see bridge.ts), not at
+   * observation. A read-only evidence run that cannot execute anything does not
+   * need a signed human attestation to look at a clock and an annual calendar;
+   * it needs an accurate description of how its session was classified.
    */
   checklist?: SameDayChecklist;
 }): CalendarRefusal {
@@ -411,7 +414,18 @@ export function admitCalendarForDate(args: {
     };
   }
 
-  // ---- Same-day operator checklist ------------------------------------------
+  // NOTE: the same-day operator checklist is deliberately NOT enforced here.
+  //
+  // A same-day closure announced outside the annual calendar is undetectable
+  // from the dataset alone. That is why the checklist exists — but it only
+  // matters where a wrong classification could AUTHORISE AN ORDER. So the
+  // checklist is enforced at the dispatch boundary, where a mistake can cost
+  // money, and deliberately not here, where the worst outcome is a mislabelled
+  // observation that cannot execute anything.
+  //
+  // Callers that want the checklist checked as part of admission may pass it;
+  // when supplied and incomplete it IS enforced, so an explicit opt-in still
+  // fails closed. Omitting it is the read-only path.
   if (args.checklist !== undefined && !args.checklist.complete) {
     return {
       ok: false,
@@ -421,6 +435,52 @@ export function admitCalendarForDate(args: {
   }
 
   return { ok: true };
+}
+
+/**
+ * How a session classification was verified. Carried in evidence so a read is
+ * never described more strongly than it was established.
+ *
+ * `ANNUAL_CALENDAR_ONLY` is the honest label for a run that used the reviewed
+ * annual calendar and the clock WITHOUT checking same-day Trader Alerts. The
+ * market may well have been open; that is simply not what was verified.
+ */
+export type SessionVerification = "ANNUAL_CALENDAR_ONLY" | "SAME_DAY_ALERTS_VERIFIED";
+
+export interface SessionVerificationRecord {
+  readonly sessionVerification: SessionVerification;
+  /** Whether same-day Trader Alerts were checked for this date. */
+  readonly sameDayAlertsChecked: boolean;
+  /** The annual calendar id that was consulted. */
+  readonly calendarBasis: "ANNUAL_CALENDAR_ONLY" | "ANNUAL_CALENDAR_PLUS_ALERTS";
+  /**
+   * Always false in this build. Dispatch requires a complete same-day
+   * checklist, which this module does not evaluate. Typed as the literal
+   * `false` so no consumer can read this record as authorising anything.
+   */
+  readonly dispatchEligible: false;
+  /** Whether a complete same-day checklist was supplied and accepted. */
+  readonly sameDayChecklistComplete: boolean;
+}
+
+/**
+ * Build the verification record for an observation.
+ *
+ * `ALERTS_VERIFIED` is only claimed when a COMPLETE checklist is supplied and
+ * admitted. Otherwise the weaker, accurate label is produced. There is no path
+ * that yields `ALERTS_VERIFIED` without a signed checklist behind it.
+ */
+export function buildSessionVerification(args: {
+  checklist?: SameDayChecklist;
+}): SessionVerificationRecord {
+  const complete = args.checklist?.complete === true;
+  return {
+    sessionVerification: complete ? "SAME_DAY_ALERTS_VERIFIED" : "ANNUAL_CALENDAR_ONLY",
+    sameDayAlertsChecked: complete,
+    calendarBasis: complete ? "ANNUAL_CALENDAR_PLUS_ALERTS" : "ANNUAL_CALENDAR_ONLY",
+    dispatchEligible: false,
+    sameDayChecklistComplete: complete,
+  };
 }
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;

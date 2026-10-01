@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { dispatchPacket, idempotencyKeyFor, type BridgeDispatcher } from "../src/bitget/bridge.js";
 import { buildStrategyPacket, type StrategyPacketV1 } from "../src/bitget/strategy-packet-v1.js";
 import type { CalendarDay, TradingCalendar } from "../src/agents/session-calendar.js";
+import { buildSameDayChecklist, type SameDayChecklist } from "../src/agents/calendar-dataset.js";
 import { evaluateBasisSpread, type QuantAnalysisResult } from "../src/agents/quant.js";
 import { sealReceipt, verifyReceipt, type SealedReasoningReceipt } from "../src/council/receipts.js";
 import { StructuralChangeGuard, toBlastRadiusReport } from "../src/skills/igraph-guard/security.js";
@@ -147,6 +148,7 @@ async function run(args: {
   intent?: "open" | "close";
   dispatchedKeys?: Set<string>;
   environmentMode?: string;
+  checklist?: SameDayChecklist | null;
 }) {
   const dispatcher = new CountingDispatcher();
   const packet = args.packet ?? makePacket();
@@ -160,6 +162,14 @@ async function run(args: {
     now: args.now ?? OPEN_ET,
     dispatchedKeys: args.dispatchedKeys,
     environmentMode: args.environmentMode,
+    sameDayChecklist: args.checklist === null
+      ? buildSameDayChecklist({ annualCalendarReviewed: false, traderAlertsChecked: false,
+          noUnscheduledChange: false, operatorConfirmed: false, confirmedBy: "", confirmedAt: "" })
+      : args.checklist ?? buildSameDayChecklist({
+          annualCalendarReviewed: true, traderAlertsChecked: true, noUnscheduledChange: true,
+          operatorConfirmed: true, confirmedBy: "fixture operator",
+          confirmedAt: OPEN_ET.toISOString(),
+        }),
   });
   return { res, dispatcher };
 }
@@ -367,6 +377,12 @@ describe("bridge — refuses with zero venue calls", () => {
     const res = await dispatchPacket({
       packet: p, receipt, intent: "close", dispatcher: dispatcherWithoutClose,
       calendar: REGULAR_CAL, now: OPEN_ET,
+      // A dispatch-boundary call always supplies the checklist; the property is
+      // required precisely so a caller cannot forget it.
+      sameDayChecklist: buildSameDayChecklist({
+        annualCalendarReviewed: true, traderAlertsChecked: true, noUnscheduledChange: true,
+        operatorConfirmed: true, confirmedBy: "fixture operator", confirmedAt: OPEN_ET.toISOString(),
+      }),
     });
     assert.equal(res.ok, false);
     assert.equal((res as { venueCalls: number }).venueCalls, 0);
@@ -431,5 +447,79 @@ describe("bridge — packet construction gates", () => {
     const p = makePacket();
     const r = approvedReceipt(p);
     assert.equal(verifyReceipt(r), true);
+  });
+});
+// ---------------------------------------------------------------------------
+// Dispatch-boundary same-day checklist
+//
+// The attestation moved HERE, from evidence admission to the moment before an
+// order could be sent. These tests pin both halves of that move: a read-only
+// observation proceeds without it, and a dispatch without it contacts nothing.
+// ---------------------------------------------------------------------------
+
+describe("bridge — same-day checklist at the dispatch boundary", () => {
+  const emptyChecklist = (): SameDayChecklist =>
+    buildSameDayChecklist({
+      annualCalendarReviewed: false, traderAlertsChecked: false, noUnscheduledChange: false,
+      operatorConfirmed: false, confirmedBy: "", confirmedAt: "",
+    });
+
+  it("dispatches when the checklist is complete", async () => {
+    const { res, dispatcher } = await run({});
+    assert.equal(res.ok, true, JSON.stringify(res));
+    assert.equal(dispatcher.calls.length, 1);
+    assert.equal((res as { revalidation: { sameDayChecklistComplete: boolean } }).revalidation.sameDayChecklistComplete, true);
+  });
+
+  it("refuses with zero venue calls when the checklist is incomplete", async () => {
+    const { res, dispatcher } = await run({ checklist: emptyChecklist() });
+    assert.equal(res.ok, false);
+    assert.equal(dispatcher.calls.length, 0, "an incomplete checklist must not reach the venue");
+    assert.equal((res as { venueCalls: number }).venueCalls, 0);
+    const reasons = (res as { reasons: string[] }).reasons;
+    assert.ok(reasons.some((r) => r.includes("SAME_DAY_CHECKLIST_INCOMPLETE")));
+  });
+
+  it("refuses when no checklist is supplied at all", async () => {
+    // `sameDayChecklist` is required in the type so this cannot be forgotten
+    // at compile time; a JS caller or `any` cast still must fail closed.
+    const dispatcher = new CountingDispatcher();
+    const packet = makePacket();
+    const receipt = approvedReceipt(packet);
+    const res = await dispatchPacket({
+      packet, receipt, dispatcher, calendar: REGULAR_CAL, now: OPEN_ET,
+    } as unknown as Parameters<typeof dispatchPacket>[0]);
+    assert.equal(res.ok, false);
+    assert.equal(dispatcher.calls.length, 0);
+    assert.ok((res as { reasons: string[] }).reasons.some((r) => r.includes("SAME_DAY_CHECKLIST_MISSING")));
+  });
+
+  it("names the Trader Alert gap as the reason", async () => {
+    const { res } = await run({ checklist: emptyChecklist() });
+    const reasons = (res as { reasons: string[] }).reasons.join(" ");
+    assert.match(reasons, /Trader Alerts are not machine-readable/);
+    assert.match(reasons, /UNKNOWN_SESSION -> NO_TRADE/);
+  });
+
+  it("refuses a close with an incomplete checklist before touching the venue", async () => {
+    const { res, dispatcher } = await run({ intent: "close", checklist: emptyChecklist() });
+    assert.equal(res.ok, false);
+    assert.equal(dispatcher.calls.length, 0);
+  });
+
+  it("reports the checklist state in revalidation even when refusing", async () => {
+    const { res } = await run({ checklist: emptyChecklist() });
+    assert.equal((res as { revalidation: { sameDayChecklistComplete: boolean } }).revalidation.sameDayChecklistComplete, false);
+  });
+
+  it("refuses a replay even when the checklist is complete", async () => {
+    // Proves the checklist did not displace the idempotency control.
+    const p = makePacket();
+    const receipt = approvedReceipt(p);
+    const replayed = new Set([idempotencyKeyFor(receipt.receiptHash, "open")]);
+    const { res, dispatcher } = await run({ packet: p, receipt, dispatchedKeys: replayed });
+    assert.equal(res.ok, false);
+    assert.equal(dispatcher.calls.length, 0);
+    assert.ok((res as { reasons: string[] }).reasons.some((r) => r.includes("IDEMPOTENCY_REPLAY_REFUSED")));
   });
 });

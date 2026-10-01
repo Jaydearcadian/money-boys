@@ -150,3 +150,52 @@ describe("fixture campaign — it proves shape, not a live trade", () => {
     );
   });
 });
+describe("fixture campaign — dispatch-boundary checklist", () => {
+  it("reaches the venue when the checklist is complete", async () => {
+    const r = await runFixtureCampaign({ now: OPEN_ET, calendar: REGULAR });
+    assert.equal(r.decision, "DISPATCHED_AND_FLAT");
+    assert.equal(r.venueContacts, 2);
+  });
+
+  it("contacts NOTHING when the checklist is incomplete", async () => {
+    // Trader Alerts unchecked: the exact gap that makes an annual calendar
+    // insufficient on the day. Dispatch must refuse.
+    const r = await runFixtureCampaign({
+      now: OPEN_ET, calendar: REGULAR,
+      sameDayChecklist: {
+        annualCalendarReviewed: true, traderAlertsChecked: false,
+        noUnscheduledChange: true, operatorConfirmed: true,
+        confirmedBy: "fixture operator", confirmedAt: OPEN_ET.toISOString(),
+      },
+    });
+    assert.equal(r.decision, "NO_TRADE");
+    assert.equal(r.venueContacts, 0, "an unchecked Trader Alert feed must not authorise an order");
+    assert.equal(r.finalFlat, true);
+  });
+
+  it("contacts NOTHING when no operator has confirmed the session", async () => {
+    const r = await runFixtureCampaign({
+      now: OPEN_ET, calendar: REGULAR,
+      sameDayChecklist: {
+        annualCalendarReviewed: true, traderAlertsChecked: true,
+        noUnscheduledChange: true, operatorConfirmed: false,
+        confirmedBy: "fixture operator", confirmedAt: OPEN_ET.toISOString(),
+      },
+    });
+    assert.equal(r.decision, "NO_TRADE");
+    assert.equal(r.venueContacts, 0);
+  });
+
+  it("contacts NOTHING when the checklist is unsigned", async () => {
+    const r = await runFixtureCampaign({
+      now: OPEN_ET, calendar: REGULAR,
+      sameDayChecklist: {
+        annualCalendarReviewed: true, traderAlertsChecked: true,
+        noUnscheduledChange: true, operatorConfirmed: true,
+        confirmedBy: "", confirmedAt: "",
+      },
+    });
+    assert.equal(r.decision, "NO_TRADE");
+    assert.equal(r.venueContacts, 0);
+  });
+});

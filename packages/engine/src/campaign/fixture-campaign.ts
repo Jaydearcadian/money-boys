@@ -24,6 +24,7 @@
 import { sealReceipt, verifyReceipt, type SealedReasoningReceipt } from "../council/receipts.js";
 import { evaluateBasisSpread } from "../agents/quant.js";
 import { resolveSession, type CalendarDay, type TradingCalendar } from "../agents/session-calendar.js";
+import { buildSameDayChecklist } from "../agents/calendar-dataset.js";
 import { buildStrategyPacket, type StrategyPacketV1 } from "../bitget/strategy-packet-v1.js";
 import { dispatchPacket, type BridgeDispatcher } from "../bitget/bridge.js";
 import { StructuralChangeGuard, toBlastRadiusReport } from "../skills/igraph-guard/security.js";
@@ -190,6 +191,12 @@ export async function runFixtureCampaign(scenarios: {
   dispatchDelayMs?: number;
   now?: Date;
   fillMismatchSymbol?: boolean;
+  /**
+   * Supplying an incomplete/absent checklist exercises the dispatch-boundary
+   * gate. Omitted by default so the happy path reaches the venue.
+   */
+  sameDayChecklist?: Parameters<typeof buildSameDayChecklist>[0];
+  omitChecklist?: boolean;
 } = {}): Promise<CampaignResult> {
   const steps: CampaignStep[] = [];
   const now = scenarios.now ?? OPEN_ET;
@@ -298,6 +305,10 @@ export async function runFixtureCampaign(scenarios: {
   const opened = await dispatchPacket({
     packet: goodPacket, receipt, intent: "open", dispatcher: venue.dispatcher,
     calendar, now: dispatchNow, environmentMode: "DEMO",
+    sameDayChecklist: buildSameDayChecklist(scenarios.sameDayChecklist ?? {
+      annualCalendarReviewed: true, traderAlertsChecked: true, noUnscheduledChange: true,
+      operatorConfirmed: true, confirmedBy: "fixture operator", confirmedAt: now.toISOString(),
+    }),
   });
   if (!opened.ok || opened.execution === undefined) {
     const reasons = opened.ok ? ["dispatcher returned no execution record"] : opened.reasons;
@@ -325,6 +336,10 @@ export async function runFixtureCampaign(scenarios: {
   const closed = await dispatchPacket({
     packet: goodPacket, receipt, intent: "close", dispatcher: venue.dispatcher,
     calendar, now: dispatchNow, environmentMode: "DEMO",
+    sameDayChecklist: buildSameDayChecklist(scenarios.sameDayChecklist ?? {
+      annualCalendarReviewed: true, traderAlertsChecked: true, noUnscheduledChange: true,
+      operatorConfirmed: true, confirmedBy: "fixture operator", confirmedAt: now.toISOString(),
+    }),
   });
   if (!closed.ok || closed.execution === undefined) {
     add("dispatch_close", false, { reasons: closed.ok ? ["no execution record"] : closed.reasons });

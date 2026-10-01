@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import {
   admitCalendarForDate,
   buildSameDayChecklist,
+  buildSessionVerification,
   computeDatasetHash,
   incompleteChecklistSteps,
   MAX_DATASET_AGE_DAYS,
@@ -414,5 +415,79 @@ describe("operator-reviewed artifact — scope limit is not production readiness
   it("records that the source publishes no version identifier", () => {
     assert.equal(ARTIFACT.provenance.sourceVersion, null);
     assert.ok((ARTIFACT.provenance.sourceLastModified === null) || typeof ARTIFACT.provenance.sourceLastModified === "string");
+  });
+});
+// ---------------------------------------------------------------------------
+// Read-only observation proceeds with the weaker, accurate label
+//
+// The checklist moved to the dispatch boundary. A non-authoritative read no
+// longer needs a signed attestation, but it must NEVER be described as fully
+// session-verified.
+// ---------------------------------------------------------------------------
+
+describe("session verification label — weaker but accurate", () => {
+  it("labels a read with no checklist ANNUAL_CALENDAR_ONLY", () => {
+    const r = buildSessionVerification({});
+    assert.equal(r.sessionVerification, "ANNUAL_CALENDAR_ONLY");
+    assert.equal(r.sameDayAlertsChecked, false);
+    assert.equal(r.calendarBasis, "ANNUAL_CALENDAR_ONLY");
+    assert.equal(r.sameDayChecklistComplete, false);
+  });
+
+  it("is never dispatch-eligible regardless of checklist state", () => {
+    const complete = buildSameDayChecklist({
+      annualCalendarReviewed: true, traderAlertsChecked: true, noUnscheduledChange: true,
+      operatorConfirmed: true, confirmedBy: "op", confirmedAt: "2026-10-01T00:00:00.000Z",
+    });
+    assert.equal(buildSessionVerification({ checklist: complete }).dispatchEligible, false);
+    assert.equal(buildSessionVerification({}).dispatchEligible, false);
+  });
+
+  it("upgrades the label only when a COMPLETE checklist is supplied", () => {
+    const complete = buildSameDayChecklist({
+      annualCalendarReviewed: true, traderAlertsChecked: true, noUnscheduledChange: true,
+      operatorConfirmed: true, confirmedBy: "op", confirmedAt: "2026-10-01T00:00:00.000Z",
+    });
+    const r = buildSessionVerification({ checklist: complete });
+    assert.equal(r.sessionVerification, "SAME_DAY_ALERTS_VERIFIED");
+    assert.equal(r.sameDayAlertsChecked, true);
+    assert.equal(r.calendarBasis, "ANNUAL_CALENDAR_PLUS_ALERTS");
+    // Even here it grants nothing.
+    assert.equal(r.dispatchEligible, false);
+  });
+
+  it("does not upgrade the label for an incomplete checklist", () => {
+    const partial = buildSameDayChecklist({
+      annualCalendarReviewed: true, traderAlertsChecked: false, noUnscheduledChange: true,
+      operatorConfirmed: true, confirmedBy: "op", confirmedAt: "2026-10-01T00:00:00.000Z",
+    });
+    const r = buildSessionVerification({ checklist: partial });
+    assert.equal(r.sessionVerification, "ANNUAL_CALENDAR_ONLY");
+    assert.equal(r.sameDayAlertsChecked, false);
+  });
+
+  it("admits calendar dates for observation WITHOUT a checklist", () => {
+    // The whole point of the change: a read-only run is no longer blocked.
+    const r = admitCalendarForDate({ dataset: ARTIFACT, date: "2026-10-05", now: NOW });
+    assert.equal(r.ok, true, JSON.stringify(r));
+  });
+
+  it("still fails closed when a checklist IS supplied but incomplete", () => {
+    // Opt-in enforcement is retained so an explicit request is honoured.
+    const partial = buildSameDayChecklist({
+      annualCalendarReviewed: true, traderAlertsChecked: false, noUnscheduledChange: false,
+      operatorConfirmed: false, confirmedBy: "op", confirmedAt: NOW.toISOString(),
+    });
+    const r = admitCalendarForDate({ dataset: ARTIFACT, date: "2026-10-05", now: NOW, checklist: partial });
+    assert.equal(r.ok, false);
+    assert.equal((r as { code: string }).code, "REVIEW_INCOMPLETE");
+  });
+
+  it("still refuses a stale or uncovered dataset for observation", () => {
+    // Weakening the checklist must NOT weaken any other gate.
+    const stale = { ...ARTIFACT, provenance: { ...ARTIFACT.provenance, derivedAt: "2020-01-01T00:00:00.000Z" } };
+    assert.equal(admitCalendarForDate({ dataset: stale, date: "2026-10-05", now: NOW }).ok, false);
+    assert.equal(admitCalendarForDate({ dataset: null, date: "2026-10-05", now: NOW }).ok, false);
+    assert.equal(admitCalendarForDate({ dataset: ARTIFACT, date: "2027-01-04", now: NOW }).ok, false);
   });
 });

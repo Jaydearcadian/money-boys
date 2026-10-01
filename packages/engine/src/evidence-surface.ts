@@ -41,6 +41,7 @@ import {
 import { RH_PRICES_PATH } from "./integrations/robinhood/schemas.js";
 import { BenchmarkSourceError } from "./integrations/robinhood/benchmark.js";
 import { robinhoodToEvidence, REPO_SYMBOL, PRODUCT_TYPE } from "./bitget/strategy-packet.js";
+import { buildSessionVerification, type SessionVerificationRecord } from "./agents/calendar-dataset.js";
 
 /**
  * EFFECTIVE freshness gate for the benchmark pre-flight.
@@ -201,8 +202,18 @@ export interface EvidenceResponse {
     closedSessionVeto: string | null;
     policy: typeof CLOSED_SESSION_POLICY;
   };
-  /** True only when every gate passed. Still never an authorization. */
+  /**
+   * True only when every observation gate passed. Still NEVER an authorization:
+   * dispatch additionally requires a complete same-day checklist, which this
+   * surface does not evaluate and cannot supply.
+   */
   decision: "ELIGIBLE_FOR_DISPATCH_DESIGN" | "NO_TRADE";
+  /**
+   * How the session was classified, carried so the read is never described more
+   * strongly than it was established. Without same-day alert verification the
+   * label is ANNUAL_CALENDAR_ONLY, which is weaker but accurate.
+   */
+  sessionVerification: SessionVerificationRecord;
   /** Hard-coded false. See the module header. */
   executable: false;
   blockingReasons: string[];
@@ -244,6 +255,16 @@ export async function buildEvidenceResponse(args: {
    */
   clock?: () => Date;
   maxAgeMs?: number;
+  /**
+   * Optional reviewed calendar dataset. When supplied, the session is classified
+   * from the artifact (GAP-017) rather than from the clock alone.
+   */
+  calendarDataset?: unknown;
+  /**
+   * Optional same-day checklist. NEVER sufficient to make this surface
+   * executable — it only upgrades the session-verification label.
+   */
+  sameDayChecklist?: Parameters<typeof buildSessionVerification>[0]["checklist"];
 }): Promise<EvidenceResponse> {
   const repoSymbol = args.symbol ?? REPO_SYMBOL;
   const now = args.now ?? new Date();
@@ -484,6 +505,7 @@ export async function buildEvidenceResponse(args: {
         policy: CLOSED_SESSION_POLICY,
       },
       decision: gateUsable && quant !== null ? "ELIGIBLE_FOR_DISPATCH_DESIGN" : "NO_TRADE",
+      sessionVerification: buildSessionVerification({ checklist: args.sameDayChecklist }),
       executable: false,
       blockingReasons: [...blockingReasons, ...ALWAYS_BLOCKED],
       error: null,
@@ -512,6 +534,7 @@ export async function buildEvidenceResponse(args: {
         policy: CLOSED_SESSION_POLICY,
       },
       decision: "NO_TRADE",
+      sessionVerification: buildSessionVerification({ checklist: args.sameDayChecklist }),
       executable: false,
       blockingReasons: [
         ...(closedSessionVeto !== null ? [closedSessionVeto] : []),

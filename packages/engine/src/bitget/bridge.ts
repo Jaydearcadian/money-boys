@@ -33,6 +33,10 @@
  *   No order was submitted while building this; it is proven with fixtures.
  */
 import { resolveSession, type TradingCalendar } from "../agents/session-calendar.js";
+import {
+  incompleteChecklistSteps,
+  type SameDayChecklist,
+} from "../agents/calendar-dataset.js";
 import { mapToVenueSymbol } from "./dispatcher.js";
 import { toUnderlyingReferenceSymbol } from "../integrations/robinhood/benchmark.js";
 import { verifyReceipt, type SealedReasoningReceipt } from "../council/receipts.js";
@@ -95,6 +99,8 @@ export interface BridgeRevalidation {
   readonly calendarDate: string;
   readonly recomputedVenueSymbol: string;
   readonly receiptVerified: boolean;
+  /** Whether the dispatch-boundary same-day checklist was complete. */
+  readonly sameDayChecklistComplete: boolean;
   readonly environment: "DEMO";
   readonly idempotencyKey: string;
 }
@@ -117,6 +123,14 @@ export async function dispatchPacket(args: {
   intent?: "open" | "close";
   dispatcher: BridgeDispatcher;
   calendar: TradingCalendar;
+  /**
+   * MANDATORY same-day operator checklist, enforced HERE and nowhere earlier.
+   *
+   * This is the boundary where a wrong session classification could authorise
+   * an order, so it is the only place the attestation is required. Read-only
+   * evidence runs do not supply one and are unaffected.
+   */
+  sameDayChecklist: SameDayChecklist;
   now?: Date;
   /** Already-dispatched keys. Re-dispatch of any of these is refused. */
   dispatchedKeys?: ReadonlySet<string>;
@@ -127,6 +141,21 @@ export async function dispatchPacket(args: {
   const intent = args.intent ?? "open";
   const p = args.packet;
   const reasons: string[] = [];
+
+  // ---- 0. SAME-DAY CHECKLIST. The dispatch-boundary attestation gate. ----
+  // Evaluated first so an incomplete checklist short-circuits everything else.
+  // No receipt is verified, no symbol mapped, no session resolved and, above
+  // all, no venue touched before this passes.
+  const checklist = args.sameDayChecklist;
+  if (checklist === undefined) {
+    reasons.push(
+      "SAME_DAY_CHECKLIST_MISSING: dispatch requires a completed same-day operator checklist (annual calendar reviewed, Trader Alerts checked, no unscheduled change, operator confirmed). Absent for a read-only observation? This surface refuses.",
+    );
+  } else if (!checklist.complete) {
+    reasons.push(
+      `SAME_DAY_CHECKLIST_INCOMPLETE: ${incompleteChecklistSteps(checklist).join(", ")}. Trader Alerts are not machine-readable, so an annual calendar alone cannot rule out a same-day closure. Result is UNKNOWN_SESSION -> NO_TRADE.`,
+    );
+  }
 
   // ---- 1. Packet expiry ----------------------------------------------------
   const expiresMs = Date.parse(p.expiresAt);
@@ -245,6 +274,7 @@ export async function dispatchPacket(args: {
     calendarDate: session.date,
     recomputedVenueSymbol: recomputedVenue,
     receiptVerified,
+    sameDayChecklistComplete: checklist?.complete === true,
     environment: "DEMO",
     idempotencyKey: key,
   };
