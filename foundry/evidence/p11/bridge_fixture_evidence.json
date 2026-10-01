@@ -1,0 +1,241 @@
+{
+  "campaign": "p11-bridge-fixture",
+  "stage": 1,
+  "fixturesOnly": true,
+  "liveNetwork": false,
+  "venueContacted": false,
+  "orderSubmitted": false,
+  "authorizationBoundary": "Bridge proven with fixtures only. Not a Demo campaign. GAP-017 and GAP-019 remain open gates.",
+  "scenarios": [
+    {
+      "name": "fresh_open_positive_edge",
+      "decision": "DISPATCHED_AND_FLAT",
+      "eligible": true,
+      "venueContacts": 2,
+      "finalFlat": true,
+      "sessionCode": "TRADABLE",
+      "steps": [
+        {
+          "step": "session_gate",
+          "ok": true
+        },
+        {
+          "step": "quant_evaluated",
+          "ok": true
+        },
+        {
+          "step": "packet_admission",
+          "ok": true
+        },
+        {
+          "step": "receipt_sealed",
+          "ok": true
+        },
+        {
+          "step": "dispatch_open",
+          "ok": true
+        },
+        {
+          "step": "read_back_open",
+          "ok": true
+        },
+        {
+          "step": "dispatch_close",
+          "ok": true
+        },
+        {
+          "step": "read_back_flat",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "name": "closed_session",
+      "decision": "NO_TRADE",
+      "eligible": false,
+      "venueContacts": 0,
+      "finalFlat": true,
+      "sessionCode": "TRADABLE",
+      "steps": [
+        {
+          "step": "session_gate",
+          "ok": false
+        }
+      ]
+    },
+    {
+      "name": "holiday",
+      "decision": "NO_TRADE",
+      "eligible": false,
+      "venueContacts": 0,
+      "finalFlat": true,
+      "sessionCode": "TRADABLE",
+      "steps": [
+        {
+          "step": "session_gate",
+          "ok": false
+        }
+      ]
+    },
+    {
+      "name": "early_close_after_1300et",
+      "decision": "NO_TRADE",
+      "eligible": false,
+      "venueContacts": 0,
+      "finalFlat": true,
+      "sessionCode": "TRADABLE",
+      "steps": [
+        {
+          "step": "session_gate",
+          "ok": false
+        }
+      ]
+    },
+    {
+      "name": "unknown_calendar_day",
+      "decision": "NO_TRADE",
+      "eligible": false,
+      "venueContacts": 0,
+      "finalFlat": true,
+      "sessionCode": "TRADABLE",
+      "steps": [
+        {
+          "step": "session_gate",
+          "ok": false
+        }
+      ]
+    },
+    {
+      "name": "weekend",
+      "decision": "NO_TRADE",
+      "eligible": false,
+      "venueContacts": 0,
+      "finalFlat": true,
+      "sessionCode": "TRADABLE",
+      "steps": [
+        {
+          "step": "session_gate",
+          "ok": false
+        }
+      ]
+    },
+    {
+      "name": "no_positive_edge",
+      "decision": "NO_TRADE",
+      "eligible": false,
+      "venueContacts": 0,
+      "finalFlat": true,
+      "sessionCode": "TRADABLE",
+      "steps": [
+        {
+          "step": "session_gate",
+          "ok": true
+        },
+        {
+          "step": "quant_evaluated",
+          "ok": true
+        },
+        {
+          "step": "positive_edge_required",
+          "ok": false
+        }
+      ]
+    },
+    {
+      "name": "stale_at_dispatch_20s",
+      "decision": "NO_TRADE",
+      "eligible": false,
+      "venueContacts": 0,
+      "finalFlat": true,
+      "sessionCode": "TRADABLE",
+      "steps": [
+        {
+          "step": "session_gate",
+          "ok": true
+        },
+        {
+          "step": "quant_evaluated",
+          "ok": true
+        },
+        {
+          "step": "packet_admission",
+          "ok": true
+        },
+        {
+          "step": "receipt_sealed",
+          "ok": true
+        },
+        {
+          "step": "dispatch_open",
+          "ok": false
+        }
+      ]
+    },
+    {
+      "name": "venue_symbol_mismatch",
+      "decision": "DISPATCHED_AND_FLAT",
+      "eligible": true,
+      "venueContacts": 2,
+      "finalFlat": true,
+      "sessionCode": "TRADABLE",
+      "steps": [
+        {
+          "step": "session_gate",
+          "ok": true
+        },
+        {
+          "step": "quant_evaluated",
+          "ok": true
+        },
+        {
+          "step": "packet_admission",
+          "ok": true
+        },
+        {
+          "step": "receipt_sealed",
+          "ok": true
+        },
+        {
+          "step": "dispatch_open",
+          "ok": true
+        },
+        {
+          "step": "read_back_open",
+          "ok": false
+        },
+        {
+          "step": "dispatch_close",
+          "ok": true
+        },
+        {
+          "step": "read_back_flat",
+          "ok": true
+        }
+      ]
+    }
+  ],
+  "invariants": [
+    {
+      "name": "all_scenarios_end_flat",
+      "ok": true
+    },
+    {
+      "name": "negative_scenarios_zero_venue_contacts",
+      "ok": true,
+      "detail": "7 negative scenarios, venueContacts=0,0,0,0,0,0,0"
+    },
+    {
+      "name": "happy_path_two_venue_calls",
+      "ok": true
+    },
+    {
+      "name": "readback_mismatch_detected",
+      "ok": true
+    },
+    {
+      "name": "no_live_network",
+      "ok": true
+    }
+  ],
+  "allInvariantsHeld": true
+}
