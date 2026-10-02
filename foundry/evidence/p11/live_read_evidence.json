@@ -14,9 +14,9 @@
     "credentialsPrinted": false
   },
   "request": {
-    "startIso": "2026-10-01T13:32:41.767Z",
-    "endIso": "2026-10-01T13:32:42.454Z",
-    "wallClockMs": 687,
+    "startIso": "2026-10-02T16:49:55.022Z",
+    "endIso": "2026-10-02T16:49:55.673Z",
+    "wallClockMs": 651,
     "url": "https://api.robinhood.com/rhj/prices/NVDA"
   },
   "symbolMapping": {
@@ -32,20 +32,20 @@
     "isTradingHalt": false
   },
   "provenance": {
-    "sourceAsOf": "2026-10-01T13:32:30.457475138Z",
-    "sourceAsOfVerbatim": "2026-10-01T13:32:30.457475138Z",
+    "sourceAsOf": "2026-10-02T16:49:49.609602549Z",
+    "sourceAsOfVerbatim": "2026-10-02T16:49:49.609602549Z",
     "timestampType": "PROVIDER_GENERATED_QUOTE",
-    "requestedAt": "2026-10-01T13:32:41.768Z",
-    "responseReceivedAt": "2026-10-01T13:32:41.902Z",
-    "fetchedAt": "2026-10-01T13:32:41.768Z",
+    "requestedAt": "2026-10-02T16:49:55.023Z",
+    "responseReceivedAt": "2026-10-02T16:49:55.145Z",
+    "fetchedAt": "2026-10-02T16:49:55.023Z",
     "conflated": false
   },
   "freshness": {
-    "ageMs": 11445,
-    "ageAtRequestStartMs": 11311,
-    "ageAtReceiptMs": 11445,
+    "ageMs": 5536,
+    "ageAtRequestStartMs": 5414,
+    "ageAtReceiptMs": 5536,
     "freshnessBasis": "receipt-relative",
-    "receiptLatencyMs": 134,
+    "receiptLatencyMs": 122,
     "effectiveGateMs": 15000,
     "inheritedCeilingMs": 345600000,
     "inheritedIsOperative": false,
@@ -56,7 +56,7 @@
   },
   "regime": {
     "regime": "tradfi_open",
-    "etNowIso": "2026-10-01T13:32:41.768Z",
+    "etNowIso": "2026-10-02T16:49:55.023Z",
     "hoursToNextReopen": 0,
     "nextReopenAtIso": null,
     "requiredBenchmarkSource": "live_intraday",
@@ -79,9 +79,9 @@
     "doesNotCloseGap017": true
   },
   "benchmark": {
-    "bid": 228.82,
-    "ask": 228.86,
-    "midpoint": 228.84,
+    "bid": 235.22,
+    "ask": 235.24,
+    "midpoint": 235.23,
     "currency": "USD",
     "priceBasis": "RAW_UNDERLYING_EQUITY_NOT_MULTIPLIER_ADJUSTED",
     "multiplierCurrent": "1.000775159164630595",
@@ -89,12 +89,12 @@
   },
   "quant": {
     "action": "NEUTRAL",
-    "rawBasisPct": 0.1049,
-    "hurdleRatePct": 0.1222,
-    "netEdgePct": -0.0173,
-    "quantScore": 49.8,
-    "tokenPrice": 229.08,
-    "benchmarkPrice": 228.84
+    "rawBasisPct": 0.051,
+    "hurdleRatePct": 0.1221,
+    "netEdgePct": -0.0711,
+    "quantScore": 49.3,
+    "tokenPrice": 235.35,
+    "benchmarkPrice": 235.23
   },
   "gate": {
     "usable": true,
@@ -122,7 +122,7 @@
       "equityDeltaVerifiedZero": true
     },
     "before": {
-      "capturedAt": "2026-10-01T13:32:41.755Z",
+      "capturedAt": "2026-10-02T16:49:55.013Z",
       "equityUsd": 9364.2040197,
       "freeMarginUsd": 9364.2040197,
       "usedMarginUsd": null,
@@ -132,7 +132,7 @@
       "spotAssetCount": 4
     },
     "after": {
-      "capturedAt": "2026-10-01T13:32:42.854Z",
+      "capturedAt": "2026-10-02T16:49:56.026Z",
       "equityUsd": 9364.2040197,
       "freeMarginUsd": 9364.2040197,
       "usedMarginUsd": null,
@@ -177,7 +177,7 @@
     {
       "name": "sourceAsOf_not_conflated_with_fetchedAt",
       "ok": true,
-      "detail": "2026-10-01T13:32:30.457475138Z vs 2026-10-01T13:32:41.768Z"
+      "detail": "2026-10-02T16:49:49.609602549Z vs 2026-10-02T16:49:55.023Z"
     },
     {
       "name": "effective_gate_is_15s",
@@ -217,7 +217,7 @@
     {
       "name": "admission_age_equals_receipt_age",
       "ok": true,
-      "detail": "ageMs=11445 ageAtReceiptMs=11445"
+      "detail": "ageMs=5536 ageAtReceiptMs=5536"
     },
     {
       "name": "no_trade_when_tradfi_closed",
@@ -232,12 +232,12 @@
     {
       "name": "three_instants_present_and_distinct",
       "ok": true,
-      "detail": "2026-10-01T13:32:30.457475138Z / 2026-10-01T13:32:41.768Z / 2026-10-01T13:32:41.902Z"
+      "detail": "2026-10-02T16:49:49.609602549Z / 2026-10-02T16:49:55.023Z / 2026-10-02T16:49:55.145Z"
     },
     {
       "name": "receipt_latency_consistent",
       "ok": true,
-      "detail": "Δage=134 latency=134"
+      "detail": "Δage=122 latency=122"
     },
     {
       "name": "no_bridge_no_order",
