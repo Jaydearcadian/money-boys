@@ -102,6 +102,25 @@ export const FRIDAY_CLOSE_SNAPSHOT: Record<string, number> = {
   rAMZNUSDT: 186.4,
 };
 
+/**
+ * STAMP REQUIRED ON ANY PERFORMANCE ARTIFACT BUILT FROM A SNAPSHOT BENCHMARK.
+ *
+ * A snapshot is a hardcoded table. Any metric computed from one describes the
+ * arithmetic of that table, not a market. Emitting such metrics WITHOUT this
+ * stamp is how a fixture becomes apparent track evidence: the artifact in
+ * foundry/evidence/paper-trading reported winRatePct 100 and maxDrawdownPct 0
+ * over 29 trades, and every figure descended from one fabricated close plus
+ * hand-authored dislocations plus a seeded RNG.
+ */
+export const SYNTHETIC_PERFORMANCE_STAMP = {
+  syntheticFixture: true,
+  validAsPerformanceEvidence: false,
+  reason:
+    "Computed from FRIDAY_CLOSE_SNAPSHOT (a hardcoded table) plus authored scenario inputs. " +
+    "Describes the arithmetic of the fixture, not any market. NOT a backtest and NOT admissible " +
+    "as Track 1 backtest record.",
+} as const;
+
 /** asOf for FRIDAY_CLOSE_SNAPSHOT. Offline fixtures only; not a live benchmark. */
 export const BENCHMARK_AS_OF = "2026-09-18T20:00:00Z";
 export const BITGET_MCP_URL = "https://agent.bitget.com/mcp";

@@ -1,5 +1,15 @@
 {
-  "strategyName": "Money Boys — Track 1 Alpha Factory (Weekend Basis Hedge)",
+  "artifactStatus": "SYNTHETIC FIXTURE \u2014 NOT A BACKTEST \u2014 NOT SUBMITTABLE",
+  "syntheticFixture": true,
+  "validAsPerformanceEvidence": false,
+  "reason": "Computed from FRIDAY_CLOSE_SNAPSHOT (a hardcoded table) plus authored scenario inputs. Describes the arithmetic of the fixture, not any market. NOT a backtest and NOT admissible as Track 1 backtest record.",
+  "inputsAreSynthetic": {
+    "benchmark": "FRIDAY_CLOSE_SNAPSHOT (hardcoded)",
+    "dislocations": "hand-authored SCENARIOS array",
+    "drift": "seededUnit() PRNG",
+    "marketDataUsed": "NONE"
+  },
+  "strategyName": "Money Boys \u2014 Track 1 Alpha Factory (Weekend Basis Hedge)",
   "period": "2026-09-03T00:00:00Z to 2026-09-23T23:59:59Z",
   "deliberations": 42,
   "councilApproved": 28,

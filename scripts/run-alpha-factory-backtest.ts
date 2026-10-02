@@ -19,7 +19,7 @@ import { evaluateBasisSpread } from "../packages/engine/src/agents/quant.js";
 import { evaluateExecution } from "../packages/engine/src/agents/execution.js";
 import { reduceCouncilVote } from "../packages/engine/src/council/reducer.js";
 import { StructuralChangeGuard } from "../packages/engine/src/skills/igraph-guard/security.js";
-import { TradFiBenchmarkService } from "../packages/engine/src/agents/benchmarks.js";
+import { TradFiBenchmarkService, SYNTHETIC_PERFORMANCE_STAMP } from "../packages/engine/src/agents/benchmarks.js";
 import { hashCatalystPayload } from "../packages/engine/src/skills/noema-qa/provenance.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -188,6 +188,7 @@ async function main(): Promise<void> {
   writeFileSync(join(OUT_DIR, "alpha_factory_backtest.jsonl"), lines.join("\n") + "\n");
   const summary = {
     strategyName: "Money Boys — Track 1 Alpha Factory (Weekend Basis Hedge)",
+    artifactStatus: "SYNTHETIC FIXTURE — NOT A BACKTEST — NOT SUBMITTABLE",
     period: "2026-09-03T00:00:00Z to 2026-09-23T23:59:59Z",
     deliberations: total,
     councilApproved: approved,
@@ -203,6 +204,13 @@ async function main(): Promise<void> {
     longPnlUsd: Math.round(longPnl * 100) / 100,
     shortPnlUsd: Math.round(shortPnl * 100) / 100,
     mode: "PAPER",
+    ...SYNTHETIC_PERFORMANCE_STAMP,
+    inputsAreSynthetic: {
+      benchmark: "FRIDAY_CLOSE_SNAPSHOT (hardcoded)",
+      dislocations: "hand-authored SCENARIOS array",
+      drift: "seededUnit() PRNG",
+      marketDataUsed: "NONE",
+    },
   };
   writeFileSync(join(OUT_DIR, "alpha_factory_summary.json"), JSON.stringify(summary, null, 2) + "\n");
   console.log(`[alpha-factory] cycles=${total} approved=${approved} scaled=${soft} vetoes=${veto} executed=${executed} equity=${equity.toFixed(2)} ret=${summary.netReturnPct}%`);
