@@ -24,6 +24,23 @@ import { z } from "zod";
 // ---------------------------------------------------------------------------
 
 export const DEFAULT_TAKER_FEE = 0.0006;
+/** Maker fee as fraction. Default 0 (no rebate) — a RATE, not a rebate. */
+export const DEFAULT_MAKER_FEE = 0;
+/**
+ * Adverse-selection coefficient for passive orders.
+ *
+ * A resting order that fills is, in expectation, filled by a counterparty who
+ * knows something: the fill price is worse than the touch implies. This is the
+ * fraction of the half-spread charged for that. 0 = the model believes passive
+ * fills capture the full half-spread (unrealistic); 1 = the full half-spread is
+ * eaten (the fill itself conveys no information, worst realistic case).
+ *
+ * THIS IS A MODELLING ASSUMPTION, not a measured quantity. It is deliberately
+ * exposed as a constant with a sensitivity test rather than buried in the
+ * hurdle, because it is the single most load-bearing guess in the passive
+ * branch. See ADVERSE_SELECTION_SENSITIVITY in the tests.
+ */
+export const DEFAULT_ADVERSE_SELECTION = 0.5;
 /** Conservative VWAP slippage penalty (fraction) for empty/insufficient book. */
 export const CONSERVATIVE_SLIPPAGE_PENALTY = 0.05;
 /** Edge scale mapping alpha_net -> score: alpha of 3% saturates the score. */
@@ -60,8 +77,32 @@ export const QuantProposalInputSchema = z.object({
   takerFee: z.number().nonnegative().default(DEFAULT_TAKER_FEE),
   /** Alias of takerFee (scope naming: feePct as fraction). Takes precedence if set. */
   feePct: z.number().nonnegative().optional(),
+  /**
+   * How the order is expected to reach the venue.
+   *
+   * "aggressive" crosses the spread and pays taker fees plus real VWAP impact.
+   * "passive" rests in the book, pays maker fees, and pays for ADVERSE SELECTION
+   * instead of impact.
+   *
+   * Default is "aggressive" so that every pre-existing call site keeps its
+   * previous hurdle exactly. Callers that post resting limits MUST pass
+   * "passive" explicitly; charging taker fees on both legs of a passive order
+   * is what produced a 98%-fee hurdle and a permanent NEUTRAL verdict.
+   */
+  executionStyle: z.enum(["passive", "aggressive"]).default("aggressive"),
+  /** Maker fee as fraction (e.g. 0 = no fee, negative = rebate). Only used when passive. */
+  makerFee: z.number().finite().default(DEFAULT_MAKER_FEE),
+  /** Adverse-selection coefficient in [0,1]. Only used when passive. */
+  adverseSelection: z.number().min(0).max(1).default(DEFAULT_ADVERSE_SELECTION),
 });
+/** Output shape (every field present). */
 export type QuantProposalInput = z.infer<typeof QuantProposalInputSchema>;
+/**
+ * Caller-facing shape. Fields with a `.default()` are OPTIONAL here and present
+ * after parsing, so call sites that omit executionStyle keep compiling and keep
+ * their previous behaviour exactly.
+ */
+export type QuantProposalInputArgs = z.input<typeof QuantProposalInputSchema>;
 
 export const QuantActionSchema = z.enum(["BUY_BASIS", "SELL_BASIS", "NEUTRAL"]);
 export type QuantAction = z.infer<typeof QuantActionSchema>;
@@ -73,10 +114,22 @@ export const QuantAnalysisResultSchema = z.object({
   vwapPrice: z.number().positive().nullable(),
   vwapSlippage: z.number().nonnegative(),
   vwapSlippagePct: z.number().nonnegative(),
+  /** Fee actually charged per round trip, given executionStyle. */
+  executionFeeRate: z.number().finite(),
+  /** Non-fee friction (impact when aggressive, adverse selection when passive). */
+  executionFrictionRate: z.number().nonnegative(),
+  /** Half-spread as a fraction of mid — the passive cost ceiling. */
+  halfSpreadPct: z.number().nonnegative(),
+  executionStyle: z.enum(["passive", "aggressive"]),
   fundingCarry: z.number().nonnegative(),
   fundingCarryPct: z.number().nonnegative(),
-  hurdleRate: z.number().nonnegative(),
-  hurdleRatePct: z.number().nonnegative(),
+  /**
+   * Friction hurdle. MAY BE NEGATIVE: a maker rebate can pay you to trade, in
+   * which case the honest hurdle is below zero. Clamping at zero would
+   * manufacture a hurdle the venue does not charge.
+   */
+  hurdleRate: z.number().finite(),
+  hurdleRatePct: z.number().finite(),
   netEdge: z.number().finite(),
   netEdgePct: z.number().finite(),
   /** Z-score of net edge in units of 1% edge (netEdge / 0.01). */
@@ -124,7 +177,7 @@ function bestAsk(asks: OrderBookLevel[]): number | null {
 // Core analysis (pure, fail-closed, never throws on book shape)
 // ---------------------------------------------------------------------------
 
-export function evaluateBasisSpread(input: QuantProposalInput): QuantAnalysisResult {
+export function evaluateBasisSpread(input: QuantProposalInputArgs): QuantAnalysisResult {
   const q = QuantProposalInputSchema.parse(input);
   const { tokenPrice: pToken, tradFiClosePrice: pClose, orderSizeUsd: Q } = q;
   // Scope aliases: hoursToOpen ~= hoursToClose, feePct ~= takerFee (fraction).
@@ -193,11 +246,40 @@ export function evaluateBasisSpread(input: QuantProposalInput): QuantAnalysisRes
     }
   }
 
-  // Friction hurdle (round-trip): H = (2 * fee) + slippage + fundingCarry,
+  // Execution-style-aware friction.
+  //
+  // The previous model charged taker fees on both legs AND walked the book
+  // against the opposite side, which is only correct for a crossing order. For
+  // a resting limit both terms were wrong in the same direction: it paid 12bp
+  // of taker cost plus impact impact it never incurs, on an order designed to
+  // avoid exactly that. Fees were 98% of the resulting hurdle, which is why
+  // every read came back NEUTRAL.
+  //
+  //   aggressive -> 2 * takerFee + VWAP impact   (crosses, pays spread)
+  //   passive    -> 2 * makerFee + adverseSel    (rests, pays for information)
+  //
+  // Passive friction is bounded by the half-spread: a resting order can never
+  // realise worse than the half-spread of adverse cost, and never better than
+  // zero. Charging anything outside that bound would be fiction.
+  const halfSpread = midPrice > 0 && bb !== null && ba !== null ? (ba - bb) / 2 / midPrice : 0;
+
+  let executionFeeRate: number;
+  let executionFrictionRate: number;
+
+  if (q.executionStyle === "passive") {
+    const makerRate = q.makerFee;
+    executionFeeRate = 2 * makerRate;
+    executionFrictionRate = q.adverseSelection * halfSpread;
+  } else {
+    executionFeeRate = 2 * fee;
+    executionFrictionRate = vwapSlippage;
+  }
+
+  // Friction hurdle (round-trip): H = (2 * fee) + execution friction + fundingCarry,
   // fundingCarry = |r_8h| * (hours / 8). Absolute funding so elevated
   // rates always expand the hurdle (weekend carry drag).
   const fundingCarry = Math.abs(q.fundingRate8h) * (hours / 8);
-  const hurdleRate = 2 * fee + vwapSlippage + fundingCarry;
+  const hurdleRate = executionFeeRate + executionFrictionRate + fundingCarry;
 
   // Net edge: alpha_net = |B_raw| - H.
   const netEdge = Math.abs(rawBasis) - hurdleRate;
@@ -246,6 +328,10 @@ export function evaluateBasisSpread(input: QuantProposalInput): QuantAnalysisRes
     vwapPrice: vwapPrice === null ? null : round(vwapPrice, 4),
     vwapSlippage: round(vwapSlippage, 6),
     vwapSlippagePct: round(vwapSlippage * 100, 4),
+    executionFeeRate: round(executionFeeRate, 8),
+    executionFrictionRate: round(executionFrictionRate, 8),
+    halfSpreadPct: round(halfSpread * 100, 4),
+    executionStyle: q.executionStyle,
     fundingCarry: round(fundingCarry, 6),
     fundingCarryPct: round(fundingCarry * 100, 4),
     hurdleRate: round(hurdleRate, 6),

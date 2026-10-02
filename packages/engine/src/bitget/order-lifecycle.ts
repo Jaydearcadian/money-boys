@@ -202,6 +202,39 @@ export function formatPrice(v: number, dp = 6): string {
   return v.toFixed(dp).replace(/0+$/, "").replace(/\.$/, "");
 }
 
+/**
+ * Align a price DOWN to the venue's tick grid, or UP for an ask.
+ *
+ * Adopted from a market-maker implementation worth reviewing: it used
+ * decimal.js with the venue's own priceDecimals to floor bids and ceil asks,
+ * which is correct but pulls in a big dependency for two roundings. We already
+ * fetch `pricePlace` / `volumePlace` from the contract config, so the grid is
+ * applied without one.
+ *
+ * Rounding to the WRONG side is not cosmetic: a bid rounded up can cross the
+ * ask and become a taker order, which is exactly the cost model this branch
+ * exists to avoid.
+ */
+export function alignToTick(price: number, tickDecimals: number, side: "bid" | "ask"): number {
+  if (!Number.isFinite(price)) {
+    throw new LifecycleValidationError("PRICE_NOT_FINITE", `price ${String(price)} is not finite`);
+  }
+  const f = 10 ** Math.max(0, Math.trunc(tickDecimals));
+  const ticks = price * f;
+  const aligned = side === "bid" ? Math.floor(ticks) : Math.ceil(ticks);
+  return aligned / f;
+}
+
+/** Align a size DOWN to the venue's lot grid. Never rounds UP: that would
+ *  exceed the authorised notional cap. */
+export function alignToLot(size: number, lotDecimals: number): number {
+  if (!Number.isFinite(size)) {
+    throw new LifecycleValidationError("SIZE_NOT_FINITE", `size ${String(size)} is not finite`);
+  }
+  const f = 10 ** Math.max(0, Math.trunc(lotDecimals));
+  return Math.floor(size * f) / f;
+}
+
 function buildOrderBody(req: LifecycleOrderRequest, clientOid: string): Record<string, unknown> {
   const symbol = mapToVenueSymbol(req.symbol);
   const body: Record<string, unknown> = {
