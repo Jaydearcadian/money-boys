@@ -1,0 +1,119 @@
+{
+  "campaign": "p13-passive-vs-aggressive",
+  "stage": "single live snapshot, both cost models",
+  "oneShot": true,
+  "scheduler": false,
+  "pollingLoop": false,
+  "retryLoop": false,
+  "dispatcherInvoked": false,
+  "orderSubmitted": false,
+  "robinhoodReads": 1,
+  "session": {
+    "label": "TRADABLE REGULAR",
+    "etDate": "2026-10-02",
+    "calendarDataset": "nasdaq-2026.operator-reviewed.r1"
+  },
+  "provenance": {
+    "sourceAsOf": "2026-10-02T17:33:49.103742234Z",
+    "timestampType": "PROVIDER_GENERATED_QUOTE",
+    "fetchedAt": "2026-10-02T17:34:02.829Z",
+    "provider": "robinhood_stock_token_api",
+    "symbol": "NVDA"
+  },
+  "freshness": {
+    "ageMs": 14071,
+    "effectiveGateMs": 15000,
+    "status": "within_effective_gate",
+    "basis": "receipt-relative"
+  },
+  "inputs": {
+    "tokenPrice": 234.77,
+    "benchmarkPrice": 234.57,
+    "orderSizeUsd": 50,
+    "takerFee": 0.0006,
+    "makerFee": 0.0002,
+    "fundingRate8h": 0,
+    "hoursToClose": 1,
+    "topOfBook": {
+      "price": 234.73,
+      "quantity": 289.62
+    },
+    "bestAsk": {
+      "price": 234.74,
+      "quantity": 2.61
+    }
+  },
+  "models": {
+    "aggressive": {
+      "action": "NEUTRAL",
+      "rawBasisPct": 0.0853,
+      "hurdleRatePct": 0.1221,
+      "executionFeeRate": 0.0012,
+      "executionFrictionRate": 0.0000213,
+      "netEdgePct": -0.0369,
+      "quantScore": 49.6
+    },
+    "passive": {
+      "action": "SELL_BASIS",
+      "rawBasisPct": 0.0853,
+      "hurdleRatePct": 0.0411,
+      "executionFeeRate": 0.0004,
+      "executionFrictionRate": 0.00001065,
+      "netEdgePct": 0.0442,
+      "quantScore": 50.7,
+      "adverseSelection": 0.5
+    }
+  },
+  "delta": {
+    "hurdleReductionPct": 0.081,
+    "verdictChanged": true,
+    "feeShareOfAggressiveHurdlePct": 98.28
+  },
+  "inventoryQuote": {
+    "flat": {
+      "fairPrice": 234.735,
+      "reservationPrice": 234.735,
+      "reservationSkew": 0,
+      "halfSpread": 0.0008,
+      "bidPrice": 234.7342,
+      "askPrice": 234.7358,
+      "reduceOnly": false,
+      "inventorySide": "FLAT",
+      "clampedToBook": false,
+      "reasons": [
+        "reservation skew 0.0000% from gamma*sigma^2*(T-t)*q"
+      ]
+    },
+    "longHalf": {
+      "fairPrice": 234.735,
+      "reservationPrice": 234.734998,
+      "reservationSkew": -1e-8,
+      "halfSpread": 0.0008,
+      "bidPrice": 234.734198,
+      "askPrice": 234.735798,
+      "reduceOnly": false,
+      "inventorySide": "LONG",
+      "clampedToBook": false,
+      "reasons": [
+        "reservation skew -0.0000% from gamma*sigma^2*(T-t)*q"
+      ]
+    },
+    "reservationSkewDelta": -1e-8
+  },
+  "fillProbability": {
+    "fillProbability": 0.017103,
+    "effectiveQueueBase": 289.833006,
+    "adverseSelectionCost": 0.0000105,
+    "expectedCapture": 1.8e-7,
+    "opportunityCostHurdle": 0.00083841,
+    "riskAdjustedEdge": -0.00083823,
+    "model": "poisson-queue-v1",
+    "reasons": [
+      "queue ahead 289.620000 + size 0.213006",
+      "arrivals 150.0000 vs queue 289.833006",
+      "P(fill)=0.0171 model=poisson-queue-v1",
+      "fill probability below 50%: edge heavily discounted"
+    ]
+  },
+  "noRecommendation": "Both models are reported. This evidence does not select an execution style; that decision requires a mandate, not a script."
+}
