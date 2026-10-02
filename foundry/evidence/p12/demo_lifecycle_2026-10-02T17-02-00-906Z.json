@@ -1,0 +1,197 @@
+{
+  "campaign": "p12-lifecycle-proof",
+  "stage": "demo",
+  "oneShot": true,
+  "scheduler": false,
+  "pollingLoop": false,
+  "dispatcherInvoked": false,
+  "retryLoop": false,
+  "operatorCapUsd": 50,
+  "notionalUsd": 50,
+  "orderType": "limit",
+  "marketOrderUsed": false,
+  "positionMode": "hedge",
+  "tradeSide": "open",
+  "limitPriceUsd": 230.73,
+  "limitDiscountPct": 2,
+  "quantity": 0.2167,
+  "orderId": "1489961902116339713",
+  "clientOid": "7fad502624fabc8057f3667fefaf130e",
+  "venueCallFootprint": [
+    {
+      "method": "GET",
+      "path": "/api/v2/mix/account/accounts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/mix/position/all-position"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/mix/order/place-order"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/mix/order/orderInfo"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/mix/order/cancel-order"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/mix/order/orderInfo"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/mix/position/all-position"
+    }
+  ],
+  "before": {
+    "total": 0,
+    "flat": true,
+    "raw": {
+      "code": "00000",
+      "msg": "success",
+      "requestTime": 1790960520024,
+      "data": []
+    }
+  },
+  "after": null,
+  "restingStatus": null,
+  "restingReadError": "Bitget HTTP 404: {\"code\":\"40404\",\"msg\":\"Request URL NOT FOUND\",\"requestTime\":1790960520438,\"data\":null}",
+  "cancelledStatus": "CANCELLED",
+  "afterReadError": "Bitget HTTP 404: {\"code\":\"40404\",\"msg\":\"Request URL NOT FOUND\",\"requestTime\":1790960520699,\"data\":null}",
+  "orderReadBackAvailable": false,
+  "substrateLimitation": "This Bitget Demo deployment serves no mix order READ routes: /api/v2/mix/order/orderInfo, /api/v2/mix/order/pending-orders and /api/v2/mix/order/history-order all answer 40404 Request URL NOT FOUND on GET and POST, while place-order and cancel-order both work normally. Order-state read-back therefore cannot be proven in this environment at all, and the absence is a substrate limitation, not a missing implementation.",
+  "finalPositionTotal": 0,
+  "finalFlat": true,
+  "receipt": {
+    "receiptHash": "14b705ce40bc170e0becfaad0dfee5914f2a46e539d4aac634399a008cf2e16b",
+    "sealedAt": "2026-10-02T17:02:00.223Z",
+    "decision": "APPROVED"
+  },
+  "quant": {
+    "action": "BUY_BASIS",
+    "rawBasisPct": -1.9024,
+    "hurdleRatePct": 0.1221,
+    "netEdgePct": 1.7803
+  },
+  "steps": [
+    {
+      "step": "market_context",
+      "ok": true,
+      "detail": {
+        "last": 235.44,
+        "limitPrice": 230.73,
+        "quantity": 0.2167,
+        "notional": 50
+      }
+    },
+    {
+      "step": "cap_check",
+      "ok": true,
+      "detail": {
+        "notional": 50,
+        "cap": 50
+      }
+    },
+    {
+      "step": "account_before",
+      "ok": true,
+      "detail": {
+        "equityUsd": 9364.2040197079,
+        "freeMarginUsd": 9364.2040197,
+        "usedMarginUsd": 0,
+        "positionTotal": 0,
+        "flat": true
+      }
+    },
+    {
+      "step": "receipt_sealed",
+      "ok": true,
+      "detail": {
+        "receiptHash": "14b705ce40bc170e0becfaad0dfee5914f2a46e539d4aac634399a008cf2e16b",
+        "notionalUsd": 50
+      }
+    },
+    {
+      "step": "place_order",
+      "ok": true,
+      "detail": {
+        "orderId": "1489961902116339713",
+        "clientOid": "7fad502624fabc8057f3667fefaf130e",
+        "symbol": "NVDAUSDT",
+        "orderType": "limit",
+        "limitPriceUsd": 230.73,
+        "takeProfitPrice": null,
+        "stopLossPrice": null,
+        "status": "SUBMITTED",
+        "receiptHash": "14b705ce40bc170e0becfaad0dfee5914f2a46e539d4aac634399a008cf2e16b",
+        "mode": "DEMO",
+        "raw": {
+          "code": "00000",
+          "msg": "success",
+          "requestTime": 1790960520292,
+          "data": {
+            "clientOid": "7fad502624fabc8057f3667fefaf130e",
+            "orderId": "1489961902116339713"
+          }
+        }
+      }
+    },
+    {
+      "step": "read_back_resting",
+      "ok": false,
+      "detail": {
+        "error": "Bitget HTTP 404: {\"code\":\"40404\",\"msg\":\"Request URL NOT FOUND\",\"requestTime\":1790960520438,\"data\":null}",
+        "consequence": "cancel still attempted"
+      }
+    },
+    {
+      "step": "cancel_order",
+      "ok": true,
+      "detail": {
+        "status": "CANCELLED",
+        "orderId": "1489961902116339713",
+        "clientOid": "4d272041d2ac9b2ff08ea2aec40416c6",
+        "symbol": "NVDAUSDT",
+        "receiptHash": "14b705ce40bc170e0becfaad0dfee5914f2a46e539d4aac634399a008cf2e16b",
+        "raw": {
+          "code": "00000",
+          "msg": "success",
+          "requestTime": 1790960520574,
+          "data": {
+            "orderId": "1489961902116339713",
+            "clientOid": "7fad502624fabc8057f3667fefaf130e"
+          }
+        }
+      }
+    },
+    {
+      "step": "read_back_cancelled",
+      "ok": false,
+      "detail": {
+        "error": "Bitget HTTP 404: {\"code\":\"40404\",\"msg\":\"Request URL NOT FOUND\",\"requestTime\":1790960520699,\"data\":null}"
+      }
+    },
+    {
+      "step": "read_back_position",
+      "ok": true,
+      "detail": {
+        "total": 0,
+        "flat": true
+      }
+    }
+  ],
+  "allStepsHeld": false,
+  "closure": {
+    "restingOrderPlaced": true,
+    "restingOrderCancelled": true,
+    "restingOrderReadBack": false,
+    "restingOrderPlacedReadBackAndCancelled": false,
+    "fundingAccrualObservedAcrossSettlementInterval": false,
+    "gap012Closed": false,
+    "note": "This satisfies ONE of GAP-012's two closure conditions. No position was held across a funding interval and no funding was read back, so GAP-012 stays OPEN. The quantity here is a resting limit below market, not a filled position."
+  }
+}

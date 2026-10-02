@@ -387,7 +387,7 @@ export async function readOrder(args: {
     "GET",
     MIX_ORDER_STATUS_PATH,
     { symbol: mapToVenueSymbol(args.symbol), productType: "USDT-FUTURES", orderId: args.orderId },
-    false,
+    true,
   );
   const rows = (Array.isArray(res.data) ? res.data : res.data ? [res.data] : []) as Record<string, unknown>[];
   const row = rows.find((r) => String(r["orderId"] ?? "") === args.orderId) ?? rows[0];
@@ -421,7 +421,7 @@ export async function readPositions(args: {
     "GET",
     MIX_POSITION_PATH,
     { productType: "USDT-FUTURES", marginCoin: "USDT" },
-    false,
+    true,
   );
   const rows = (Array.isArray(res.data) ? res.data : res.data ? [res.data] : []) as Record<string, unknown>[];
   const wanted = mapToVenueSymbol(args.symbol);

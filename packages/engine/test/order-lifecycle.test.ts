@@ -61,13 +61,13 @@ function receiptFor(decision: "APPROVED" | "VETOED" = "APPROVED"): SealedReasoni
   });
 }
 
-interface Call { method: string; path: string; body: unknown }
+interface Call { method: string; path: string; body: unknown; auth: boolean }
 
 function scriptedClient(responses: Record<string, unknown> = {}): { client: LifecycleClient; calls: Call[] } {
   const calls: Call[] = [];
   const client: LifecycleClient = {
-    request: async (method, path, _query, _auth, bodyObj) => {
-      calls.push({ method, path, body: bodyObj });
+    request: async (method, path, _query, auth, bodyObj) => {
+      calls.push({ method, path, body: bodyObj, auth: auth === true });
       const byPath = responses[path];
       if (byPath !== undefined) return byPath as { code: string; data?: unknown };
       if (path === MIX_PLACE_ORDER_PATH) {
@@ -79,6 +79,62 @@ function scriptedClient(responses: Record<string, unknown> = {}): { client: Life
   };
   return { client, calls };
 }
+
+// ---------------------------------------------------------------------------
+// Authentication on EVERY call
+//
+// The venue answers an unsigned call with 40006 "Invalid ACCESS_KEY", not
+// with a schema error, so an auth mistake looks like a credential problem.
+// These ran green for a full commit while readOrder/readPositions sent
+// auth=false and could never have worked against the real venue. The guard
+// is that every lifecycle call asserts auth === true, because a test double
+// that ignores the flag cannot catch this class of defect.
+// ---------------------------------------------------------------------------
+
+describe("GAP-012 — every lifecycle call is authenticated", () => {
+  it("authenticates the place-order write", async () => {
+    const { client, calls } = scriptedClient();
+    await placeOrderWithLifecycle({
+      receipt: receiptFor(),
+      request: { symbol: SYMBOL, side: "BUY", quantity: 1, orderType: "limit", limitPriceUsd: ENTRY },
+      client, mode: "DEMO",
+    });
+    assert.deepEqual(calls.map((c) => c.auth), [true]);
+  });
+
+  it("authenticates the cancel-order write", async () => {
+    const { client, calls } = scriptedClient();
+    await cancelOrder({ receipt: receiptFor(), orderId: "o1", symbol: SYMBOL, client, mode: "DEMO" });
+    assert.deepEqual(calls.map((c) => c.auth), [true]);
+  });
+
+  it("authenticates the order read-back", async () => {
+    const { client, calls } = scriptedClient();
+    await readOrder({ symbol: SYMBOL, orderId: "o1", client });
+    assert.deepEqual(calls.map((c) => c.auth), [true]);
+  });
+
+  it("authenticates the position read-back", async () => {
+    const { client, calls } = scriptedClient();
+    await readPositions({ client, symbol: SYMBOL });
+    assert.deepEqual(calls.map((c) => c.auth), [true]);
+  });
+
+  it("authenticates a full place -> read -> cancel -> read -> position cycle", async () => {
+    const { client, calls } = scriptedClient();
+    const placed = await placeOrderWithLifecycle({
+      receipt: receiptFor(),
+      request: { symbol: SYMBOL, side: "BUY", quantity: 1, orderType: "limit", limitPriceUsd: ENTRY },
+      client, mode: "DEMO",
+    });
+    await readOrder({ symbol: SYMBOL, orderId: placed.orderId!, client });
+    await cancelOrder({ receipt: receiptFor(), orderId: placed.orderId!, symbol: SYMBOL, client, mode: "DEMO" });
+    await readOrder({ symbol: SYMBOL, orderId: placed.orderId!, client });
+    await readPositions({ client, symbol: SYMBOL });
+    const unsigned = calls.filter((c) => c.auth !== true);
+    assert.equal(unsigned.length, 0, `unsigned lifecycle calls: ${JSON.stringify(unsigned)}`);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // Validation before any network call
