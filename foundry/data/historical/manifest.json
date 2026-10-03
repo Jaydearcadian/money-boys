@@ -1,0 +1,47 @@
+{
+  "ingestedAt": "2026-10-03T11:58:24.618Z",
+  "sourceEndpoint": "https://api.bitget.com/api/v2/mix/market/candles",
+  "granularity": "1D",
+  "symbols": {
+    "NVDAUSDT": {
+      "symbol": "NVDAUSDT",
+      "productType": "USDT-FUTURES",
+      "granularity": "1D",
+      "barsCount": 90,
+      "startDateIso": "2026-07-05T16:00:00.000Z",
+      "endDateIso": "2026-10-02T16:00:00.000Z",
+      "spanDays": 89,
+      "fileSha256": "6b4eca4530e78b6c7809bc8c33d72cd5e829c71f66cf026b260ce8d99a8a7792"
+    },
+    "TSLAUSDT": {
+      "symbol": "TSLAUSDT",
+      "productType": "USDT-FUTURES",
+      "granularity": "1D",
+      "barsCount": 90,
+      "startDateIso": "2026-07-05T16:00:00.000Z",
+      "endDateIso": "2026-10-02T16:00:00.000Z",
+      "spanDays": 89,
+      "fileSha256": "0a383fb0404b7804c28a5eddb6c9f2b8f02ebef71d76e1b1d0f0428e03030296"
+    },
+    "AAPLUSDT": {
+      "symbol": "AAPLUSDT",
+      "productType": "USDT-FUTURES",
+      "granularity": "1D",
+      "barsCount": 90,
+      "startDateIso": "2026-07-05T16:00:00.000Z",
+      "endDateIso": "2026-10-02T16:00:00.000Z",
+      "spanDays": 89,
+      "fileSha256": "816eea8f7e441d919f958fad749ccc2547b93994f9121819336405f5038fae59"
+    },
+    "BTCUSDT": {
+      "symbol": "BTCUSDT",
+      "productType": "USDT-FUTURES",
+      "granularity": "1D",
+      "barsCount": 90,
+      "startDateIso": "2026-07-05T16:00:00.000Z",
+      "endDateIso": "2026-10-02T16:00:00.000Z",
+      "spanDays": 89,
+      "fileSha256": "418d8fa65138a20c0286eb879fd275820bb82b66386b0e131cf1b4d499fc16cf"
+    }
+  }
+}
