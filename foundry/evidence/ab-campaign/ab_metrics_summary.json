@@ -1,0 +1,22 @@
+{
+  "cycles": 10,
+  "riskViolationRate": 0,
+  "riskViolations": 0,
+  "decisionConsistency": 0.9,
+  "repeatsPerInput": 4,
+  "armsAgreeCount": 8,
+  "armsDisagreeCount": 2,
+  "armsAgreementRate": 0.8,
+  "humanTakeovers": 0,
+  "humanTakeoverRate": 0,
+  "outcomeTally": {
+    "win": 0,
+    "loss": 0,
+    "flat": 0,
+    "unknown": 10
+  },
+  "criticalDefect": false,
+  "caveats": [
+    "10 cycle(s) have NO realised outcome. Agreement between arms is reported as agreement, NOT as accuracy: without an outcome it is unknown which arm was right."
+  ]
+}

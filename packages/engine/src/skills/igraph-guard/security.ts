@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+  PortfolioCopilot,
+  type PortfolioState,
+  type PortfolioCopilotLimits,
+  type PortfolioRiskAssessment,
+} from "./portfolio-copilot.js";
 
 /**
  * Risk Boy HARD_VETO — StructuralChangeGuard (CLM-002 / GAP-002).
@@ -185,4 +191,34 @@ export const StructuralChangeGuard = {
       ),
     });
   },
+
+  /**
+   * Unified blast-radius guard combining single-order account safety (R1-R3)
+   * with portfolio-level factor, sector, and concentration controls (R4-R6).
+   */
+  evaluateBlastRadiusWithPortfolio(
+    request: RiskOrderRequest,
+    account: RiskAccount,
+    portfolio: PortfolioState,
+    copilotLimits?: PortfolioCopilotLimits,
+  ): BlastRadiusResult & { portfolioAssessment: PortfolioRiskAssessment } {
+    const base = StructuralChangeGuard.evaluateBlastRadius(request, account);
+    const portfolioAssessment = PortfolioCopilot.evaluateImpact(request, portfolio, copilotLimits);
+
+    const combinedReasons = [...base.reasons, ...portfolioAssessment.reasons];
+    const decision: BlastRadiusDecision = combinedReasons.length > 0 ? "HARD_VETO" : "APPROVED";
+
+    return {
+      decision,
+      reasons: combinedReasons,
+      exposureUsd: base.exposureUsd,
+      projectedMarginUtilization: base.projectedMarginUtilization,
+      cancelCandidates: base.cancelCandidates,
+      projectedLiquidationPrice: decision === "APPROVED" ? base.projectedLiquidationPrice : null,
+      portfolioAssessment,
+    };
+  },
 };
+
+export * from "./portfolio-copilot.js";
+
