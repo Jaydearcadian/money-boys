@@ -71,6 +71,12 @@ export const AbCycleInputSchema = z.object({
   macroScore: z.number().min(0).max(100).default(50),
   macroRationale: z.string().default("Neutral macro catalyst baseline"),
   llmVerdict: LlmVerdictSchema.optional(),
+  /**
+   * Explicit label for scenario test fixtures. Using authoredFixtureVerdict
+   * makes it unambiguous that the verdict is an authored literal rather
+   * than a live model output (GAP-022).
+   */
+  authoredFixtureVerdict: LlmVerdictSchema.optional(),
   humanTakeover: z.boolean().default(false),
   outcome: z.enum(["WIN", "LOSS", "FLAT", "UNKNOWN"]).default("UNKNOWN"),
 });
@@ -197,12 +203,14 @@ export class AbPaperRunner {
       riskReasons: risk.reasons,
     });
 
+    const effectiveVerdict = p.authoredFixtureVerdict ?? p.llmVerdict;
+
     const llmResolution = resolveDecisionAuthority({
       authority: "LLM",
       deliberation: councilDeliberation,
       riskPermitted: riskReport.permitted,
       riskReasons: risk.reasons,
-      llmVerdict: p.llmVerdict,
+      llmVerdict: effectiveVerdict,
     });
 
     const armsAgree = councilResolution.decision === llmResolution.decision;
@@ -268,7 +276,7 @@ export class AbPaperRunner {
         decision: "APPROVED",
         rationale: activeAuthority === "COUNCIL"
           ? councilDeliberation.rationale
-          : (p.llmVerdict?.rationale ?? "LLM Approved"),
+          : (effectiveVerdict?.rationale ?? "LLM Approved"),
         metadata: {
           passNumber: 1,
           originalQuantity: p.quantity,

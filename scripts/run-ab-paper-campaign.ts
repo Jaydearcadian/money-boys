@@ -1,17 +1,20 @@
 /**
- * Bounded A/B Paper Campaign Runner (Track 2 Deliverable)
+ * Bounded A/B Paper Campaign Runner (Track 2 Verification Fixture)
  *
  * Runs a bounded sequence of deliberation cycles through AbPaperRunner,
  * measuring the LLM decision authority arm against the fixed-rule COUNCIL arm
  * on identical market inputs, with Portfolio Copilot factor & concentration risk
  * controls actively enforced.
  *
- * Generates audit-grade evidence in foundry/evidence/ab-campaign/
+ * NOTE: The LLM verdicts here are AUTHORED FIXTURES for control-plane and
+ * invariant verification (GAP-022). They are NOT live DashScope / Qwen-Plus
+ * model outputs.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { AbPaperRunner, type AbCycleInputArgs } from "../packages/engine/src/campaign/ab-paper-runner.js";
+import { SYNTHETIC_PERFORMANCE_STAMP } from "../packages/engine/src/agents/benchmarks.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(HERE, "..", "foundry", "evidence", "ab-campaign");
@@ -21,7 +24,7 @@ const LOG_FILE = join(OUT_DIR, "ab_observations.jsonl");
 const SUMMARY_FILE = join(OUT_DIR, "ab_metrics_summary.json");
 
 async function main() {
-  console.log("== Money Boys: Running Bounded A/B Paper Campaign ==");
+  console.log("== Money Boys: Running Bounded A/B Paper Campaign (Control-Plane Fixture) ==");
   const runner = new AbPaperRunner({ logFilePath: LOG_FILE });
 
   const defaultDepth = {
@@ -44,7 +47,7 @@ async function main() {
     ],
   };
 
-  // Diverse test scenarios across our universe
+  // Authored scenario fixtures for control-plane verification
   const scenarios: { name: string; input: AbCycleInputArgs }[] = [
     {
       name: "1. NVDA Dislocation (Both Arms Agree -> APPROVED)",
@@ -60,12 +63,12 @@ async function main() {
         account: startingAccount,
         portfolio: startingPortfolio,
         macroScore: 82,
-        macroRationale: "Blackwell architecture delivery beat expectations",
-        llmVerdict: {
+        macroRationale: "Authored catalyst: Blackwell architecture beat expectations",
+        authoredFixtureVerdict: {
           decision: "APPROVED",
           confidence: 0.94,
-          modelId: "qwen-plus-0925",
-          rationale: "Clear weekend dislocation with strong guidance catalyst",
+          modelId: "authored-fixture-scenario",
+          rationale: "Authored fixture hypothesis: Clear weekend dislocation with positive guidance",
         },
       },
     },
@@ -83,12 +86,12 @@ async function main() {
         account: startingAccount,
         portfolio: startingPortfolio,
         macroScore: 90,
-        macroRationale: "Robotaxi fleet deployment approval",
-        llmVerdict: {
+        macroRationale: "Authored catalyst: Robotaxi fleet deployment approval",
+        authoredFixtureVerdict: {
           decision: "APPROVED",
           confidence: 0.98,
-          modelId: "qwen-plus-0925",
-          rationale: "Extremely high conviction AI thesis",
+          modelId: "authored-fixture-scenario",
+          rationale: "Authored fixture hypothesis: High-conviction AI thesis",
         },
       },
     },
@@ -106,12 +109,12 @@ async function main() {
         account: startingAccount,
         portfolio: startingPortfolio,
         macroScore: 65,
-        macroRationale: "Mild retail sales uptick",
-        llmVerdict: {
+        macroRationale: "Authored catalyst: Mild retail sales uptick",
+        authoredFixtureVerdict: {
           decision: "APPROVED",
           confidence: 0.60,
-          modelId: "qwen-plus-0925",
-          rationale: "Slight positive drift expected into Monday open",
+          modelId: "authored-fixture-scenario",
+          rationale: "Authored fixture hypothesis: Slight positive drift expected",
         },
       },
     },
@@ -129,12 +132,12 @@ async function main() {
         account: startingAccount,
         portfolio: startingPortfolio,
         macroScore: 82,
-        macroRationale: "Blackwell architecture delivery beat expectations",
-        llmVerdict: {
+        macroRationale: "Authored catalyst: Blackwell architecture beat expectations",
+        authoredFixtureVerdict: {
           decision: "APPROVED",
           confidence: 0.94,
-          modelId: "qwen-plus-0925",
-          rationale: "Clear weekend dislocation with strong guidance catalyst",
+          modelId: "authored-fixture-scenario",
+          rationale: "Authored fixture hypothesis: Clear weekend dislocation with positive guidance",
         },
       },
     },
@@ -155,12 +158,12 @@ async function main() {
         account: startingAccount,
         portfolio: startingPortfolio,
         macroScore: 95,
-        macroRationale: "Global crypto regulatory clarity announced",
-        llmVerdict: {
+        macroRationale: "Authored catalyst: Global crypto regulatory clarity announced",
+        authoredFixtureVerdict: {
           decision: "APPROVED",
           confidence: 0.99,
-          modelId: "qwen-plus-0925",
-          rationale: "High macro tailwind, approve maximum available size",
+          modelId: "authored-fixture-scenario",
+          rationale: "Authored fixture hypothesis: High macro tailwind",
         },
       },
     },
@@ -191,7 +194,7 @@ async function main() {
 
   const metrics = runner.getMetrics();
   console.log("\n=======================================================");
-  console.log("A/B CAMPAIGN METRICS SUMMARY (Track 2 Open Theme):");
+  console.log("A/B CAMPAIGN METRICS SUMMARY (Track 2 Verification Fixture):");
   console.log("=======================================================");
   console.log(`Total Cycles Recorded:        ${metrics.cycles}`);
   console.log(`Risk Violation Rate:          ${(metrics.riskViolationRate * 100).toFixed(2)}% (Target: 0%)`);
@@ -200,8 +203,19 @@ async function main() {
   console.log(`Arms Agreement Rate:          ${(metrics.armsAgreementRate * 100).toFixed(1)}% (${metrics.armsAgreeCount} agree, ${metrics.armsDisagreeCount} disagree)`);
   console.log(`Human Takeovers:              ${metrics.humanTakeovers}`);
 
-  writeFileSync(SUMMARY_FILE, JSON.stringify(metrics, null, 2), "utf8");
-  console.log(`\nEvidence written to:`);
+  const stampedSummary = {
+    ...SYNTHETIC_PERFORMANCE_STAMP,
+    syntheticFixture: true,
+    validAsPerformanceEvidence: false,
+    reason:
+      "A/B campaign executed on authored scenario fixtures and synthetic LLM verdicts (GAP-022). " +
+      "The LLM arm was not driven by live model inference; metrics reflect authored fixture design rather than empirical model performance. " +
+      "Admissible ONLY as control-plane and structural risk-veto verification.",
+    ...metrics,
+  };
+
+  writeFileSync(SUMMARY_FILE, JSON.stringify(stampedSummary, null, 2), "utf8");
+  console.log(`\nEvidence written with SYNTHETIC_PERFORMANCE_STAMP to:`);
   console.log(`  - ${LOG_FILE}`);
   console.log(`  - ${SUMMARY_FILE}`);
   console.log("VERIFY OK");

@@ -7,9 +7,9 @@ hand-authored scenario inputs and a seeded PRNG. **No market data was used.**
 `alpha_factory_summary.json` reported `winRatePct: 100` and
 `maxDrawdownPct: 0` across 29 trades. Those figures are properties of the
 fixture's P&L arithmetic, not of any strategy. Its baseline
-(`rNVDAUSDT: 128.8`, dated 2026-09-18) also disagrees with the live market
-(NVDA ~234.6 on 2026-10-02), so the dislocation it measures is an artifact of a
-wrong constant.
+(`rNVDAUSDT: 128.8`, representing a real September 2024 close, was mislabeled as 2026-09-18)
+disagrees with the live market (NVDA ~234.6 on 2026-10-02), so the dislocation it measures is an artifact of a
+stale 2-year-old constant.
 
 `live_paper_daemon.jsonl` records `priceSource: "LOCAL_SNAPSHOT"` with
 `tokenPrice: 130.73` — stale and not venue-derived.

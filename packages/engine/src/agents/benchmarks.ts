@@ -89,10 +89,10 @@ export function assertBenchmarkUsableForTrading(
 /**
  * OFFLINE TEST FIXTURE ONLY.
  *
- * The values are a frozen 2026-09-18 snapshot kept so existing unit tests and
- * PAPER tooling have a deterministic benchmark. They are ~44% away from the
- * live market and MUST NOT influence a Demo or live strategy decision. Use
- * `assertBenchmarkUsableForTrading` to enforce that.
+ * The values are frozen September 2024 closing prices (post-NVDA 10-for-1
+ * split, week of 2024-09-18), previously mislabeled as 2026-09-18. They are
+ * ~44% away from the live market and MUST NOT influence a Demo or live
+ * strategy decision. Use `assertBenchmarkUsableForTrading` to enforce that.
  */
 export const FRIDAY_CLOSE_SNAPSHOT: Record<string, number> = {
   rNVDAUSDT: 128.8,
@@ -121,8 +121,8 @@ export const SYNTHETIC_PERFORMANCE_STAMP = {
     "as Track 1 backtest record.",
 } as const;
 
-/** asOf for FRIDAY_CLOSE_SNAPSHOT. Offline fixtures only; not a live benchmark. */
-export const BENCHMARK_AS_OF = "2026-09-18T20:00:00Z";
+/** asOf for FRIDAY_CLOSE_SNAPSHOT. Corrected from 2026-09-18 to true 2024-09-18 close. */
+export const BENCHMARK_AS_OF = "2024-09-18T20:00:00Z";
 export const BITGET_MCP_URL = "https://agent.bitget.com/mcp";
 export const BENCHMARK_TIMEOUT_MS = 1500;
 
