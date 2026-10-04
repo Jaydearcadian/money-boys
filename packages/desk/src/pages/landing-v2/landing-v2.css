@@ -1,0 +1,149 @@
+/*
+ * Landing v2 — scoped under .lv2 so nothing leaks into #/desk, #/evidence or v1.
+ * Tokens: reference (raw OKLCH) -> semantic -> used by components.
+ * Motion: "Premium" archetype (LottieFiles motion-design-skill): 350-600ms,
+ * decelerated entrances, zero overshoot, primary/secondary/ambient layers.
+ */
+.lv2 {
+  /* reference */
+  --ref-ink-950: oklch(0.15 0.012 265);
+  --ref-ink-900: oklch(0.18 0.014 265);
+  --ref-ink-800: oklch(0.23 0.016 265);
+  --ref-paper-50: oklch(0.975 0.004 265);
+  --ref-paper-100: oklch(0.945 0.005 265);
+  --ref-emerald-400: oklch(0.80 0.17 160);
+  --ref-emerald-700: oklch(0.45 0.11 160);
+  --ref-amber-400: oklch(0.82 0.15 80);
+  --ref-amber-800: oklch(0.45 0.10 70);
+  --ref-red-400: oklch(0.72 0.17 25);
+  --ref-red-700: oklch(0.45 0.16 25);
+
+  /* semantic */
+  --bg: var(--ref-ink-950);
+  --surface: var(--ref-ink-900);
+  --surface-2: var(--ref-ink-800);
+  --text: oklch(0.97 0.005 265);
+  --text-muted: oklch(0.76 0.01 265);
+  --line: oklch(1 0 0 / 0.12);
+  --accent: var(--ref-emerald-400);
+  --warn: var(--ref-amber-400);
+  --danger: var(--ref-red-400);
+  --light-bg: var(--ref-paper-100);
+  --light-surface: oklch(1 0 0);
+  --light-text: oklch(0.2 0.015 265);
+  --light-muted: oklch(0.42 0.015 265);
+  --light-accent: var(--ref-emerald-700);
+  --light-warn: var(--ref-amber-800);
+  --light-danger: var(--ref-red-700);
+  --focus: oklch(0.85 0.15 200);
+
+  /* motion */
+  --ease-std: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-enter: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --dur-quick: 150ms;
+  --dur-std: 400ms;
+  --dur-slow: 700ms;
+
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  overflow-x: clip;
+  isolation: isolate;
+  --h1: clamp(2.5rem, 1.4rem + 5.2vw, 5.25rem);
+  --h2: clamp(1.875rem, 1.2rem + 2.8vw, 3.25rem);
+}
+.lv2 *:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+.lv2 .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+.lv2 .measure { max-width: 66ch; }
+
+/* dim-gradient headline (Moneliq) */
+.lv2 .dim-text {
+  background: linear-gradient(180deg, #fff 30%, oklch(0.97 0.005 265 / 0.45) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.lv2 .light .dim-text {
+  background: linear-gradient(180deg, var(--light-text) 40%, oklch(0.2 0.015 265 / 0.55) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.lv2 .glass {
+  background: oklch(1 0 0 / 0.045);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.08), 0 24px 48px -24px rgb(0 0 0 / 0.6);
+}
+.lv2 .pill {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 0.375rem 0.875rem; font-size: 0.8125rem; font-weight: 600;
+  background: oklch(1 0 0 / 0.05);
+}
+.lv2 .light .pill { border-color: oklch(0 0 0 / 0.14); background: oklch(0 0 0 / 0.04); color: var(--light-text); }
+
+.lv2 .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  min-height: 48px; padding: 0 1.5rem; border-radius: 999px; font-weight: 700; font-size: 1rem;
+  transition: transform var(--dur-quick) var(--ease-std), background-color var(--dur-quick) var(--ease-std), border-color var(--dur-quick) var(--ease-std);
+}
+.lv2 .btn:active { transform: scale(0.97); }
+.lv2 .btn-primary { background: #fff; color: oklch(0.15 0.012 265); }
+.lv2 .btn-primary:hover { background: color-mix(in oklab, #fff 82%, var(--accent)); }
+.lv2 .btn-ghost { border: 1px solid oklch(1 0 0 / 0.28); color: var(--text); }
+.lv2 .btn-ghost:hover { background: oklch(1 0 0 / 0.08); }
+.lv2 .light .btn-primary { background: var(--light-text); color: #fff; }
+.lv2 .light .btn-primary:hover { background: color-mix(in oklab, var(--light-text) 80%, var(--light-accent)); }
+
+.lv2 .card-lift { transition: transform var(--dur-std) var(--ease-std), border-color var(--dur-std) var(--ease-std); }
+.lv2 .card-lift:hover { transform: translateY(-4px); border-color: oklch(1 0 0 / 0.28); }
+
+.lv2 .grid-bg {
+  background-image: radial-gradient(oklch(1 0 0 / 0.09) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse at 20% 0%, #000 0%, transparent 70%);
+}
+.lv2 .spot {
+  background: radial-gradient(closest-side, oklch(0.8 0.17 160 / 0.28), transparent);
+}
+
+/* hero scrim keeps white text >= 4.5:1 over the image (verified in DESIGN.md) */
+.lv2 .hero-scrim {
+  background: linear-gradient(90deg, oklch(0.15 0.012 265) 0%, oklch(0.15 0.012 265 / 0.88) 38%, oklch(0.15 0.012 265 / 0) 72%);
+}
+
+/* ---------- motion ---------- */
+@keyframes lv2-rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@keyframes lv2-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes lv2-glow { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
+
+.lv2 .rise { animation: lv2-rise var(--dur-slow) var(--ease-enter) both; animation-delay: calc(var(--i, 0) * 120ms); }
+.lv2 .float { animation: lv2-float 7s var(--ease-std) infinite; }
+.lv2 .glow { animation: lv2-glow 5s var(--ease-std) infinite; }
+
+/* hidden only once JS has opted in, so no-JS / reduced-motion always see content */
+.lv2[data-motion="on"] .reveal { opacity: 0; transform: translateY(24px); }
+.lv2[data-motion="on"] .reveal.in {
+  opacity: 1; transform: none;
+  transition: opacity var(--dur-slow) var(--ease-enter), transform var(--dur-slow) var(--ease-enter);
+  transition-delay: calc(min(var(--i, 0), 3) * 100ms);
+}
+
+.lv2 details > summary { list-style: none; cursor: pointer; }
+.lv2 details > summary::-webkit-details-marker { display: none; }
+.lv2 details[open] .chev { transform: rotate(180deg); }
+.lv2 .chev { transition: transform var(--dur-std) var(--ease-std); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lv2 *, .lv2 *::before, .lv2 *::after {
+    animation: none !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+  .lv2 .reveal { opacity: 1 !important; transform: none !important; }
+}

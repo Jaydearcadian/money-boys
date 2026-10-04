@@ -3,6 +3,7 @@ import { fetchState, type DeskState } from "./lib/api";
 import { LandingPage } from "./pages/Landing";
 import { DeskPage } from "./pages/Desk";
 import { EvidencePage } from "./pages/Evidence";
+import { LandingV2 } from "./pages/landing-v2/LandingV2";
 
 /**
  * Three surfaces, deliberately separate routes rather than tabs: a tab would
@@ -10,10 +11,11 @@ import { EvidencePage } from "./pages/Evidence";
  * #/evidence is the read-only benchmark pre-flight. #/desk is the Bitget Demo
  * venue lifecycle. Neither is connected end-to-end to the other.
  */
-function route(): "desk" | "evidence" | "landing" {
+function route(): "desk" | "evidence" | "landing" | "landing-v2" {
   const h = window.location.hash;
   if (h.startsWith("#/desk")) return "desk";
   if (h.startsWith("#/evidence")) return "evidence";
+  if (h.startsWith("#/landing-v2")) return "landing-v2";
   return "landing";
 }
 
@@ -28,5 +30,6 @@ export default function App() {
   }, []);
   if (r === "desk") return <DeskPage />;
   if (r === "evidence") return <EvidencePage />;
+  if (r === "landing-v2") return <LandingV2 desk={desk} />;
   return <LandingPage latest={desk?.latestReceipt ?? null} />;
 }

@@ -160,8 +160,8 @@ export interface DeliberationOutput {
 }
 
 export const API_BASE =
-  (import.meta as unknown as { env?: Record<string, string> }).env?.["VITE_API_BASE"] ??
-  "http://localhost:3001";
+  (import.meta as unknown as { env?: Record<string, string> }).env?.["VITE_API_BASE"] ?? "";
+
 
 export async function fetchEvidence(symbol?: string): Promise<EvidenceResponse> {
   const qs = symbol ? "?symbol=" + encodeURIComponent(symbol) : "";
