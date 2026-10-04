@@ -11,11 +11,11 @@ import { LandingV2 } from "./pages/landing-v2/LandingV2";
  * #/evidence is the read-only benchmark pre-flight. #/desk is the Bitget Demo
  * venue lifecycle. Neither is connected end-to-end to the other.
  */
-function route(): "desk" | "evidence" | "landing" | "landing-v2" {
+function route(): "desk" | "evidence" | "landing" | "v1" {
   const h = window.location.hash;
   if (h.startsWith("#/desk")) return "desk";
   if (h.startsWith("#/evidence")) return "evidence";
-  if (h.startsWith("#/landing-v2")) return "landing-v2";
+  if (h.startsWith("#/v1")) return "v1";
   return "landing";
 }
 
@@ -30,6 +30,6 @@ export default function App() {
   }, []);
   if (r === "desk") return <DeskPage />;
   if (r === "evidence") return <EvidencePage />;
-  if (r === "landing-v2") return <LandingV2 desk={desk} />;
-  return <LandingPage latest={desk?.latestReceipt ?? null} />;
+  if (r === "v1") return <LandingPage latest={desk?.latestReceipt ?? null} />;
+  return <LandingV2 desk={desk} />;
 }

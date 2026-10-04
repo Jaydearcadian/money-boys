@@ -64,8 +64,10 @@ export type ClaimState = "LIVE_DEMONSTRATED" | "TESTED" | "UNKNOWN";
 export interface LedgerClaim {
   id: string;
   statement: string;
+  category: string;
   state: ClaimState;
   limitation: string | null;
+  limitations: string[];
 }
 
 /** Parse foundry/claims.jsonl. Malformed lines are skipped, never thrown. */
@@ -78,11 +80,21 @@ export function parseClaims(raw: string): LedgerClaim[] {
       const r = JSON.parse(t) as Record<string, unknown>;
       const id = String(r["id"] ?? r["claim_id"] ?? "");
       const statement = String(r["claim"] ?? r["statement"] ?? "");
+      const category = String(r["category"] ?? "SAFETY");
       const st = String(r["state"] ?? r["status"] ?? "");
       const state: ClaimState = st === "LIVE_DEMONSTRATED" || st === "TESTED" ? st : "UNKNOWN";
-      const lims = Array.isArray(r["limitations"]) ? (r["limitations"] as unknown[]) : [];
+      const lims = Array.isArray(r["limitations"])
+        ? (r["limitations"] as unknown[]).map(String)
+        : [];
       if (!id || !statement) continue;
-      out.push({ id, statement, state, limitation: lims.length ? String(lims[0]) : null });
+      out.push({
+        id,
+        statement,
+        category,
+        state,
+        limitation: lims.length ? lims[0] : null,
+        limitations: lims,
+      });
     } catch {
       /* skip malformed line */
     }

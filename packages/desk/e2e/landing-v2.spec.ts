@@ -79,6 +79,17 @@ test.describe("landing-v2 page", () => {
     await expect(page.locator("h1")).toHaveCount(1); // still v2, not v1
   });
 
+  test("canonical root #/ renders LandingV2 and legacy #/v1 renders LandingPage", async ({ page }) => {
+    await stubState(page);
+    await page.goto("/index.html#/");
+    await expect(page.locator(".lv2")).toBeVisible();
+    await expect(page.locator("h1")).toHaveText(/The desk that trades while Wall Street sleeps/i);
+
+    await page.goto("/index.html#/v1");
+    await expect(page.locator(".lv2")).toHaveCount(0);
+    await expect(page.getByText("DESK-01").first()).toBeVisible();
+  });
+
   test("calculator derives the verdict from inputs", async ({ page }) => {
     await stubState(page);
     await open(page);

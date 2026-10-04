@@ -1,6 +1,6 @@
 ---
 name: Money Boys Landing v2
-route: "#/landing-v2"
+route: "#/ (canonical), #/landing-v2 (alias), #/v1 (legacy)"
 colors:
   ink-950: "oklch(0.15 0.012 265)"
   ink-900: "oklch(0.18 0.014 265)"

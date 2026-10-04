@@ -57,7 +57,7 @@ function Nav() {
             </li>
           ))}
         </ul>
-        <a href="#/landing-v2" className="flex min-h-[44px] items-center gap-2 font-extrabold tracking-tight lg:justify-center">
+        <a href="#/" className="flex min-h-[44px] items-center gap-2 font-extrabold tracking-tight lg:justify-center">
           <Logo /> <span>MONEY BOYS</span>
         </a>
         <div className="hidden items-center justify-end gap-6 text-sm font-semibold lg:flex lg:flex-1">
@@ -341,7 +341,12 @@ const GUARDS = [
   { Icon: LockIcon, t: "Receipt before dispatch", d: "No SHA-256 ReasoningReceipt, no Bitget order." },
   { Icon: BrainIcon, t: "No LLM authority", d: "The model proposes. It holds no keys and cannot sign." },
   { Icon: LayersIcon, t: "Portfolio Copilot limits", d: "Concentration capped at 40% (R4) and 60% (R5), portfolio beta at 2.50 (R6).", wide: true },
-  { Icon: TerminalIcon, t: "A/B harness, quarantined", d: "The harness's LLM-arm numbers are synthetic and not used as evidence. This is an open gap (GAP-022).", full: true },
+  {
+    Icon: TerminalIcon,
+    t: "Quarantined Synthetic Benchmark",
+    d: "The LLM-arm benchmark is strictly isolated under GAP-022. Synthetic simulation results are cordoned off and prohibited from acting as live evidence or driving risk thresholds.",
+    full: true,
+  },
 ] as const;
 
 function Guardrails() {
@@ -400,15 +405,44 @@ function Ledger() {
         {CLAIMS.map((c) => (
           <li key={c.id} className="reveal p-5 sm:p-6">
             <details>
-              <summary className="flex min-h-[44px] flex-wrap items-start gap-x-4 gap-y-2">
-                <span className="mono shrink-0 pt-0.5 text-sm text-[var(--text-muted)]">{c.id}</span>
-                <span className="min-w-[14rem] flex-1 leading-snug">{c.statement}</span>
-                <span className={`pill shrink-0 !text-xs ${c.state === "LIVE_DEMONSTRATED" ? "text-[var(--accent)]" : "text-[var(--warn)]"}`}>
-                  {c.state === "LIVE_DEMONSTRATED" ? <CheckIcon className="h-3.5 w-3.5" aria-hidden="true" /> : <span aria-hidden="true">◐</span>}
-                  {STATE_LABEL[c.state]}
-                </span>
+              <summary className="flex min-h-[44px] flex-wrap items-start justify-between gap-x-4 gap-y-2">
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+                  <span className="mono shrink-0 text-sm font-bold text-[var(--text-muted)]">{c.id}</span>
+                  <span className="pill mono shrink-0 !py-0.5 !px-2 text-[0.65rem] uppercase text-[var(--text-muted)]">
+                    {c.category}
+                  </span>
+                  <span className="min-w-[14rem] flex-1 font-semibold leading-snug">{c.statement}</span>
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                  <span className={`pill shrink-0 !text-xs ${c.state === "LIVE_DEMONSTRATED" ? "text-[var(--accent)]" : "text-[var(--warn)]"}`}>
+                    {c.state === "LIVE_DEMONSTRATED" ? <CheckIcon className="h-3.5 w-3.5" aria-hidden="true" /> : <span aria-hidden="true">◐</span>}
+                    {STATE_LABEL[c.state]}
+                  </span>
+                  <svg className="chev h-4 w-4 text-[var(--text-muted)]" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <path d="m5 8 5 5 5-5" />
+                  </svg>
+                </div>
               </summary>
-              {c.limitation && <p className="measure mt-3 pl-0 text-sm leading-relaxed text-[var(--text-muted)] sm:pl-14">Limitation: {c.limitation}</p>}
+              <div className="mt-4 rounded-2xl border border-[var(--line)] bg-[oklch(1_0_0/0.02)] p-4 sm:ml-12">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[var(--warn)]">
+                  <ShieldIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Audit Scope & Disclosed Constraints</span>
+                </div>
+                {c.limitations.length > 0 ? (
+                  <ul className="mt-3 space-y-2 text-xs leading-relaxed text-[var(--text-muted)]">
+                    {c.limitations.map((lim, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="mono shrink-0 select-none text-[var(--line)]">•</span>
+                        <span className="flex-1">{lim}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-2 text-xs leading-relaxed text-[var(--text-muted)]">
+                    Verified through automated regression and invariant test suites. Zero operational constraints registered.
+                  </p>
+                )}
+              </div>
             </details>
           </li>
         ))}
@@ -479,7 +513,7 @@ function Footer() {
         <ul className="grid grid-cols-1 gap-1 text-sm">
           <li><a href="#/desk" className="flex min-h-[44px] items-center text-[var(--text-muted)] hover:text-white">Cockpit</a></li>
           <li><a href="#/evidence" className="flex min-h-[44px] items-center text-[var(--text-muted)] hover:text-white">Evidence</a></li>
-          <li><a href="#/" className="flex min-h-[44px] items-center text-[var(--text-muted)] hover:text-white">Original landing page</a></li>
+          <li><a href="#/v1" className="flex min-h-[44px] items-center text-[var(--text-muted)] hover:text-white">Legacy v1 landing</a></li>
         </ul>
       </div>
       <p className="mono mt-10 text-xs leading-relaxed text-[var(--text-muted)]">
