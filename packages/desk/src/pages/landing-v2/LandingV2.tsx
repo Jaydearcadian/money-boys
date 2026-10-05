@@ -343,9 +343,14 @@ const GUARDS = [
   { Icon: LayersIcon, t: "Portfolio Copilot limits", d: "Concentration capped at 40% (R4) and 60% (R5), portfolio beta at 2.50 (R6).", wide: true },
   {
     Icon: TerminalIcon,
-    t: "Quarantined Synthetic Benchmark",
-    d: "The LLM-arm benchmark is strictly isolated under GAP-022. Synthetic simulation results are cordoned off and prohibited from acting as live evidence or driving risk thresholds.",
-    full: true,
+    t: "Quarantined Synthetic Backtest",
+    d: "The historical paper backtest claiming 100% win rate and 0% max drawdown is strictly quarantined under GAP-021: it was derived from an authored snapshot constant and seeded drift, not real market data. Track 1 Sharpe is withheld until genuine venue history is evaluated.",
+    wide: true,
+  },
+  {
+    Icon: TerminalIcon,
+    t: "Quarantined Benchmark Arm",
+    d: "The LLM-arm benchmark is strictly isolated under GAP-022. Synthetic simulation results are cordoned off and prohibited from acting as live evidence.",
   },
 ] as const;
 
@@ -457,6 +462,7 @@ const FAQ = [
   ["What stops a bad trade?", "Risk Boy vetoes on margin utilisation, trade size and free margin, using fixed rules rather than a model's judgement."],
   ["How do I check a decision?", "Use the verifier above. It recomputes the SHA-256 hash of a receipt in your browser and compares it to the sealed one."],
   ["What is the basis?", "The percentage gap between a token's price and its stock's last close. It is only an opportunity if it exceeds trading costs."],
+  ["Why are some backtest numbers quarantined?", "The historical paper backtest claiming 100% win rate and 0% max drawdown was derived from a static snapshot constant and seeded drift rather than genuine market candles (quarantined under GAP-021). The synthetic LLM benchmark arm is similarly isolated under GAP-022 until live execution evidence is captured."],
   ["Does it handle market holidays?", "Not yet. The open/closed chip uses Monday to Friday 09:30–16:00 ET and does not know about exchange holidays or early closes."],
 ] as const;
 

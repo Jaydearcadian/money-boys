@@ -83,10 +83,10 @@ export function createTelemetryServer(): Server {
   });
 }
 
-export function startServer(port: number = TELEMETRY_PORT): Promise<Server> {
+export function startServer(port: number = TELEMETRY_PORT, host: string = "127.0.0.1"): Promise<Server> {
   seedLatest();
   const server = createTelemetryServer();
-  return new Promise<Server>((resolve) => { server.listen(port, () => resolve(server)); });
+  return new Promise<Server>((resolve) => { server.listen(port, host, () => resolve(server)); });
 }
 
 export function stopServer(server: Server): Promise<void> {
@@ -102,5 +102,5 @@ export { TELEMETRY_PORT, COMMIT };
 const isMain = process.argv[1] != null && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {
   const server = createTelemetryServer();
-  server.listen(TELEMETRY_PORT, () => { console.log("[telemetry] MONEY BOYS desk telemetry listening on :" + TELEMETRY_PORT + " commit=" + COMMIT); });
+  server.listen(TELEMETRY_PORT, "127.0.0.1", () => { console.log("[telemetry] MONEY BOYS desk telemetry listening on 127.0.0.1:" + TELEMETRY_PORT + " commit=" + COMMIT); });
 }
