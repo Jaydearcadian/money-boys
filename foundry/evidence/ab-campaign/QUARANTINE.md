@@ -2,11 +2,10 @@
 
 The artifacts in this directory demonstrate that the A/B harness, Portfolio Copilot, and structural risk veto fire correctly by construction.
 
-However:
-1. **The LLM arm was not driven by live model inference.** All LLM verdicts in `ab_observations.jsonl` were passed as `authoredFixtureVerdict` scenario objects. No call to DashScope or any LLM API occurred.
-2. **Metrics describe the fixture's scenario script**, not Qwen-Plus or any model's empirical behavior:
-   - `decisionConsistency: 0.9` reflects repeated runs of the same authored fixture literal.
-   - `armsAgreementRate: 0.8` reflects 2 authored disagreements out of 10 scripted cycles.
-3. Neither file is admissible as Track 2 agent evaluation benchmark evidence until the harness is driven by live LLM inference calls against live market data.
+Status update (GAP-022 PARTIALLY RESOLVED):
+1. **Live Inference Pipeline Integrated:** `AbPaperRunner` and `scripts/run-ab-paper-campaign.ts` now support live DashScope / Qwen gateway inference via `queryLiveLlmVerdict()`. When `BITGET_QWEN_API_KEY` or `DASHSCOPE_API_KEY` is present, the LLM arm queries `qwen3.8-max` over native `fetch` with Zod schema enforcement and records empirical round-trip latency and SHA-256 payload digests.
+2. **Provenance-Derived Stamping Enforced:** `derivePerformanceStamp()` automatically inspects telemetry records (checking latency > 0ms, valid 64-char SHA-256 hex, and non-fixture model IDs). It refuses to claim live performance evidence if runs were driven by authored fixture literals or fail-closed fallbacks.
+3. **Current Artifact State:** The present `ab_metrics_summary.json` was generated in an environment without live API keys; telemetry confirmed 0 live evaluations, so the artifact is automatically stamped `provenance: "ALL_SYNTHETIC"` and `syntheticFixture: true`.
+4. **Admissibility Constraint:** Neither file is admissible as empirical agent evaluation benchmark evidence until a sustained paper campaign is executed against live Bitget Demo market quotes with real model calls.
 
-Tracked by: **GAP-022** (LLM decision authority arm evaluated only with authored fixture verdicts; live inference integration required).
+Tracked by: **GAP-022** (Status: **PARTIAL** — inference pipeline & telemetry-derived provenance implemented; sustained empirical campaign remaining).

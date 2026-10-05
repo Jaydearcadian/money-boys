@@ -13,8 +13,11 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { AbPaperRunner, type AbCycleInputArgs } from "../packages/engine/src/campaign/ab-paper-runner.js";
-import { SYNTHETIC_PERFORMANCE_STAMP } from "../packages/engine/src/agents/benchmarks.js";
+import {
+  AbPaperRunner,
+  type AbCycleInputArgs,
+} from "../packages/engine/src/campaign/ab-paper-runner.js";
+import { resolveQwenConfig } from "../packages/engine/src/agents/macro.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(HERE, "..", "foundry", "evidence", "ab-campaign");
@@ -24,7 +27,19 @@ const LOG_FILE = join(OUT_DIR, "ab_observations.jsonl");
 const SUMMARY_FILE = join(OUT_DIR, "ab_metrics_summary.json");
 
 async function main() {
-  console.log("== Money Boys: Running Bounded A/B Paper Campaign (Control-Plane Fixture) ==");
+  const { apiKey, model, baseUrl } = resolveQwenConfig();
+  const hasLiveKey = Boolean(apiKey && apiKey.trim().length > 0);
+
+  console.log(
+    `== Money Boys: Running Bounded A/B Paper Campaign (${hasLiveKey ? "Live Inference Pipeline" : "Control-Plane Fixture"}) ==`,
+  );
+  if (hasLiveKey) {
+    console.log(`[ab-campaign] Detected live API key. Querying ${model} @ ${baseUrl}`);
+  } else {
+    console.log(
+      `[ab-campaign] No BITGET_QWEN_API_KEY / DASHSCOPE_API_KEY detected. Running control-plane scenario fixtures (GAP-022).`,
+    );
+  }
   const runner = new AbPaperRunner({ logFilePath: LOG_FILE });
 
   const defaultDepth = {
@@ -171,9 +186,15 @@ async function main() {
 
   for (const s of scenarios) {
     console.log(`\nExecuting: ${s.name}`);
-    const res = await runner.runCycle(s.input, {
+    const input: AbCycleInputArgs = { ...s.input };
+    if (hasLiveKey) {
+      delete input.authoredFixtureVerdict;
+      input.queryLiveLlm = true;
+    }
+    const res = await runner.runCycle(input, {
       activeAuthority: "COUNCIL",
       executePaperFills: true,
+      queryLiveLlm: hasLiveKey,
     });
 
     console.log(`  Input Hash:         ${res.inputHash.slice(0, 16)}...`);
@@ -183,6 +204,9 @@ async function main() {
     }
     console.log(`  Council Resolution: ${res.councilResolution.decision} (${res.councilResolution.authoritySource})`);
     console.log(`  LLM Resolution:     ${res.llmResolution.decision} (${res.llmResolution.authoritySource})`);
+    if (res.llmTelemetry) {
+      console.log(`  LLM Telemetry:      live=${res.llmTelemetry.isLiveInference} latency=${res.llmTelemetry.latencyMs}ms model=${res.llmTelemetry.modelId}`);
+    }
     console.log(`  Arms Agree:         ${res.armsAgree ? "YES" : "NO"}`);
     if (res.receipt) {
       console.log(`  ReasoningReceipt:   SEALED -> ${res.receipt.receiptHash.slice(0, 16)}...`);
@@ -194,7 +218,7 @@ async function main() {
 
   const metrics = runner.getMetrics();
   console.log("\n=======================================================");
-  console.log("A/B CAMPAIGN METRICS SUMMARY (Track 2 Verification Fixture):");
+  console.log("A/B CAMPAIGN METRICS SUMMARY:");
   console.log("=======================================================");
   console.log(`Total Cycles Recorded:        ${metrics.cycles}`);
   console.log(`Risk Violation Rate:          ${(metrics.riskViolationRate * 100).toFixed(2)}% (Target: 0%)`);
@@ -203,19 +227,25 @@ async function main() {
   console.log(`Arms Agreement Rate:          ${(metrics.armsAgreementRate * 100).toFixed(1)}% (${metrics.armsAgreeCount} agree, ${metrics.armsDisagreeCount} disagree)`);
   console.log(`Human Takeovers:              ${metrics.humanTakeovers}`);
 
+  const stamp = runner.getDerivedPerformanceStamp();
+  console.log("\n=======================================================");
+  console.log("DERIVED PROVENANCE STAMP (From Observed Telemetry):");
+  console.log("=======================================================");
+  console.log(`Provenance:                   ${stamp.provenance}`);
+  console.log(`Synthetic Fixture:            ${stamp.syntheticFixture}`);
+  console.log(`Valid as Performance Evidence: ${stamp.validAsPerformanceEvidence}`);
+  console.log(`Live Evaluations:             ${stamp.telemetrySummary.liveEvaluations}/${stamp.telemetrySummary.totalEvaluations}`);
+  if (stamp.telemetrySummary.meanLatencyMs !== undefined) {
+    console.log(`Mean Inference Latency:       ${stamp.telemetrySummary.meanLatencyMs}ms`);
+  }
+
   const stampedSummary = {
-    ...SYNTHETIC_PERFORMANCE_STAMP,
-    syntheticFixture: true,
-    validAsPerformanceEvidence: false,
-    reason:
-      "A/B campaign executed on authored scenario fixtures and synthetic LLM verdicts (GAP-022). " +
-      "The LLM arm was not driven by live model inference; metrics reflect authored fixture design rather than empirical model performance. " +
-      "Admissible ONLY as control-plane and structural risk-veto verification.",
+    ...stamp,
     ...metrics,
   };
 
   writeFileSync(SUMMARY_FILE, JSON.stringify(stampedSummary, null, 2), "utf8");
-  console.log(`\nEvidence written with SYNTHETIC_PERFORMANCE_STAMP to:`);
+  console.log(`\nEvidence written with telemetry-derived stamp to:`);
   console.log(`  - ${LOG_FILE}`);
   console.log(`  - ${SUMMARY_FILE}`);
   console.log("VERIFY OK");

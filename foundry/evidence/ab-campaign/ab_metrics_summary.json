@@ -1,7 +1,17 @@
 {
   "syntheticFixture": true,
   "validAsPerformanceEvidence": false,
-  "reason": "A/B campaign executed on authored scenario fixtures and synthetic LLM verdicts (GAP-022). The LLM arm was not driven by live model inference; metrics reflect authored fixture design rather than empirical model performance. Admissible ONLY as control-plane and structural risk-veto verification.",
+  "provenance": "ALL_SYNTHETIC",
+  "reason": "A/B campaign executed on authored scenario fixtures and synthetic LLM verdicts (GAP-022). Zero live model inference round-trips observed in telemetry; metrics reflect authored fixture design rather than empirical model performance. Admissible ONLY as control-plane and structural risk-veto verification.",
+  "telemetrySummary": {
+    "totalEvaluations": 5,
+    "liveEvaluations": 0,
+    "syntheticEvaluations": 5,
+    "modelsObserved": [
+      "authored-fixture-scenario"
+    ],
+    "responseHashesSample": []
+  },
   "cycles": 10,
   "riskViolationRate": 0,
   "riskViolations": 0,
