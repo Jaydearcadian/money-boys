@@ -13,6 +13,7 @@ import {
   TOOL_NAMES,
 } from "../src/mcp/server.js";
 import { verifyHaltReceipt, sealHaltReceipt } from "../src/council/halt-receipt.js";
+import { verifyReceipt } from "../src/council/receipts.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..", "..");
@@ -165,6 +166,38 @@ describe("MCP tools", () => {
     })) as { verified: boolean; receiptType: string };
     assert.equal(r.verified, false);
     assert.equal(r.receiptType, "UNKNOWN_OR_TAMPERED");
+  });
+
+  it("simulate_deliberation seals a receipt that verifies", async () => {
+    // The documented demo flow is deliberate -> verify the seal. That only works
+    // if simulate_deliberation actually seals one; it previously did not.
+    const r = (await callTool("money_boys_simulate_deliberation", {
+      symbol: "rNVDAUSDT", side: "BUY_BASIS", tokenPrice: 235.5, tradFiClosePrice: 230.0,
+    })) as { receipt: unknown; receiptHash: string; dispatched: boolean; decision: string };
+
+    assert.match(r.receiptHash, /^[0-9a-f]{64}$/);
+    assert.equal(verifyReceipt(r.receipt), true, "sealed proposal must verify");
+    assert.equal(r.dispatched, false);
+
+    // And it must be verifiable through the public tool too.
+    const viaTool = (await callTool("money_boys_verify_reasoning_receipt", { receipt: r.receipt })) as {
+      verified: boolean; receiptType: string;
+    };
+    assert.equal(viaTool.verified, true);
+    assert.equal(viaTool.receiptType, "REASONING");
+  });
+
+  it("a tampered simulated receipt fails verification", async () => {
+    const r = (await callTool("money_boys_simulate_deliberation", {
+      symbol: "rNVDAUSDT", side: "BUY_BASIS", tokenPrice: 235.5, tradFiClosePrice: 230.0,
+    })) as { receipt: Record<string, unknown> };
+    // Flip to the OPPOSITE decision. Hard-coding APPROVED was a no-op when the
+    // council had already approved, so the seal correctly still verified.
+    const was = r.receipt["decision"] === "APPROVED" ? "VETOED" : "APPROVED";
+    const viaTool = (await callTool("money_boys_verify_reasoning_receipt", {
+      receipt: { ...r.receipt, decision: was },
+    })) as { verified: boolean };
+    assert.equal(viaTool.verified, false, `flipping decision to ${was} must break the seal`);
   });
 
   it("simulate_deliberation never claims to dispatch", async () => {

@@ -24,7 +24,10 @@
  *   error as the frozen disclosure strings this project has already caught.
  */
 import { z } from "zod";
-import { verifyReceipt, type SealedReasoningReceipt } from "../council/receipts.js";
+import { sealReceipt, verifyReceipt, type SealedReasoningReceipt } from "../council/receipts.js";
+import { reduceCouncilVote } from "../council/reducer.js";
+import { StructuralChangeGuard, toBlastRadiusReport } from "../skills/igraph-guard/security.js";
+import { evaluateExecution } from "../agents/execution.js";
 import { sealHaltReceipt, verifyHaltReceipt, type EmergencyHaltReceipt } from "../council/halt-receipt.js";
 import { evaluateBasisSpread } from "../agents/quant.js";
 import { computeFillProbability } from "../agents/fill-probability.js";
@@ -112,6 +115,35 @@ export function applyHalt(args: { halt: boolean; reason: string; caller: string 
 // ---------------------------------------------------------------------------
 // Handlers
 // ---------------------------------------------------------------------------
+
+/** Risk posture for a proposed size: bounded, never above the single-trade cap. */
+function riskFor(side: "BUY_BASIS" | "SELL_BASIS", tokenPrice: number, tradFiClosePrice: number) {
+  const notionalUsd = 25;
+  return StructuralChangeGuard.evaluateBlastRadius(
+    {
+      symbol: "PROPOSED",
+      side: side === "BUY_BASIS" ? "buy" : "sell",
+      quantity: notionalUsd / tokenPrice,
+      priceUsd: (tokenPrice + tradFiClosePrice) / 2,
+    },
+    { equityUsd: 25_000, usedMarginUsd: 0, freeMarginUsd: 25_000, openOrders: [] },
+  );
+}
+
+function riskScoreFor(report: ReturnType<typeof toBlastRadiusReport>): number {
+  return report.permitted ? 90 : 0;
+}
+
+function execFor(quant: { availableDepthUsd: number; depthCoverage: number; completeFill: boolean }): number {
+  return evaluateExecution({
+    orderSizeUsd: 25,
+    availableDepthUsd: quant.availableDepthUsd,
+    depthCoverage: quant.depthCoverage,
+    completeFill: quant.completeFill,
+    takerFee: 0.0006,
+    vwapSlippage: 0,
+  }).executionScore;
+}
 
 export type McpToolName =
   | "money_boys_get_desk_state"
@@ -212,16 +244,62 @@ export async function callTool(name: string, rawArgs: unknown): Promise<unknown>
         takerFee: 0.0006,
         executionStyle: "passive",
       });
+      // The council is actually run, and a REAL ReasoningReceipt is sealed.
+      // It previously returned a bare object with no receipt while the tool
+      // description and SKILL.md both promised a sealed proposal — so the
+      // documented demo flow (deliberate -> verify the seal) could not work.
+      const council = reduceCouncilVote({
+        macroScore: a.macroScore,
+        quantScore: quant.quantScore,
+        riskScore: riskScoreFor(toBlastRadiusReport(riskFor(a.side, a.tokenPrice, a.tradFiClosePrice))),
+        execScore: execFor(quant),
+        riskPermitted: true,
+        originalExposureUsd: 25,
+      });
+      const decision = council.status === "APPROVED" ? "APPROVED" : "VETOED";
+      const receipt = sealReceipt({
+        symbol: a.symbol,
+        action: quant.action,
+        quantMetrics: quant,
+        riskReport: toBlastRadiusReport(riskFor(a.side, a.tokenPrice, a.tradFiClosePrice)),
+        councilScores: {
+          compositeScore: council.compositeScore,
+          macro: a.macroScore,
+          quant: quant.quantScore,
+          risk: riskScoreFor(toBlastRadiusReport(riskFor(a.side, a.tokenPrice, a.tradFiClosePrice))),
+          exec: execFor(quant),
+        },
+        decision,
+        rationale:
+          `MCP paper deliberation on ${a.symbol}: council ${council.status} at S=${council.compositeScore.toFixed(1)}, ` +
+          `quorum ${council.quorum}/4. PROPOSAL ONLY — this receipt authorises nothing on any venue.`,
+        metadata: {
+          passNumber: 1,
+          mode: "PAPER_PROPOSAL_ONLY",
+          dispatched: false,
+          // Nothing was executed. Both are 0 so the receipt cannot be misread
+          // as an authorised fill, and the schema requires them explicitly.
+          originalQuantity: 0,
+          executedQuantity: 0,
+        },
+      });
       return {
         executed: true,
         dispatched: false,
         mode: "PAPER_PROPOSAL_ONLY",
         symbol: a.symbol,
         side: a.side,
-        macroScore: a.macroScore,
+        councilStatus: council.status,
+        compositeScore: council.compositeScore,
+        quorum: council.quorum,
+        decision,
         quantAction: quant.action,
         netEdgePct: quant.netEdgePct,
-        note: "Deliberation simulated and sealed. This tool cannot dispatch an order by construction.",
+        receipt,
+        receiptHash: receipt.receiptHash,
+        note:
+          "Deliberation ran and sealed a verifiable ReasoningReceipt. This tool cannot dispatch an " +
+          "order by construction; the receipt is a PROPOSAL artefact only.",
       };
     }
 
