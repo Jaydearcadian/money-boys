@@ -6,6 +6,8 @@ import { pathToFileURL } from "node:url";
 import { executeDeliberationCycle } from "./council/adapter.js";
 import { OrderDispatcher } from "./bitget/dispatcher.js";
 import { TELEMETRY_PORT, COMMIT, state, snapshot, pushReceipt, broadcastReceipt, broadcastHalt, seedLatest } from "./server-state.js";
+import { applyHalt } from "./mcp/server.js";
+import { verifyHaltReceipt } from "./council/halt-receipt.js";
 import { fixture, setCors, json, readBody } from "./server-helpers.js";
 import { buildEvidenceResponse } from "./evidence-surface.js";
 
@@ -35,17 +37,34 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     return;
   }
   if (method === "POST" && path === "/api/desk/halt") {
+    // This route used to flip state.systemHalt with NO audit trail at all. An
+    // emergency halt is the most consequential state change the desk can make,
+    // so it is now SHA-256 receipt-sealed through the SAME applyHalt() the MCP
+    // tool uses — two paths, one sealing implementation.
     const raw = await readBody(req);
+    let halt: boolean;
+    let reason = "operator toggled via /api/desk/halt";
     if (raw.trim().length > 0) {
       try {
-        const parsed = JSON.parse(raw) as { systemHalt?: unknown };
-        if (typeof parsed.systemHalt === "boolean") state.systemHalt = parsed.systemHalt;
-        else state.systemHalt = !state.systemHalt;
-      } catch { state.systemHalt = !state.systemHalt; }
-    } else { state.systemHalt = !state.systemHalt; }
+        const parsed = JSON.parse(raw) as { systemHalt?: unknown; reason?: unknown };
+        halt = typeof parsed.systemHalt === "boolean" ? parsed.systemHalt : !state.systemHalt;
+        if (typeof parsed.reason === "string" && parsed.reason.trim().length > 0) reason = parsed.reason;
+      } catch {
+        halt = !state.systemHalt;
+        reason = "operator toggled via /api/desk/halt (unparseable body)";
+      }
+    } else {
+      halt = !state.systemHalt;
+    }
+    const haltReceipt = applyHalt({ halt, reason, caller: "http:/api/desk/halt" });
+    state.systemHalt = haltReceipt ? halt : halt;
     state.activeNodes.risk.hardVetoActive = state.systemHalt;
     broadcastHalt();
-    json(res, 200, { systemHalt: state.systemHalt });
+    json(res, 200, {
+      systemHalt: state.systemHalt,
+      haltReceiptHash: haltReceipt.receiptHash,
+      haltReceiptVerified: verifyHaltReceipt(haltReceipt),
+    });
     return;
   }
   if (method === "POST" && path === "/api/desk/simulate-cycle") {

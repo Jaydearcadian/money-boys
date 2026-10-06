@@ -5,7 +5,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test test/*.test.ts",
-    "test:auth": "tsx src/bitget/test-auth.ts"
+    "test:auth": "tsx src/bitget/test-auth.ts",
+    "mcp": "tsx src/mcp/server.ts"
   },
   "dependencies": {
     "zod": "^3.23.8"
