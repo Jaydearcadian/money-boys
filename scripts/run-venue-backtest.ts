@@ -185,6 +185,13 @@ async function main(): Promise<void> {
   console.log(`    OOS with straddlers:    +$${summary.reconciliation.straddlingTradesDisclosure.oosPnlWithStraddlersUsd.toFixed(2)} (+${summary.reconciliation.straddlingTradesDisclosure.oosReturnWithStraddlersPct.toFixed(2)}%)`);
   console.log(`    OOS without straddlers:  $${summary.reconciliation.straddlingTradesDisclosure.oosPnlWithoutStraddlersUsd.toFixed(2)} (${summary.reconciliation.straddlingTradesDisclosure.oosReturnWithoutStraddlersPct.toFixed(2)}%)`);
   console.log("--------------------------------------------------------------------------------");
+  console.log("CROSS-PAIR RETURN CORRELATION & EFFECTIVE SAMPLE SIZE (N_eff):");
+  console.table(summary.crossPairCorrelation.matrix);
+  console.log(`  Average Pairwise Correlation (rho): ${summary.crossPairCorrelation.averagePairwiseCorrelation}`);
+  console.log(`  Effective Independent Assets (N_eff): ${summary.crossPairCorrelation.effectiveAssetCount} / ${summary.crossPairCorrelation.totalAssets}`);
+  console.log(`  OOS Effective Independent Trades: ~${summary.crossPairCorrelation.oosEffectiveTradesCount} (out of ${summary.outOfSample.tradesCount})`);
+  console.log(`  Analysis: ${summary.crossPairCorrelation.analysisNote}`);
+  console.log("--------------------------------------------------------------------------------");
   console.log("================================================================================");
 }
 

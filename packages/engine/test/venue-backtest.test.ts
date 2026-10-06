@@ -276,4 +276,29 @@ describe("Track 1 — Venue Candle Walk-Forward Backtest (GAP-021)", () => {
       assert.match(d.effectiveObservationNote, /variance compression/i);
     }
   });
+
+  it("12. computes and discloses cross-pair return correlation and effective asset count (N_eff)", () => {
+    const summary = new VenueBacktestRunner().runBacktest();
+    const corr = summary.crossPairCorrelation;
+
+    assert.equal(corr.totalAssets, 5);
+    // Diagonal must be 1.0
+    for (const sym of Object.keys(corr.matrix)) {
+      assert.equal(corr.matrix[sym]![sym], 1.0);
+    }
+    // Correlation symmetry
+    for (const s1 of Object.keys(corr.matrix)) {
+      for (const s2 of Object.keys(corr.matrix)) {
+        assert.equal(corr.matrix[s1]![s2], corr.matrix[s2]![s1]);
+      }
+    }
+    // Average correlation must be finite and within [-1, 1]
+    assert.ok(corr.averagePairwiseCorrelation >= -1 && corr.averagePairwiseCorrelation <= 1);
+    assert.ok(corr.averagePairwiseCorrelation < 0.5, "Average correlation across idiosyncratic perps is below 0.5");
+    // Effective asset count must be > 1 and <= totalAssets
+    assert.ok(corr.effectiveAssetCount > 1.0 && corr.effectiveAssetCount <= 5.0);
+    assert.ok(corr.oosEffectiveTradesCount > 0 && corr.oosEffectiveTradesCount <= summary.outOfSample.tradesCount);
+    assert.match(corr.analysisNote, /average pairwise return correlation/i);
+    assert.match(corr.analysisNote, /Neff/i);
+  });
 });
