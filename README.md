@@ -73,6 +73,7 @@ Status vocabulary: `TESTED` = verified locally with evidence. `LIVE_DEMONSTRATED
 | Demo order accepted and filled | LIVE_DEMONSTRATED | [`p06/demo_order_filled.json`](./foundry/evidence/p06/demo_order_filled.json) | 0.001 BTCUSDT, Demo Trading |
 | Demo position closed, account flat | LIVE_DEMONSTRATED | [`p06/demo_position_closed.json`](./foundry/evidence/p06/demo_position_closed.json) | Demo Trading |
 | Dispatcher lifecycle on venue | LIVE_DEMONSTRATED | [`p07/dispatcher_lifecycle.json`](./foundry/evidence/p07/dispatcher_lifecycle.json) | Market orders only, no cancel path |
+| Walk-forward venue candle backtest | TESTED | [`backtest/venue_backtest_summary.json`](./foundry/evidence/backtest/venue_backtest_summary.json) | 5 tokenized pairs, 59d IS / 30d OOS, 150 trades, 100% sealed receipts, exact cent reconciliation, ≥30 OOS trade gate cleared (48 trades, Sharpe 3.89, Sortino 9.15, decay 1.32x, mean rolling Sharpe 4.04, rho_avg 0.197) |
 | Bitget hackathon adapters | TESTED | [`integrations/bitget/`](./packages/engine/src/integrations/bitget/) | **No live adapter validation yet** |
 
 Full ledgers: [`claims`](./foundry/claims.jsonl) and [`gaps`](./foundry/gaps.jsonl).
@@ -108,7 +109,7 @@ Read this before trusting any number in this repo.
 - **All orders were market orders.** No limit orders, no partial fills, no resting orders, no cancel path, no SL/TP.
 - **No funding was observed.** Every round trip closed within seconds, so no position crossed a funding settlement interval.
 - **The paper daemon has never run against a venue.** No bounded campaign, no continuous loop, no reconciliation evidence.
-- **The integration adapters have zero live validation.** They pass 103 tests without having contacted a real MCP endpoint or fetched a real Playbook artifact.
+- **The integration adapters have zero live validation.** They pass 782 tests without having contacted a real MCP endpoint or fetched a real Playbook artifact.
 - **Paper backtest numbers are not performance claims.** Reported win rate of 100% and max drawdown of 0% are artifacts of a deterministic setup on synthetic depth, not evidence of edge.
 - **Single symbol, single size.** Every venue order was 0.001 BTCUSDT. No sizing sweep, no multi-symbol run.
 
@@ -116,7 +117,7 @@ Read this before trusting any number in this repo.
 
 ```bash
 pnpm install
-pnpm verify            # typecheck, 103 tests, desk build, foundry checks, secret scan
+pnpm verify            # typecheck, 782 tests (722 engine + 60 browser E2E), desk build, foundry checks, secret scan
 ```
 
 Optional, needs Bitget Demo credentials in a gitignored `.env`:
@@ -158,11 +159,12 @@ Never commit exchange credentials. A repository secret scan covers Bitget key sh
 
 What a reviewer can verify independently:
 
-- Run `pnpm verify`. 103 tests, typecheck, build, Foundry consistency, secret scan.
+- Run `pnpm verify`. 782 tests (722 engine unit + 60 Playwright E2E), typecheck, build, Foundry consistency, secret scan.
 - Read `foundry/claims.jsonl` and `foundry/gaps.jsonl`. Claims are graded, gaps are tracked, and nothing is marked live without venue evidence.
 - Inspect the Demo order evidence JSON. Real order IDs, real fill prices, real fees, real read-back responses from Bitget.
+- Inspect the Track 1 walk-forward backtest evidence JSON: [`foundry/evidence/backtest/venue_backtest_summary.json`](./foundry/evidence/backtest/venue_backtest_summary.json) and daily returns series [`venue_backtest_daily_series.json`](./foundry/evidence/backtest/venue_backtest_daily_series.json) for exact cent and Sharpe reproducibility.
 - Confirm the account is flat. The last verified position read returned no open BTCUSDT row.
 
-What to be skeptical of: the backtest summaries under `foundry/evidence/paper-trading/`. They show a 100% win rate and 0% drawdown, which are artifacts of deterministic synthetic depth, not a strategy result. The ledger records that discrepancy rather than hiding it.
+What to be skeptical of: synthetic fixtures under `foundry/evidence/paper-trading/` (flagged under GAP-021 / SYNTHETIC_PERFORMANCE_STAMP, superseded by the authentic 5-pair venue backtest under `foundry/evidence/backtest/`). And in the genuine backtest: exit-date vs entry-date straddler sensitivity (5 straddling trades entered in-sample contribute $224.49 of the $433.35 OOS PnL; without them OOS is +$208.86; both figures are reported transparently in `venue_backtest_summary.json`).
 
 Repository status is `IN_PROGRESS`. Not complete, and honest about where.
