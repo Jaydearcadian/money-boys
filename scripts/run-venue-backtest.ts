@@ -166,9 +166,18 @@ async function main(): Promise<void> {
   if (summary.sharpeDecayPct !== null) {
     console.log(`Sharpe Decay (IS -> OOS): ${summary.sharpeDecayPct}%`);
   } else {
-    console.log("Sharpe Decay: N/A (Withheld due to trade observation threshold gate: OOS has 24 trades < 30 required)");
+    console.log(`Sharpe Decay: N/A (Withheld due to trade observation threshold gate: OOS has ${summary.outOfSample.tradesCount} trades < 30 required)`);
   }
 
+  console.log("\n--------------------------------------------------------------------------------");
+  console.log(`RECONCILIATION AUDIT (Attribution Policy: ${summary.reconciliation.attributionPolicy}):`);
+  console.log(`  PnL Reconciled to the Cent: ${summary.reconciliation.pnlReconciledToTheCent ? `YES ($${summary.reconciliation.isTotalPnlUsd.toFixed(2)} + $${summary.reconciliation.oosTotalPnlUsd.toFixed(2)} = $${summary.reconciliation.fullTotalPnlUsd.toFixed(2)})` : "NO"}`);
+  console.log(`  Trades Count Reconciled: ${summary.reconciliation.tradesCountReconciled ? `YES (${summary.reconciliation.isTradesCount} + ${summary.reconciliation.oosTradesCount} = ${summary.reconciliation.fullTradesCount})` : "NO"}`);
+  console.log(`  Straddling Trades Count: ${summary.reconciliation.straddlingTradesCount} (entered IS, exited OOS; total PnL: +$${summary.reconciliation.straddlingTradesPnlUsd.toFixed(2)})`);
+  for (const st of summary.reconciliation.straddlingTradesDetail) {
+    console.log(`    - ${st.tradeId} (${st.symbol}): entry ${st.entryDate} -> exit ${st.exitDate}, PnL $${st.pnlUsd.toFixed(2)}`);
+  }
+  console.log("--------------------------------------------------------------------------------");
   console.log("================================================================================");
 }
 

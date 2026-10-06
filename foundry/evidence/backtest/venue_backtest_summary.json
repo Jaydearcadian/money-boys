@@ -1,5 +1,5 @@
 {
-  "headline": "IS Sharpe 2.23 (daily) -> OOS flat at -0.02% (24 trades, Sharpe WITHHELD_INSUFFICIENT_OBSERVATIONS), Turnover 14.56 (1456%)",
+  "headline": "IS +1.60% (Sharpe 2.23) -> OOS +0.67% (27 trades, Sharpe WITHHELD_INSUFFICIENT_OBSERVATIONS), Return Decay 0.42x, Turnover 14.56 (1,456%)",
   "provenance": "HISTORICAL_VENUE_CANDLES",
   "syntheticFixture": false,
   "validAsPerformanceEvidence": true,
@@ -419,16 +419,16 @@
     "segment": "IN_SAMPLE",
     "calendarDays": 59,
     "tradingDays": 43,
-    "tradesCount": 67,
-    "winningTrades": 37,
-    "losingTrades": 30,
-    "winRatePct": 55.2,
+    "tradesCount": 64,
+    "winningTrades": 35,
+    "losingTrades": 29,
+    "winRatePct": 54.7,
     "totalPnlUsd": 399.79,
     "netReturnPct": 1.6,
     "maxDrawdownPct": 1.02,
     "sharpeRatio": 2.23,
     "sortinoRatio": 4.07,
-    "turnoverRatio": 10.72,
+    "turnoverRatio": 10.24,
     "sharpeStatus": "PUBLISHED",
     "dailySeries": [
       {
@@ -695,145 +695,181 @@
     "segment": "OUT_OF_SAMPLE",
     "calendarDays": 30,
     "tradingDays": 21,
-    "tradesCount": 24,
-    "winningTrades": 12,
-    "losingTrades": 12,
-    "winRatePct": 50,
-    "totalPnlUsd": -5.92,
-    "netReturnPct": -0.02,
-    "maxDrawdownPct": 0.49,
+    "tradesCount": 27,
+    "winningTrades": 14,
+    "losingTrades": 13,
+    "winRatePct": 51.9,
+    "totalPnlUsd": 167.09,
+    "netReturnPct": 0.67,
+    "maxDrawdownPct": 0.48,
     "sharpeRatio": null,
     "sortinoRatio": null,
-    "turnoverRatio": 3.84,
+    "turnoverRatio": 4.32,
     "sharpeStatus": "WITHHELD_INSUFFICIENT_OBSERVATIONS",
     "dailySeries": [
       {
         "date": "2026-09-03",
-        "dayPnlUsd": 0,
-        "cumulativeEquityUsd": 25000,
-        "dailyReturnPct": 0
+        "dayPnlUsd": 207.69,
+        "cumulativeEquityUsd": 25207.69,
+        "dailyReturnPct": 0.8308
       },
       {
         "date": "2026-09-04",
-        "dayPnlUsd": 15.56,
-        "cumulativeEquityUsd": 25015.56,
-        "dailyReturnPct": 0.0622
+        "dayPnlUsd": -19.12,
+        "cumulativeEquityUsd": 25188.57,
+        "dailyReturnPct": -0.0758
       },
       {
         "date": "2026-09-08",
         "dayPnlUsd": 0,
-        "cumulativeEquityUsd": 25015.56,
+        "cumulativeEquityUsd": 25188.57,
         "dailyReturnPct": 0
       },
       {
         "date": "2026-09-09",
         "dayPnlUsd": 56.09,
-        "cumulativeEquityUsd": 25071.65,
-        "dailyReturnPct": 0.2242
+        "cumulativeEquityUsd": 25244.66,
+        "dailyReturnPct": 0.2227
       },
       {
         "date": "2026-09-10",
         "dayPnlUsd": 4.99,
-        "cumulativeEquityUsd": 25076.64,
-        "dailyReturnPct": 0.0199
+        "cumulativeEquityUsd": 25249.65,
+        "dailyReturnPct": 0.0198
       },
       {
         "date": "2026-09-11",
         "dayPnlUsd": -88.39,
-        "cumulativeEquityUsd": 24988.25,
-        "dailyReturnPct": -0.3525
+        "cumulativeEquityUsd": 25161.26,
+        "dailyReturnPct": -0.3501
       },
       {
         "date": "2026-09-14",
         "dayPnlUsd": 0,
-        "cumulativeEquityUsd": 24988.25,
+        "cumulativeEquityUsd": 25161.26,
         "dailyReturnPct": 0
       },
       {
         "date": "2026-09-15",
         "dayPnlUsd": 17.44,
-        "cumulativeEquityUsd": 25005.69,
-        "dailyReturnPct": 0.0698
+        "cumulativeEquityUsd": 25178.7,
+        "dailyReturnPct": 0.0693
       },
       {
         "date": "2026-09-16",
         "dayPnlUsd": 0,
-        "cumulativeEquityUsd": 25005.69,
+        "cumulativeEquityUsd": 25178.7,
         "dailyReturnPct": 0
       },
       {
         "date": "2026-09-17",
         "dayPnlUsd": -17.58,
-        "cumulativeEquityUsd": 24988.11,
-        "dailyReturnPct": -0.0703
+        "cumulativeEquityUsd": 25161.12,
+        "dailyReturnPct": -0.0698
       },
       {
         "date": "2026-09-18",
         "dayPnlUsd": 6.18,
-        "cumulativeEquityUsd": 24994.29,
-        "dailyReturnPct": 0.0247
+        "cumulativeEquityUsd": 25167.3,
+        "dailyReturnPct": 0.0246
       },
       {
         "date": "2026-09-21",
         "dayPnlUsd": 0,
-        "cumulativeEquityUsd": 24994.29,
+        "cumulativeEquityUsd": 25167.3,
         "dailyReturnPct": 0
       },
       {
         "date": "2026-09-22",
         "dayPnlUsd": 27.35,
-        "cumulativeEquityUsd": 25021.64,
-        "dailyReturnPct": 0.1094
+        "cumulativeEquityUsd": 25194.65,
+        "dailyReturnPct": 0.1087
       },
       {
         "date": "2026-09-23",
         "dayPnlUsd": -27.28,
-        "cumulativeEquityUsd": 24994.36,
-        "dailyReturnPct": -0.109
+        "cumulativeEquityUsd": 25167.37,
+        "dailyReturnPct": -0.1083
       },
       {
         "date": "2026-09-24",
         "dayPnlUsd": 21.47,
-        "cumulativeEquityUsd": 25015.83,
-        "dailyReturnPct": 0.0859
+        "cumulativeEquityUsd": 25188.84,
+        "dailyReturnPct": 0.0853
       },
       {
         "date": "2026-09-25",
         "dayPnlUsd": -33.35,
-        "cumulativeEquityUsd": 24982.48,
-        "dailyReturnPct": -0.1333
+        "cumulativeEquityUsd": 25155.49,
+        "dailyReturnPct": -0.1324
       },
       {
         "date": "2026-09-28",
         "dayPnlUsd": 0,
-        "cumulativeEquityUsd": 24982.48,
+        "cumulativeEquityUsd": 25155.49,
         "dailyReturnPct": 0
       },
       {
         "date": "2026-09-29",
         "dayPnlUsd": 34,
-        "cumulativeEquityUsd": 25016.48,
-        "dailyReturnPct": 0.1361
+        "cumulativeEquityUsd": 25189.49,
+        "dailyReturnPct": 0.1352
       },
       {
         "date": "2026-09-30",
         "dayPnlUsd": 71.94,
-        "cumulativeEquityUsd": 25088.42,
-        "dailyReturnPct": 0.2876
+        "cumulativeEquityUsd": 25261.43,
+        "dailyReturnPct": 0.2856
       },
       {
         "date": "2026-10-01",
         "dayPnlUsd": 28.27,
-        "cumulativeEquityUsd": 25116.69,
-        "dailyReturnPct": 0.1127
+        "cumulativeEquityUsd": 25289.7,
+        "dailyReturnPct": 0.1119
       },
       {
         "date": "2026-10-02",
         "dayPnlUsd": -122.61,
-        "cumulativeEquityUsd": 24994.08,
-        "dailyReturnPct": -0.4882
+        "cumulativeEquityUsd": 25167.09,
+        "dailyReturnPct": -0.4848
       }
     ]
+  },
+  "reconciliation": {
+    "isTradesCount": 64,
+    "oosTradesCount": 27,
+    "fullTradesCount": 91,
+    "tradesCountReconciled": true,
+    "isTotalPnlUsd": 399.79,
+    "oosTotalPnlUsd": 167.09,
+    "fullTotalPnlUsd": 566.88,
+    "pnlReconciledToTheCent": true,
+    "straddlingTradesCount": 3,
+    "straddlingTradesPnlUsd": 173.01,
+    "straddlingTradesDetail": [
+      {
+        "tradeId": "trade-venue-0065",
+        "symbol": "TSLAUSDT",
+        "entryDate": "2026-09-02",
+        "exitDate": "2026-09-03",
+        "pnlUsd": 157.58
+      },
+      {
+        "tradeId": "trade-venue-0066",
+        "symbol": "AAPLUSDT",
+        "entryDate": "2026-09-02",
+        "exitDate": "2026-09-03",
+        "pnlUsd": 50.11
+      },
+      {
+        "tradeId": "trade-venue-0067",
+        "symbol": "NVDAUSDT",
+        "entryDate": "2026-09-02",
+        "exitDate": "2026-09-04",
+        "pnlUsd": -34.68
+      }
+    ],
+    "attributionPolicy": "REALIZED_EXIT_DATE"
   },
   "sharpeDecayPct": null,
   "totalReceiptsSealed": 91

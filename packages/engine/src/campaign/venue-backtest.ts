@@ -65,6 +65,27 @@ export interface SegmentMetrics {
   dailySeries: DailyReturnRecord[];
 }
 
+export interface BacktestReconciliation {
+  isTradesCount: number;
+  oosTradesCount: number;
+  fullTradesCount: number;
+  tradesCountReconciled: boolean;
+  isTotalPnlUsd: number;
+  oosTotalPnlUsd: number;
+  fullTotalPnlUsd: number;
+  pnlReconciledToTheCent: boolean;
+  straddlingTradesCount: number;
+  straddlingTradesPnlUsd: number;
+  straddlingTradesDetail: Array<{
+    tradeId: string;
+    symbol: string;
+    entryDate: string;
+    exitDate: string;
+    pnlUsd: number;
+  }>;
+  attributionPolicy: "REALIZED_EXIT_DATE";
+}
+
 export interface VenueBacktestSummary {
   headline: string;
   provenance: "HISTORICAL_VENUE_CANDLES";
@@ -83,6 +104,7 @@ export interface VenueBacktestSummary {
   fullCampaign: SegmentMetrics;
   inSample: SegmentMetrics;
   outOfSample: SegmentMetrics;
+  reconciliation: BacktestReconciliation;
   sharpeDecayPct: number | null;
   totalReceiptsSealed: number;
 }
@@ -320,7 +342,7 @@ export class VenueBacktestRunner {
               returnPct: Math.round(returnPct * 100) / 100,
               feesUsd: Math.round(totalFeesUsd * 100) / 100,
               receiptHash: pos.receiptHash,
-              isOutSample: pos.isOutSample,
+              isOutSample: date > IN_SAMPLE_CUTOFF_DATE,
             });
 
             openPositions.delete(tokenSym);
@@ -462,7 +484,45 @@ export class VenueBacktestRunner {
       ) / 10;
     }
 
-    const headline = `IS Sharpe ${inSample.sharpeRatio !== null ? inSample.sharpeRatio : "WITHHELD"} (daily) -> OOS flat at ${outOfSample.netReturnPct}% (${outOfSample.tradesCount} trades, Sharpe ${outOfSample.sharpeStatus}), Turnover ${fullCampaign.turnoverRatio} (${Math.round(fullCampaign.turnoverRatio * 100)}%)`;
+    const straddlingTrades = this.completedTrades.filter(
+      (t) => t.entryDate <= IN_SAMPLE_CUTOFF_DATE && t.exitDate > IN_SAMPLE_CUTOFF_DATE,
+    );
+    const straddlingTradesPnlUsd = Math.round(
+      straddlingTrades.reduce((acc, t) => acc + t.pnlUsd, 0) * 100,
+    ) / 100;
+
+    const pnlSum = Math.round((inSample.totalPnlUsd + outOfSample.totalPnlUsd) * 100) / 100;
+    const pnlReconciledToTheCent = pnlSum === fullCampaign.totalPnlUsd;
+    const tradesCountReconciled =
+      inSample.tradesCount + outOfSample.tradesCount === fullCampaign.tradesCount;
+
+    const reconciliation: BacktestReconciliation = {
+      isTradesCount: inSample.tradesCount,
+      oosTradesCount: outOfSample.tradesCount,
+      fullTradesCount: fullCampaign.tradesCount,
+      tradesCountReconciled,
+      isTotalPnlUsd: inSample.totalPnlUsd,
+      oosTotalPnlUsd: outOfSample.totalPnlUsd,
+      fullTotalPnlUsd: fullCampaign.totalPnlUsd,
+      pnlReconciledToTheCent,
+      straddlingTradesCount: straddlingTrades.length,
+      straddlingTradesPnlUsd,
+      straddlingTradesDetail: straddlingTrades.map((t) => ({
+        tradeId: t.tradeId,
+        symbol: t.symbol,
+        entryDate: t.entryDate,
+        exitDate: t.exitDate,
+        pnlUsd: t.pnlUsd,
+      })),
+      attributionPolicy: "REALIZED_EXIT_DATE",
+    };
+
+    const returnDecay =
+      inSample.netReturnPct !== 0
+        ? (outOfSample.netReturnPct / inSample.netReturnPct).toFixed(2)
+        : "0.00";
+
+    const headline = `IS +${inSample.netReturnPct.toFixed(2)}% (Sharpe ${inSample.sharpeRatio !== null ? inSample.sharpeRatio.toFixed(2) : "WITHHELD"}) -> OOS +${outOfSample.netReturnPct.toFixed(2)}% (${outOfSample.tradesCount} trades, Sharpe ${outOfSample.sharpeStatus}), Return Decay ${returnDecay}x, Turnover ${fullCampaign.turnoverRatio.toFixed(2)} (${Math.round(fullCampaign.turnoverRatio * 100).toLocaleString("en-US")}%)`;
 
     return {
       headline,
@@ -482,6 +542,7 @@ export class VenueBacktestRunner {
       fullCampaign,
       inSample,
       outOfSample,
+      reconciliation,
       sharpeDecayPct,
       totalReceiptsSealed: this.receipts.length,
     };

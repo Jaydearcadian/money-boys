@@ -7,7 +7,7 @@
 
 | | |
 |---|---|
-| Generated at commit | `73e5291` |
+| Generated at commit | `307ef0d` |
 | Ledger fingerprint | `8defeed867c90d2e` |
 | Non-closed gaps | **10** (of 22) |
 | Blocked external | 1 |

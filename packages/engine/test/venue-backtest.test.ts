@@ -51,7 +51,7 @@ describe("Track 1 — Venue Candle Walk-Forward Backtest (GAP-021)", () => {
     assert.equal(summary.fullCampaign.calendarDays, 89);
   });
 
-  it("3. strictly binds trades to In-Sample and Out-of-Sample boundaries", () => {
+  it("3. strictly binds trades to In-Sample and Out-of-Sample boundaries by realized exit date", () => {
     const runner = new VenueBacktestRunner();
     runner.runBacktest();
     const trades = runner.getCompletedTrades();
@@ -61,10 +61,14 @@ describe("Track 1 — Venue Candle Walk-Forward Backtest (GAP-021)", () => {
     for (const t of trades) {
       if (t.isOutSample) {
         assert.ok(
-          t.entryDate > IN_SAMPLE_CUTOFF_DATE,
-          `OOS trade entered at ${t.entryDate} must be strictly after cutoff ${IN_SAMPLE_CUTOFF_DATE}`,
+          t.exitDate > IN_SAMPLE_CUTOFF_DATE,
+          `OOS trade exited at ${t.exitDate} must be strictly after cutoff ${IN_SAMPLE_CUTOFF_DATE}`,
         );
       } else {
+        assert.ok(
+          t.exitDate <= IN_SAMPLE_CUTOFF_DATE,
+          `IS trade exited at ${t.exitDate} must be on or before cutoff ${IN_SAMPLE_CUTOFF_DATE}`,
+        );
         assert.ok(
           t.entryDate <= IN_SAMPLE_CUTOFF_DATE,
           `IS trade entered at ${t.entryDate} must be on or before cutoff ${IN_SAMPLE_CUTOFF_DATE}`,
@@ -161,6 +165,38 @@ describe("Track 1 — Venue Candle Walk-Forward Backtest (GAP-021)", () => {
           `Published Sharpe (${seg.sharpeRatio}) must match recomputed daily Sharpe (${recomputedSharpe})`,
         );
       }
+    }
+  });
+
+  it("8. reconciles In-Sample and Out-of-Sample PnL and trade counts to the exact cent", () => {
+    const runner = new VenueBacktestRunner();
+    const summary = runner.runBacktest();
+    const rec = summary.reconciliation;
+
+    assert.equal(rec.attributionPolicy, "REALIZED_EXIT_DATE");
+    assert.equal(rec.tradesCountReconciled, true);
+    assert.equal(rec.pnlReconciledToTheCent, true);
+
+    // Trade counts exact sum
+    assert.equal(rec.isTradesCount + rec.oosTradesCount, rec.fullTradesCount);
+    assert.equal(rec.isTradesCount, 64);
+    assert.equal(rec.oosTradesCount, 27);
+    assert.equal(rec.fullTradesCount, 91);
+
+    // Total PnL exact sum to the cent ($399.79 + $167.09 = $566.88)
+    const summedPnl = Math.round((rec.isTotalPnlUsd + rec.oosTotalPnlUsd) * 100) / 100;
+    assert.equal(summedPnl, rec.fullTotalPnlUsd);
+    assert.equal(rec.isTotalPnlUsd, 399.79);
+    assert.equal(rec.oosTotalPnlUsd, 167.09);
+    assert.equal(rec.fullTotalPnlUsd, 566.88);
+
+    // Straddling trades verification: 3 trades entered on 2026-09-02 and exited in OOS
+    assert.equal(rec.straddlingTradesCount, 3);
+    assert.equal(rec.straddlingTradesPnlUsd, 173.01);
+    assert.equal(rec.straddlingTradesDetail.length, 3);
+    for (const st of rec.straddlingTradesDetail) {
+      assert.ok(st.entryDate <= IN_SAMPLE_CUTOFF_DATE);
+      assert.ok(st.exitDate > IN_SAMPLE_CUTOFF_DATE);
     }
   });
 });
