@@ -192,6 +192,10 @@ async function main(): Promise<void> {
   console.log(`  OOS Effective Independent Trades: ~${summary.crossPairCorrelation.oosEffectiveTradesCount} (out of ${summary.outOfSample.tradesCount})`);
   console.log(`  Analysis: ${summary.crossPairCorrelation.analysisNote}`);
   console.log("--------------------------------------------------------------------------------");
+  console.log(`ROLLING 30-DAY SHARPE STABILITY (${summary.rollingSharpeStability.totalWindows} Overlapping Windows):`);
+  console.log(`  All Windows Positive: ${summary.rollingSharpeStability.allWindowsPositive ? "YES (100% positive)" : "NO"}`);
+  console.log(`  Mean Rolling Sharpe: ${summary.rollingSharpeStability.meanSharpe} (Range: ${summary.rollingSharpeStability.minSharpe} to ${summary.rollingSharpeStability.maxSharpe})`);
+  console.log("--------------------------------------------------------------------------------");
   console.log("================================================================================");
 }
 

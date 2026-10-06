@@ -131,6 +131,7 @@ export interface VenueBacktestSummary {
     effectiveObservationNote: string;
   };
   crossPairCorrelation: CrossPairCorrelationAnalysis;
+  rollingSharpeStability: RollingSharpeStability;
   provisionalDecayMetrics: {
     rawOosDailySharpe: number;
     rawSharpeRatioDecay: number;
@@ -139,6 +140,16 @@ export interface VenueBacktestSummary {
     returnDecayRatio: number;
   };
   totalReceiptsSealed: number;
+}
+
+export interface RollingSharpeStability {
+  windowTradingDays: number;
+  totalWindows: number;
+  meanSharpe: number;
+  minSharpe: number;
+  maxSharpe: number;
+  allWindowsPositive: boolean;
+  series: number[];
 }
 
 export interface CrossPairCorrelationAnalysis {
@@ -732,6 +743,35 @@ rawOosDailySharpe: rawOosSharpe,
         `On an effective degrees-of-freedom basis, the 48 OOS trades represent approximately ${oosEffectiveTradesCount} independent macro-shock observations.`,
     };
 
+    const windowSize = 30;
+    const rollingSharpes: number[] = [];
+    const fullDailySeries = fullCampaign.dailySeries;
+    for (let i = windowSize; i <= fullDailySeries.length; i++) {
+      const sub = fullDailySeries.slice(i - windowSize, i).map((s) => s.dailyReturnPct / 100);
+      const mean = sub.reduce((a, b) => a + b, 0) / windowSize;
+      const variance = sub.reduce((acc, r) => acc + Math.pow(r - mean, 2), 0) / (windowSize - 1);
+      const std = Math.sqrt(variance);
+      const s = std > 0 ? (mean / std) * Math.sqrt(252) : 0;
+      rollingSharpes.push(Math.round(s * 100) / 100);
+    }
+    const meanRollingSharpe =
+      rollingSharpes.length > 0
+        ? Math.round((rollingSharpes.reduce((a, b) => a + b, 0) / rollingSharpes.length) * 100) / 100
+        : 0;
+    const minRollingSharpe = rollingSharpes.length > 0 ? Math.min(...rollingSharpes) : 0;
+    const maxRollingSharpe = rollingSharpes.length > 0 ? Math.max(...rollingSharpes) : 0;
+    const allWindowsPositive = rollingSharpes.length > 0 && rollingSharpes.every((s) => s > 0);
+
+    const rollingSharpeStability: RollingSharpeStability = {
+      windowTradingDays: windowSize,
+      totalWindows: rollingSharpes.length,
+      meanSharpe: meanRollingSharpe,
+      minSharpe: minRollingSharpe,
+      maxSharpe: maxRollingSharpe,
+      allWindowsPositive,
+      series: rollingSharpes,
+    };
+
     return {
       headline,
       provenance: "HISTORICAL_VENUE_CANDLES",
@@ -760,6 +800,7 @@ rawOosDailySharpe: rawOosSharpe,
           `See crossPairCorrelation for the full matrix.`,
       },
       crossPairCorrelation,
+      rollingSharpeStability,
       splitParameters: {
         totalCalendarDays: 89,
         inSampleDays: 59,

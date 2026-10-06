@@ -301,4 +301,16 @@ describe("Track 1 — Venue Candle Walk-Forward Backtest (GAP-021)", () => {
     assert.match(corr.analysisNote, /average pairwise return correlation/i);
     assert.match(corr.analysisNote, /Neff/i);
   });
+
+  it("13. computes and discloses rolling 30-day Sharpe stability across all windows", () => {
+    const summary = new VenueBacktestRunner().runBacktest();
+    const stab = summary.rollingSharpeStability;
+
+    assert.equal(stab.windowTradingDays, 30);
+    assert.ok(stab.totalWindows > 0);
+    assert.equal(stab.totalWindows, stab.series.length);
+    assert.equal(stab.allWindowsPositive, true);
+    assert.ok(stab.minSharpe > 0, "All rolling 30-day Sharpe windows remain strictly positive");
+    assert.ok(stab.meanSharpe >= stab.minSharpe && stab.meanSharpe <= stab.maxSharpe);
+  });
 });
