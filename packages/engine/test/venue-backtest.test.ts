@@ -300,6 +300,7 @@ describe("Track 1 — Venue Candle Walk-Forward Backtest (GAP-021)", () => {
     assert.ok(corr.oosEffectiveTradesCount > 0 && corr.oosEffectiveTradesCount <= summary.outOfSample.tradesCount);
     assert.match(corr.analysisNote, /average pairwise return correlation/i);
     assert.match(corr.analysisNote, /Neff/i);
+    assert.match(corr.analysisNote, /timing decorrelation/i);
   });
 
   it("13. computes and discloses rolling 30-day Sharpe stability across all windows", () => {
@@ -312,5 +313,7 @@ describe("Track 1 — Venue Candle Walk-Forward Backtest (GAP-021)", () => {
     assert.equal(stab.allWindowsPositive, true);
     assert.ok(stab.minSharpe > 0, "All rolling 30-day Sharpe windows remain strictly positive");
     assert.ok(stab.meanSharpe >= stab.minSharpe && stab.meanSharpe <= stab.maxSharpe);
+    assert.match(stab.dispersionNote, /regime sensitivity/i);
+    assert.match(stab.dispersionNote, /dispersion/i);
   });
 });

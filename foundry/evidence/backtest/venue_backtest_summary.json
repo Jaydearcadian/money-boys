@@ -20,8 +20,8 @@
       "MSFTUSDT",
       "GOOGLUSDT"
     ],
-    "correlationCaveat": "All five pairs are US mega-cap technology names whose rToken basis behaviour is strongly correlated. Adding instruments raises the TRADE COUNT faster than it raises INDEPENDENT observations, so clearing the 30-trade gate is necessary but not sufficient for a confident Sharpe.",
-    "effectiveObservationNote": "OOS Sharpe now exceeds IS Sharpe. That is atypical and is reported as measured rather than as an improvement claim. The empirical mechanism is variance compression from adding low-volatility correlated pairs: average pairwise correlation is ρ = 0.197, yielding Neff = 2.80 effective independent assets out of 5. See crossPairCorrelation for the full matrix."
+    "correlationCaveat": "All five pairs are US mega-cap technology names sharing correlated macro beta. The observed low return correlation (ρ = 0.197) is primarily an artifact of asynchronous P&L timing across idiosyncratic dislocation triggers rather than structural market-risk diversification. Adding instruments raises the TRADE COUNT faster than it raises truly independent observations under tail shocks.",
+    "effectiveObservationNote": "OOS Sharpe (3.89) exceeds IS Sharpe (2.94), yielding an atypical decay ratio of 1.32x. This is reported as measured rather than as an improvement claim. Realized daily P&L decorrelates due to staggered entry and exit timing across idiosyncratic dislocation crossings, compressing daily portfolio volatility during benign regimes (variance compression yielding Neff = 2.80). However, tail correlation under common macro shocks remains high."
   },
   "crossPairCorrelation": {
     "matrix": {
@@ -66,7 +66,7 @@
     "totalAssets": 5,
     "oosEffectiveTradesCount": 27,
     "fullEffectiveTradesCount": 84,
-    "analysisNote": "Average pairwise return correlation across the 5 tokenized pairs is ρ = 0.197, yielding Neff = 2.80 effective independent assets out of 5. Empirical basis dislocations retain idiosyncratic movement (e.g. NVDA/AAPL at -0.063, MSFT/AAPL at -0.01), explaining the variance compression that produced the 1.32x OOS Sharpe ratio. On an effective degrees-of-freedom basis, the 48 OOS trades represent approximately 27 independent macro-shock observations."
+    "analysisNote": "Average pairwise return correlation across the 5 tokenized pairs is ρ = 0.197, yielding Neff = 2.80 effective independent assets out of 5. This low correlation primarily reflects asynchronous entry and exit timing across individual dislocation triggers, which desynchronizes daily P&L and compresses portfolio return variance during benign trading regimes. However, this is timing decorrelation rather than fundamental market-risk diversification: all five pairs are long-US-mega-cap technology basis positions sharing high market beta and remaining vulnerable to simultaneous tail shocks. Deflating trade counts to effective independent counts (27 OOS / 84 full) is a theoretical heuristic derived from this empirical correlation, not an independent proof of orthogonal risk."
   },
   "rollingSharpeStability": {
     "windowTradingDays": 30,
@@ -110,7 +110,8 @@
       7.31,
       5.43,
       5.24
-    ]
+    ],
+    "dispersionNote": "100% of rolling 30-day windows are positive (min 1.13, max 7.31), but the wide 6.5x dispersion (1.13 to 7.31) indicates substantial regime sensitivity rather than stable risk-adjusted returns. The rolling window mean (4.04) also reflects standard small-window upward bias relative to the full-campaign Sharpe (3.21)."
   },
   "splitParameters": {
     "totalCalendarDays": 89,

@@ -150,6 +150,7 @@ export interface RollingSharpeStability {
   maxSharpe: number;
   allWindowsPositive: boolean;
   series: number[];
+  dispersionNote: string;
 }
 
 export interface CrossPairCorrelationAnalysis {
@@ -737,10 +738,12 @@ rawOosDailySharpe: rawOosSharpe,
       analysisNote:
         `Average pairwise return correlation across the 5 tokenized pairs is ρ = ${averagePairwiseCorrelation.toFixed(3)}, ` +
         `yielding Neff = ${effectiveAssetCount.toFixed(2)} effective independent assets out of ${totalAssets}. ` +
-        `Empirical basis dislocations retain idiosyncratic movement (e.g. NVDA/AAPL at ${corrMatrix["NVDAUSDT"]?.["AAPLUSDT"]}, ` +
-        `MSFT/AAPL at ${corrMatrix["MSFTUSDT"]?.["AAPLUSDT"]}), explaining the variance compression that produced the ` +
-        `${(outOfSample.sharpeRatio && inSample.sharpeRatio ? (outOfSample.sharpeRatio / inSample.sharpeRatio).toFixed(2) : "1.32")}x OOS Sharpe ratio. ` +
-        `On an effective degrees-of-freedom basis, the 48 OOS trades represent approximately ${oosEffectiveTradesCount} independent macro-shock observations.`,
+        `This low correlation primarily reflects asynchronous entry and exit timing across individual dislocation triggers, ` +
+        `which desynchronizes daily P&L and compresses portfolio return variance during benign trading regimes. ` +
+        `However, this is timing decorrelation rather than fundamental market-risk diversification: all five pairs are ` +
+        `long-US-mega-cap technology basis positions sharing high market beta and remaining vulnerable to simultaneous ` +
+        `tail shocks. Deflating trade counts to effective independent counts (${oosEffectiveTradesCount} OOS / ${fullEffectiveTradesCount} full) ` +
+        `is a theoretical heuristic derived from this empirical correlation, not an independent proof of orthogonal risk.`,
     };
 
     const windowSize = 30;
@@ -770,6 +773,11 @@ rawOosDailySharpe: rawOosSharpe,
       maxSharpe: maxRollingSharpe,
       allWindowsPositive,
       series: rollingSharpes,
+      dispersionNote:
+        `100% of rolling 30-day windows are positive (min ${minRollingSharpe.toFixed(2)}, max ${maxRollingSharpe.toFixed(2)}), ` +
+        `but the wide 6.5x dispersion (${minRollingSharpe.toFixed(2)} to ${maxRollingSharpe.toFixed(2)}) indicates substantial ` +
+        `regime sensitivity rather than stable risk-adjusted returns. The rolling window mean (${meanRollingSharpe.toFixed(2)}) ` +
+        `also reflects standard small-window upward bias relative to the full-campaign Sharpe (${fullCampaign.sharpeRatio?.toFixed(2)}).`,
     };
 
     return {
@@ -789,15 +797,16 @@ rawOosDailySharpe: rawOosSharpe,
           "cherry-picking, but it was decided after observing the gate fail and is recorded as such.",
         allPairs: PAIRS.map((x) => x.tokenSym),
         correlationCaveat:
-          "All five pairs are US mega-cap technology names whose rToken basis behaviour is strongly " +
-          "correlated. Adding instruments raises the TRADE COUNT faster than it raises INDEPENDENT " +
-          "observations, so clearing the 30-trade gate is necessary but not sufficient for a confident Sharpe.",
+          "All five pairs are US mega-cap technology names sharing correlated macro beta. " +
+          "The observed low return correlation (ρ = 0.197) is primarily an artifact of asynchronous P&L " +
+          "timing across idiosyncratic dislocation triggers rather than structural market-risk diversification. " +
+          "Adding instruments raises the TRADE COUNT faster than it raises truly independent observations under tail shocks.",
         effectiveObservationNote:
-          "OOS Sharpe now exceeds IS Sharpe. That is atypical and is reported as measured rather than as " +
-          "an improvement claim. The empirical mechanism is variance compression from adding low-" +
-          `volatility correlated pairs: average pairwise correlation is ρ = ${averagePairwiseCorrelation.toFixed(3)}, ` +
-          `yielding Neff = ${effectiveAssetCount.toFixed(2)} effective independent assets out of ${totalAssets}. ` +
-          `See crossPairCorrelation for the full matrix.`,
+          "OOS Sharpe (3.89) exceeds IS Sharpe (2.94), yielding an atypical decay ratio of 1.32x. " +
+          "This is reported as measured rather than as an improvement claim. Realized daily P&L decorrelates " +
+          "due to staggered entry and exit timing across idiosyncratic dislocation crossings, compressing " +
+          "daily portfolio volatility during benign regimes (variance compression yielding Neff = 2.80). " +
+          "However, tail correlation under common macro shocks remains high.",
       },
       crossPairCorrelation,
       rollingSharpeStability,
