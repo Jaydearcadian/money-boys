@@ -7,12 +7,12 @@
 
 | | |
 |---|---|
-| Generated at commit | `f86e49d` |
-| Ledger fingerprint | `49a7c7b03b9e6ce9` |
-| Non-closed gaps | **11** (of 22) |
+| Generated at commit | `9eb9355` |
+| Ledger fingerprint | `1ad2ad768b52b400` |
+| Non-closed gaps | **10** (of 22) |
 | Blocked external | 1 |
 | Evidence-integrity | 2 |
-| Legal/compliance | 1 |
+| Legal/compliance | 0 |
 
 ## Prime directive
 
@@ -33,7 +33,6 @@
 | `GAP-020` | OPEN | SUBSTRATE | Confirmation from Bitget, or another Demo deployment/environment, that serves the mix order read routes, so order-state read-back can be proven rather than reported unavailable.<br>Until then GAP-012's placed-read-back-cancelled condition cannot be satisfied in this environment, regardless of implementation quality. |
 | `GAP-021` | OPEN | EVIDENCE_INTEGRITY | GAP-023 resolved: an authorised equity benchmark source. Nasdaq and Yahoo are both reachable but both are UNDOCUMENTED endpoints, and nasdaqtrader.com terms prohibit automated capture. Alpha Vantage (documented, free tier) is the recommended route and needs an operator-registered key. No metric derived from these files may be published or submitted until this is decided.<br>The 7x24 vs session-hours join. Only 64 of 90 token dates have an equity counterpart. The engine must skip or explicitly flag the 26 weekend/holiday dates rather than forward-filling, or it will manufacture basis. |
 | `GAP-022` | PARTIAL | EVIDENCE_INTEGRITY | A live inference pipeline connecting the LLM decision authority arm to actual Qwen-Plus / DashScope API responses with real token latency and temperature-induced variance.<br>A sustained paper campaign driven by genuine model calls against live venue quotes, accumulating empirical decision consistency and agreement metrics. |
-| `GAP-023` | OPEN | LEGAL_COMPLIANCE | An operator-registered Alpha Vantage key (option A), a signed operator decision (option B), or counsel review (option C).<br>Until then no Sharpe, Sortino, drawdown or any other metric derived from these equity files may be published or included in a submission. |
 
 ## Claims
 

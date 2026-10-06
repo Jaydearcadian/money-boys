@@ -58,7 +58,7 @@ interface Provider {
   id: string;
   endpointPattern: string;
   /** Terms posture recorded in the manifest. Never inferred at read time. */
-  termsStatus: "FIRST_PARTY_UNDOCUMENTED" | "THIRD_PARTY_UNDOCUMENTED";
+  termsStatus: "DOCUMENTED_API" | "FIRST_PARTY_UNDOCUMENTED" | "THIRD_PARTY_UNDOCUMENTED";
   termsNote: string;
   fetchDaily(symbol: string): Promise<Bar[]>;
 }
@@ -76,6 +76,50 @@ async function getJson(url: string): Promise<unknown> {
     clearTimeout(timer);
   }
 }
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const ALPHA_VANTAGE_KEY =
+  process.env.ALPHAVANTAGE_API_KEY ||
+  process.env.ALPHA_VANTAGE_API_KEY ||
+  "5ZGLV4J6L4R1IH0J";
+
+/**
+ * Official Alpha Vantage TIME_SERIES_DAILY API.
+ * Documented developer endpoint with explicit free-tier developer terms.
+ */
+const alphaVantage: Provider = {
+  id: "alpha_vantage_daily",
+  endpointPattern: "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={key}&outputsize=compact",
+  termsStatus: "DOCUMENTED_API",
+  termsNote:
+    "Official Alpha Vantage TIME_SERIES_DAILY API with documented developer terms of service.",
+  async fetchDaily(symbol) {
+    if (!ALPHA_VANTAGE_KEY) throw new Error("ALPHAVANTAGE_API_KEY missing");
+    const url = alphaVantage.endpointPattern
+      .replace("{symbol}", encodeURIComponent(symbol))
+      .replace("{key}", encodeURIComponent(ALPHA_VANTAGE_KEY));
+    const data = (await getJson(url)) as Record<string, unknown>;
+    const ts = data["Time Series (Daily)"] as Record<string, Record<string, string>> | undefined;
+    if (!ts || typeof ts !== "object") {
+      const errNote = data["Note"] || data["Information"] || data["Error Message"] || JSON.stringify(data).slice(0, 120);
+      throw new Error(`Alpha Vantage response missing Time Series (Daily): ${errNote}`);
+    }
+    const out: Bar[] = [];
+    for (const [date, row] of Object.entries(ts)) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+      out.push({
+        date,
+        open: Number(row["1. open"] ?? 0),
+        high: Number(row["2. high"] ?? 0),
+        low: Number(row["3. low"] ?? 0),
+        close: Number(row["4. close"] ?? 0),
+        volume: Number(row["5. volume"] ?? 0),
+      });
+    }
+    return out.sort((a, b) => a.date.localeCompare(b.date));
+  },
+};
 
 /**
  * Nasdaq's own quote API. First-party data from the same publisher as the
@@ -151,7 +195,7 @@ const yahoo: Provider = {
   },
 };
 
-const PROVIDERS: Provider[] = [nasdaq, yahoo];
+const PROVIDERS: Provider[] = [alphaVantage, nasdaq, yahoo];
 
 function loadTokenDates(): Map<string, Set<string>> {
   const map = new Map<string, Set<string>>();
@@ -186,7 +230,9 @@ async function main(): Promise<void> {
   const out: Record<string, unknown> = {};
   const summary: string[] = [];
 
-  for (const { symbol, rtoken } of EQUITIES) {
+  for (let idx = 0; idx < EQUITIES.length; idx++) {
+    const { symbol, rtoken } = EQUITIES[idx]!;
+    if (idx > 0) await sleep(2000); // Respect burst limits
     let bars: Bar[] = [];
     let used: Provider | null = null;
     let lastErr: unknown = null;

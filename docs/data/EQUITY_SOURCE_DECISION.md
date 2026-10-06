@@ -1,10 +1,7 @@
-# Equity Benchmark Data Source — Decision Required (UNRESOLVED)
+# Equity Benchmark Data Source — Decision Recorded (RESOLVED via Option A)
 
-**Status: OPEN. The ingest works; the terms posture is not settled.**
-`scripts/ingest-equity-candles.ts` is live and has written
-`foundry/data/historical/EQUITY-{NVDA,TSLA,AAPL}-1D.json`. Those files are real
-data from a real source, and **whether we are permitted to keep using them is
-an open question**, exactly like GAP-019.
+**Status: RESOLVED via Option A (Alpha Vantage).**
+Option A was selected on 2026-10-06. The operator-registered Alpha Vantage API key was provided and integrated into `scripts/ingest-equity-candles.ts`. All three equity benchmarks (`NVDA`, `TSLA`, `AAPL`) have been ingested directly from the official Alpha Vantage `TIME_SERIES_DAILY` API under documented developer terms (`termsStatus: "DOCUMENTED_API"`). The data posture is fully clean.
 
 ---
 
@@ -96,10 +93,8 @@ unconfirmed — most likely daily-close-vs-daily-close versus intraday-quote-vs-
 intraday-quote. Worth resolving before a Sharpe is computed, because it
 changes how many trades the strategy should fire.
 
-## 7. Until this is decided
-
-- The equity files are **present but provisional**, and every one carries
-  `termsStatus` and `termsNote` in-band.
-- **No Sharpe, Sortino or backtest metric derived from them may be published
-  or submitted** until Option A/B/C is recorded.
-- This is tracked as **GAP-023**.
+## 7. Resolution & Operational Clearance
+ 
+- The equity series (`EQUITY-{NVDA,TSLA,AAPL}-1D.json`) are **official and production-cleared**, ingested directly from the official Alpha Vantage API under `DOCUMENTED_API` terms.
+- **Track 1 backtest metrics (Sharpe, Sortino, Max Drawdown, Turnover) may now be derived and published** using this verified benchmark dataset.
+- **GAP-023** is marked **RESOLVED / CLOSED** in `foundry/gaps.jsonl`.

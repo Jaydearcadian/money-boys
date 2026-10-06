@@ -45,51 +45,51 @@
     }
   },
   "equityLeg": {
-    "ingestedAt": "2026-10-05T14:39:48.598Z",
+    "ingestedAt": "2026-10-06T13:23:57.163Z",
     "purpose": "Underlying equity closes required by evaluateBasisSpread(tradFiClosePrice). The rToken ingest alone cannot produce a basis.",
     "termsDecisionDoc": "docs/data/EQUITY_SOURCE_DECISION.md",
     "symbols": {
       "NVDA": {
         "file": "EQUITY-NVDA-1D.json",
-        "provider": "nasdaq_quote_api",
-        "termsStatus": "FIRST_PARTY_UNDOCUMENTED",
-        "barsCount": 87,
-        "startDateIso": "2026-06-01",
-        "endDateIso": "2026-10-02",
-        "fileSha256": "2f33573ad9aa8e9bb40e7eb0729989450da1b68684e40835ceb6a52b78f526d9",
+        "provider": "alpha_vantage_daily",
+        "termsStatus": "DOCUMENTED_API",
+        "barsCount": 100,
+        "startDateIso": "2026-05-13",
+        "endDateIso": "2026-10-05",
+        "fileSha256": "dd0a60ec36acb96e969a9f60ceee4ab53814d1d41f4070a31a8c5bd9cabfe4ab",
         "joinCoverage": {
           "rtokenBars": 90,
-          "equityBars": 87,
+          "equityBars": 100,
           "datesMatching": 64,
           "rtokenDatesWithoutEquity": 26
         }
       },
       "TSLA": {
         "file": "EQUITY-TSLA-1D.json",
-        "provider": "nasdaq_quote_api",
-        "termsStatus": "FIRST_PARTY_UNDOCUMENTED",
-        "barsCount": 87,
-        "startDateIso": "2026-06-01",
-        "endDateIso": "2026-10-02",
-        "fileSha256": "6dca6dfbec57835490d3065c4dc7c52ffeda716f66f6849458d3220cbc930b48",
+        "provider": "alpha_vantage_daily",
+        "termsStatus": "DOCUMENTED_API",
+        "barsCount": 100,
+        "startDateIso": "2026-05-13",
+        "endDateIso": "2026-10-05",
+        "fileSha256": "b6bec3a841fdc7fb71a4bc64eda44f30a1c8d7574a87d847bd1a7fd288961dfc",
         "joinCoverage": {
           "rtokenBars": 90,
-          "equityBars": 87,
+          "equityBars": 100,
           "datesMatching": 64,
           "rtokenDatesWithoutEquity": 26
         }
       },
       "AAPL": {
         "file": "EQUITY-AAPL-1D.json",
-        "provider": "nasdaq_quote_api",
-        "termsStatus": "FIRST_PARTY_UNDOCUMENTED",
-        "barsCount": 87,
-        "startDateIso": "2026-06-01",
-        "endDateIso": "2026-10-02",
-        "fileSha256": "6cfd51252cc4c3c1b6014838ad939fbd4a398b6cedcd83dcf4316677c7ebb3dc",
+        "provider": "alpha_vantage_daily",
+        "termsStatus": "DOCUMENTED_API",
+        "barsCount": 100,
+        "startDateIso": "2026-05-13",
+        "endDateIso": "2026-10-05",
+        "fileSha256": "3f91494cbda35fcf422848ab0256feaccc9d68afc578d95e7cceb0b52f3e6130",
         "joinCoverage": {
           "rtokenBars": 90,
-          "equityBars": 87,
+          "equityBars": 100,
           "datesMatching": 64,
           "rtokenDatesWithoutEquity": 26
         }
