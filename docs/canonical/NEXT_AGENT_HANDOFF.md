@@ -7,11 +7,11 @@
 
 | | |
 |---|---|
-| Generated at commit | `27eb9e4` |
-| Ledger fingerprint | `8defeed867c90d2e` |
-| Non-closed gaps | **10** (of 22) |
+| Generated at commit | `2b2aee4` |
+| Ledger fingerprint | `b8935fc8796fc74c` |
+| Non-closed gaps | **9** (of 22) |
 | Blocked external | 1 |
-| Evidence-integrity | 2 |
+| Evidence-integrity | 1 |
 | Legal/compliance | 1 |
 
 ## Prime directive
@@ -31,7 +31,6 @@
 | `GAP-018` | PARTIAL | INTEGRATION | GAP-019 resolved: written terms clarification from Robinhood, or a recorded operator legal decision that the intended read-only documented-API use is permitted. Automated use remains BLOCKED_EXTERNAL until then.<br>A positive-edge open-session read. Every live read so far has been NEUTRAL or vetoed, so the benchmark has never driven an authorisation even under a permissive read-only surface. |
 | `GAP-019` | BLOCKED_EXTERNAL | LEGAL_COMPLIANCE | Operator signature on docs/risk/GAP-019-OPERATOR-DECISION.md, scoped to unauthenticated read-only access to the public price endpoint only, or written clarification from Robinhood. Either closes the gap; silence does not.<br>ESCALATE to legal counsel is a recorded third option and would leave the gap open with the risk formally transferred rather than informally absorbed. |
 | `GAP-020` | OPEN | SUBSTRATE | Confirmation from Bitget, or another Demo deployment/environment, that serves the mix order read routes, so order-state read-back can be proven rather than reported unavailable.<br>Until then GAP-012's placed-read-back-cancelled condition cannot be satisfied in this environment, regardless of implementation quality. |
-| `GAP-021` | PARTIAL | EVIDENCE_INTEGRITY | A sustained holdout observation window accumulating >=30 completed round-trip trades in Out-of-Sample so that out-of-sample Sharpe, Sortino, and Sharpe decay can be empirically computed rather than withheld.<br>Rolling 30-day Sharpe stability metric computed from daily returns once holdout observation depth is sufficient. |
 | `GAP-022` | PARTIAL | EVIDENCE_INTEGRITY | A live inference pipeline connecting the LLM decision authority arm to actual Qwen-Plus / DashScope API responses with real token latency and temperature-induced variance.<br>A sustained paper campaign driven by genuine model calls against live venue quotes, accumulating empirical decision consistency and agreement metrics. |
 
 ## Claims
