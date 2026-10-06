@@ -96,6 +96,7 @@ export function seededSample(): SealedReasoningReceipt {
 
 export function seedLatest(): void {
   if (state.latestReceipt) return;
+  syncLiveAccountState().catch(() => {});
   try {
     const here = dirname(fileURLToPath(import.meta.url));
     const paperPath = join(here, "..", "..", "..", "foundry", "evidence", "paper-trading", "paper_trades.jsonl");
@@ -115,3 +116,52 @@ export function seedLatest(): void {
   } catch { /* fall through */ }
   pushReceipt(seededSample());
 }
+
+export async function syncLiveAccountState(): Promise<boolean> {
+  const env = (process.env["BITGET_ENV"] ?? "").toLowerCase();
+  const apiKey = process.env["BITGET_API_KEY"];
+  const secretKey = process.env["BITGET_SECRET_KEY"];
+  const passphrase = process.env["BITGET_PASSPHRASE"];
+
+  if (!apiKey || !secretKey || !passphrase) {
+    return false;
+  }
+
+  try {
+    const { BitgetClient } = await import("./bitget/client.js");
+    const client = new BitgetClient({
+      apiKey,
+      secretKey,
+      passphrase,
+      demoTrading: env === "testnet" || env === "demo" || env === "test",
+    });
+
+    const acct = await client.request("GET", "/api/v2/mix/account/accounts", { productType: "USDT-FUTURES" }, true);
+    const row = (Array.isArray(acct.data) ? acct.data[0] : acct.data) as Record<string, unknown> | undefined;
+    if (!row) return false;
+
+    const equity = Number(row["usdtEquity"] ?? row["accountEquity"] ?? 0);
+    const free = Number(row["isolatedMaxAvailable"] ?? row["available"] ?? 0);
+    const used = Math.max(0, equity - free);
+    const utilPct = equity > 0 ? (used / equity) * 100 : 0;
+
+    state.account = {
+      equityUsd: Math.round(equity * 100) / 100,
+      usedMarginUsd: Math.round(used * 100) / 100,
+      freeMarginUsd: Math.round(free * 100) / 100,
+      marginUtilPct: Math.round(utilPct * 100) / 100,
+    };
+    state.activeNodes.risk.marginUtilizationPct = state.account.marginUtilPct;
+    state.activeNodes.exec.venue = env === "testnet" || env === "demo" ? "bitget-demo" : "bitget";
+
+    const payload = "data: " + JSON.stringify({ type: "INIT", state: snapshot() }) + "\n\n";
+    for (const c of state.sseClients) {
+      try { c.write(payload); } catch { /* noop */ }
+    }
+    return true;
+  } catch (err) {
+    console.error("[server-state] Failed to sync live account:", err instanceof Error ? err.message : String(err));
+    return false;
+  }
+}
+

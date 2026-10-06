@@ -5,7 +5,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { pathToFileURL } from "node:url";
 import { executeDeliberationCycle } from "./council/adapter.js";
 import { OrderDispatcher } from "./bitget/dispatcher.js";
-import { TELEMETRY_PORT, COMMIT, state, snapshot, pushReceipt, broadcastReceipt, broadcastHalt, seedLatest } from "./server-state.js";
+import { TELEMETRY_PORT, COMMIT, state, snapshot, pushReceipt, broadcastReceipt, broadcastHalt, seedLatest, syncLiveAccountState } from "./server-state.js";
 import { applyHalt } from "./mcp/server.js";
 import { verifyHaltReceipt } from "./council/halt-receipt.js";
 import { fixture, setCors, json, readBody } from "./server-helpers.js";
@@ -18,6 +18,13 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   if (method === "OPTIONS") { setCors(res); res.writeHead(204); res.end(); return; }
   if (method === "GET" && path === "/health") { json(res, 200, { status: "ok", uptime: process.uptime(), commit: COMMIT }); return; }
   if (method === "GET" && path === "/api/desk/state") { json(res, 200, snapshot()); return; }
+  if (method === "POST" && path === "/api/desk/sync-account") {
+    try {
+      const synced = await syncLiveAccountState();
+      json(res, 200, { synced, state: snapshot() });
+    } catch (err) { json(res, 500, { error: err instanceof Error ? err.message : String(err) }); }
+    return;
+  }
   if (method === "GET" && path === "/api/desk/receipts") { json(res, 200, { receipts: [...state.recentReceipts] }); return; }
   // Phase 1 read-only evidence surface. GET only: no body, no state mutation,
   // no credentials, no execution authority. See evidence-surface.ts.

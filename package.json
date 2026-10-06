@@ -11,7 +11,10 @@
     "engine:test": "pnpm --filter @money-boys/engine test",
     "engine:auth": "pnpm --filter @money-boys/engine test:auth",
     "test:e2e": "pnpm --filter @money-boys/desk test:e2e",
-    "demo:live": "tsx scripts/demo-dispatcher-lifecycle.ts"
+    "demo:live": "tsx scripts/demo-dispatcher-lifecycle.ts",
+    "demo:rwa": "tsx scripts/demo-rwa-lifecycle.ts",
+    "daemon:live": "tsx scripts/run-autonomous-daemon.ts --mode=demo",
+    "daemon:paper": "tsx scripts/run-autonomous-daemon.ts --mode=paper"
   },
   "devDependencies": {
     "tsx": "^4.19.0"
