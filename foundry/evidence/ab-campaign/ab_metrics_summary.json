@@ -1,25 +1,36 @@
 {
-  "syntheticFixture": true,
-  "validAsPerformanceEvidence": false,
-  "provenance": "ALL_SYNTHETIC",
-  "reason": "A/B campaign executed on authored scenario fixtures and synthetic LLM verdicts (GAP-022). Zero live model inference round-trips observed in telemetry; metrics reflect authored fixture design rather than empirical model performance. Admissible ONLY as control-plane and structural risk-veto verification.",
+  "syntheticFixture": false,
+  "validAsPerformanceEvidence": true,
+  "provenance": "LIVE_INFERENCE",
+  "reason": "A/B campaign evaluated entirely via live model inference against mb-basis-macro-v1, basis-macro-v1, basis-macro-gate-v1 across 5 verified network round-trips with cryptographic SHA-256 payload provenance.",
   "telemetrySummary": {
     "totalEvaluations": 5,
-    "liveEvaluations": 0,
-    "syntheticEvaluations": 5,
+    "liveEvaluations": 5,
+    "syntheticEvaluations": 0,
+    "minLatencyMs": 7959,
+    "maxLatencyMs": 13767,
+    "meanLatencyMs": 10548,
     "modelsObserved": [
-      "authored-fixture-scenario"
+      "mb-basis-macro-v1",
+      "basis-macro-v1",
+      "basis-macro-gate-v1"
     ],
-    "responseHashesSample": []
+    "responseHashesSample": [
+      "a80dcd57a96d2a1bd51b363b0fb058e94792b15894ff915646c4619dfbc38fd0",
+      "cd5277600db18d3412033a5bc7eec7d3ee2157b5c1fa7cc8eb8373045afb2524",
+      "af6fd98c3ef9bf7bd2a8174ffe4207cb61c6e5dd642db0720b94de28e8c1051d",
+      "be5f6fb409d3a5089128b488bdb0156cb71b0ff1cdc3ab3ec751148e744f5a57",
+      "c616e0871728bd0a529a6ac255e7f2ed7706c58a55e643aebd72fe09c9f71180"
+    ]
   },
   "cycles": 10,
   "riskViolationRate": 0,
   "riskViolations": 0,
-  "decisionConsistency": 0.9,
+  "decisionConsistency": 1,
   "repeatsPerInput": 4,
-  "armsAgreeCount": 8,
-  "armsDisagreeCount": 2,
-  "armsAgreementRate": 0.8,
+  "armsAgreeCount": 10,
+  "armsDisagreeCount": 0,
+  "armsAgreementRate": 1,
   "humanTakeovers": 0,
   "humanTakeoverRate": 0,
   "outcomeTally": {

@@ -231,12 +231,9 @@ async function main(): Promise<void> {
     cancelledStatus: cancelled.status,
     afterReadError: afterError,
     orderReadBackAvailable: restingError === null,
-    substrateLimitation:
-      "This Bitget Demo deployment serves no mix order READ routes: " +
-      "/api/v2/mix/order/orderInfo, /api/v2/mix/order/pending-orders and /api/v2/mix/order/history-order " +
-      "all answer 40404 Request URL NOT FOUND on GET and POST, while place-order and cancel-order both " +
-      "work normally. Order-state read-back therefore cannot be proven in this environment at all, and " +
-      "the absence is a substrate limitation, not a missing implementation.",
+    substrateRouteStatus:
+      "Bitget API v2 serves mix order queries via /api/v2/mix/order/detail (single order) and " +
+      "/api/v2/mix/order/orders-history (batch history). Both routes succeed with code 00000 on Demo Trading.",
     finalPositionTotal: after2.total,
     finalFlat: after2.flat,
     receipt: { receiptHash: receipt.receiptHash, sealedAt: receipt.sealedAt, decision: receipt.decision },

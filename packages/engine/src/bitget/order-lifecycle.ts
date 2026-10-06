@@ -36,7 +36,7 @@ import { mapToVenueSymbol } from "./dispatcher.js";
 /** Bitget v2 mix order routes used by the lifecycle path. */
 export const MIX_PLACE_ORDER_PATH = "/api/v2/mix/order/place-order";
 export const MIX_CANCEL_ORDER_PATH = "/api/v2/mix/order/cancel-order";
-export const MIX_ORDER_STATUS_PATH = "/api/v2/mix/order/orderInfo";
+export const MIX_ORDER_STATUS_PATH = "/api/v2/mix/order/detail";
 export const MIX_POSITION_PATH = "/api/v2/mix/position/all-position";
 
 export type OrderType = "market" | "limit";
@@ -425,12 +425,20 @@ export async function readOrder(args: {
   const rows = (Array.isArray(res.data) ? res.data : res.data ? [res.data] : []) as Record<string, unknown>[];
   const row = rows.find((r) => String(r["orderId"] ?? "") === args.orderId) ?? rows[0];
   if (row === undefined) return null;
+  const rawStatus = String(row["status"] ?? row["state"] ?? "UNKNOWN").toLowerCase();
+  const status = rawStatus === "canceled" ? "cancelled" : rawStatus;
+  const priceVal =
+    row["price"] !== undefined && row["price"] !== null && row["price"] !== ""
+      ? Number(row["price"])
+      : row["priceAvg"] !== undefined && row["priceAvg"] !== null && row["priceAvg"] !== ""
+      ? Number(row["priceAvg"])
+      : null;
   return {
     orderId: String(row["orderId"] ?? args.orderId),
     symbol: String(row["symbol"] ?? mapToVenueSymbol(args.symbol)),
-    status: String(row["status"] ?? "UNKNOWN"),
+    status,
     orderType: String(row["orderType"] ?? "UNKNOWN"),
-    price: row["price"] === undefined ? null : Number(row["price"]),
+    price: priceVal,
     quantity: Number(row["baseVolume"] ?? row["size"] ?? 0),
     reduceOnly: String(row["reduceOnly"] ?? "NO") === "YES",
     raw: row,

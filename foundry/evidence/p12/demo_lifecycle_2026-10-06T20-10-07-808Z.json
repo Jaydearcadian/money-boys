@@ -1,0 +1,321 @@
+{
+  "campaign": "p12-lifecycle-proof",
+  "stage": "demo",
+  "oneShot": true,
+  "scheduler": false,
+  "pollingLoop": false,
+  "dispatcherInvoked": false,
+  "retryLoop": false,
+  "operatorCapUsd": 50,
+  "notionalUsd": 49.98,
+  "orderType": "limit",
+  "marketOrderUsed": false,
+  "positionMode": "hedge",
+  "tradeSide": "open",
+  "limitPriceUsd": 234.88,
+  "limitDiscountPct": 2,
+  "quantity": 0.2128,
+  "orderId": "1491458794516021249",
+  "clientOid": "0ec51809b7fb4458748cd7d0855bc595",
+  "venueCallFootprint": [
+    {
+      "method": "GET",
+      "path": "/api/v2/mix/account/accounts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/mix/position/all-position"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/mix/order/place-order"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/mix/order/detail"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/mix/order/cancel-order"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/mix/order/detail"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/mix/position/all-position"
+    }
+  ],
+  "before": {
+    "total": 0,
+    "flat": true,
+    "raw": {
+      "code": "00000",
+      "msg": "success",
+      "requestTime": 1791317407005,
+      "data": []
+    }
+  },
+  "after": {
+    "orderId": "1491458794516021249",
+    "symbol": "NVDAUSDT",
+    "status": "cancelled",
+    "orderType": "limit",
+    "price": 234.88,
+    "quantity": 0,
+    "reduceOnly": false,
+    "raw": {
+      "symbol": "NVDAUSDT",
+      "size": "0.21",
+      "orderId": "1491458794516021249",
+      "clientOid": "0ec51809b7fb4458748cd7d0855bc595",
+      "baseVolume": "0",
+      "fee": "0",
+      "price": "234.88",
+      "priceAvg": "",
+      "state": "canceled",
+      "side": "buy",
+      "force": "gtc",
+      "totalProfits": "0",
+      "posSide": "long",
+      "marginCoin": "USDT",
+      "presetStopSurplusPrice": "",
+      "presetStopSurplusType": "",
+      "presetStopSurplusExecutePrice": "",
+      "presetStopLossPrice": "",
+      "presetStopLossExecutePrice": "",
+      "presetStopLossType": "",
+      "quoteVolume": "0",
+      "orderType": "limit",
+      "leverage": "10",
+      "marginMode": "isolated",
+      "reduceOnly": "NO",
+      "enterPointSource": "API",
+      "tradeSide": "open",
+      "posMode": "hedge_mode",
+      "orderSource": "normal",
+      "newTradeSide": "open",
+      "cancelReason": "normal_cancel",
+      "cTime": "1791317407257",
+      "uTime": "1791317407522"
+    }
+  },
+  "restingStatus": "live",
+  "restingReadError": null,
+  "cancelledStatus": "CANCELLED",
+  "afterReadError": null,
+  "orderReadBackAvailable": true,
+  "substrateRouteStatus": "Bitget API v2 serves mix order queries via /api/v2/mix/order/detail (single order) and /api/v2/mix/order/orders-history (batch history). Both routes succeed with code 00000 on Demo Trading.",
+  "finalPositionTotal": 0,
+  "finalFlat": true,
+  "receipt": {
+    "receiptHash": "79969f274604f61e9189cc313f3db45a8cda1295cba98d974f51b00d5a5e885f",
+    "sealedAt": "2026-10-06T20:10:07.187Z",
+    "decision": "APPROVED"
+  },
+  "quant": {
+    "action": "BUY_BASIS",
+    "rawBasisPct": -1.9005,
+    "hurdleRatePct": 0.1221,
+    "netEdgePct": 1.7784
+  },
+  "steps": [
+    {
+      "step": "market_context",
+      "ok": true,
+      "detail": {
+        "last": 239.67,
+        "limitPrice": 234.88,
+        "quantity": 0.2128,
+        "notional": 49.98
+      }
+    },
+    {
+      "step": "cap_check",
+      "ok": true,
+      "detail": {
+        "notional": 49.98,
+        "cap": 50
+      }
+    },
+    {
+      "step": "account_before",
+      "ok": true,
+      "detail": {
+        "equityUsd": 9363.9102970279,
+        "freeMarginUsd": 9363.91029702,
+        "usedMarginUsd": 0,
+        "positionTotal": 0,
+        "flat": true
+      }
+    },
+    {
+      "step": "receipt_sealed",
+      "ok": true,
+      "detail": {
+        "receiptHash": "79969f274604f61e9189cc313f3db45a8cda1295cba98d974f51b00d5a5e885f",
+        "notionalUsd": 49.98
+      }
+    },
+    {
+      "step": "place_order",
+      "ok": true,
+      "detail": {
+        "orderId": "1491458794516021249",
+        "clientOid": "0ec51809b7fb4458748cd7d0855bc595",
+        "symbol": "NVDAUSDT",
+        "orderType": "limit",
+        "limitPriceUsd": 234.88,
+        "takeProfitPrice": null,
+        "stopLossPrice": null,
+        "status": "SUBMITTED",
+        "receiptHash": "79969f274604f61e9189cc313f3db45a8cda1295cba98d974f51b00d5a5e885f",
+        "mode": "DEMO",
+        "raw": {
+          "code": "00000",
+          "msg": "success",
+          "requestTime": 1791317407251,
+          "data": {
+            "clientOid": "0ec51809b7fb4458748cd7d0855bc595",
+            "orderId": "1491458794516021249"
+          }
+        }
+      }
+    },
+    {
+      "step": "read_back_resting",
+      "ok": true,
+      "detail": {
+        "orderId": "1491458794516021249",
+        "symbol": "NVDAUSDT",
+        "status": "live",
+        "orderType": "limit",
+        "price": 234.88,
+        "quantity": 0,
+        "reduceOnly": false,
+        "raw": {
+          "symbol": "NVDAUSDT",
+          "size": "0.21",
+          "orderId": "1491458794516021249",
+          "clientOid": "0ec51809b7fb4458748cd7d0855bc595",
+          "baseVolume": "0",
+          "fee": "0",
+          "price": "234.88",
+          "priceAvg": "",
+          "state": "live",
+          "side": "buy",
+          "force": "gtc",
+          "totalProfits": "0",
+          "posSide": "long",
+          "marginCoin": "USDT",
+          "presetStopSurplusPrice": "",
+          "presetStopSurplusType": "",
+          "presetStopSurplusExecutePrice": "",
+          "presetStopLossPrice": "",
+          "presetStopLossExecutePrice": "",
+          "presetStopLossType": "",
+          "quoteVolume": "0",
+          "orderType": "limit",
+          "leverage": "10",
+          "marginMode": "isolated",
+          "reduceOnly": "NO",
+          "enterPointSource": "API",
+          "tradeSide": "open",
+          "posMode": "hedge_mode",
+          "orderSource": "normal",
+          "newTradeSide": "open",
+          "cancelReason": "",
+          "cTime": "1791317407257",
+          "uTime": "1791317407314"
+        }
+      }
+    },
+    {
+      "step": "cancel_order",
+      "ok": true,
+      "detail": {
+        "status": "CANCELLED",
+        "orderId": "1491458794516021249",
+        "clientOid": "9e51aa14a92d7e3ea6f83382ba0019c4",
+        "symbol": "NVDAUSDT",
+        "receiptHash": "79969f274604f61e9189cc313f3db45a8cda1295cba98d974f51b00d5a5e885f",
+        "raw": {
+          "code": "00000",
+          "msg": "success",
+          "requestTime": 1791317407504,
+          "data": {
+            "orderId": "1491458794516021249",
+            "clientOid": "0ec51809b7fb4458748cd7d0855bc595"
+          }
+        }
+      }
+    },
+    {
+      "step": "read_back_cancelled",
+      "ok": true,
+      "detail": {
+        "orderId": "1491458794516021249",
+        "symbol": "NVDAUSDT",
+        "status": "cancelled",
+        "orderType": "limit",
+        "price": 234.88,
+        "quantity": 0,
+        "reduceOnly": false,
+        "raw": {
+          "symbol": "NVDAUSDT",
+          "size": "0.21",
+          "orderId": "1491458794516021249",
+          "clientOid": "0ec51809b7fb4458748cd7d0855bc595",
+          "baseVolume": "0",
+          "fee": "0",
+          "price": "234.88",
+          "priceAvg": "",
+          "state": "canceled",
+          "side": "buy",
+          "force": "gtc",
+          "totalProfits": "0",
+          "posSide": "long",
+          "marginCoin": "USDT",
+          "presetStopSurplusPrice": "",
+          "presetStopSurplusType": "",
+          "presetStopSurplusExecutePrice": "",
+          "presetStopLossPrice": "",
+          "presetStopLossExecutePrice": "",
+          "presetStopLossType": "",
+          "quoteVolume": "0",
+          "orderType": "limit",
+          "leverage": "10",
+          "marginMode": "isolated",
+          "reduceOnly": "NO",
+          "enterPointSource": "API",
+          "tradeSide": "open",
+          "posMode": "hedge_mode",
+          "orderSource": "normal",
+          "newTradeSide": "open",
+          "cancelReason": "normal_cancel",
+          "cTime": "1791317407257",
+          "uTime": "1791317407522"
+        }
+      }
+    },
+    {
+      "step": "read_back_position",
+      "ok": true,
+      "detail": {
+        "total": 0,
+        "flat": true
+      }
+    }
+  ],
+  "allStepsHeld": true,
+  "closure": {
+    "restingOrderPlaced": true,
+    "restingOrderCancelled": true,
+    "restingOrderReadBack": true,
+    "restingOrderPlacedReadBackAndCancelled": true,
+    "fundingAccrualObservedAcrossSettlementInterval": false,
+    "gap012Closed": false,
+    "note": "This satisfies ONE of GAP-012's two closure conditions. No position was held across a funding interval and no funding was read back, so GAP-012 stays OPEN. The quantity here is a resting limit below market, not a filled position."
+  }
+}
