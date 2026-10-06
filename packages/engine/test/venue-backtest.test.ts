@@ -199,4 +199,26 @@ describe("Track 1 — Venue Candle Walk-Forward Backtest (GAP-021)", () => {
       assert.ok(st.exitDate > IN_SAMPLE_CUTOFF_DATE);
     }
   });
+
+  it("9. discloses straddling trades dependence and provisional decay metrics", () => {
+    const runner = new VenueBacktestRunner();
+    const summary = runner.runBacktest();
+
+    // Straddling disclosure checks
+    const straddleDisc = summary.reconciliation.straddlingTradesDisclosure;
+    assert.equal(straddleDisc.oosPnlWithStraddlersUsd, 167.09);
+    assert.equal(straddleDisc.oosReturnWithStraddlersPct, 0.67);
+    assert.equal(straddleDisc.oosPnlWithoutStraddlersUsd, -5.92);
+    assert.equal(straddleDisc.oosReturnWithoutStraddlersPct, -0.02);
+    assert.ok(straddleDisc.dependenceNote.includes("30.5% of total campaign PnL"));
+
+    // Provisional decay checks
+    const prov = summary.provisionalDecayMetrics;
+    assert.equal(prov.rawOosDailySharpe, 2.03);
+    assert.equal(prov.rawSharpeRatioDecay, 0.91);
+    assert.equal(prov.sharpeDecayAboveThreshold, true);
+    assert.equal(prov.returnDecayRatio, 0.42);
+    assert.ok(prov.sharpeStatusDisclosure.includes("OOS Sharpe withheld: 27 trades, below the 30 gate"));
+    assert.ok(prov.sharpeStatusDisclosure.includes("OOS/IS Sharpe is 0.91x — above the 0.5x reference alert"));
+  });
 });

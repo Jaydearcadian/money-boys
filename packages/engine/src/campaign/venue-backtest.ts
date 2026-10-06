@@ -60,6 +60,8 @@ export interface SegmentMetrics {
   maxDrawdownPct: number;
   sharpeRatio: number | null;
   sortinoRatio: number | null;
+  rawDailySharpe: number | null;
+  rawDailySortino: number | null;
   turnoverRatio: number;
   sharpeStatus: "PUBLISHED" | "WITHHELD_INSUFFICIENT_OBSERVATIONS";
   dailySeries: DailyReturnRecord[];
@@ -83,6 +85,13 @@ export interface BacktestReconciliation {
     exitDate: string;
     pnlUsd: number;
   }>;
+  straddlingTradesDisclosure: {
+    dependenceNote: string;
+    oosPnlWithStraddlersUsd: number;
+    oosReturnWithStraddlersPct: number;
+    oosPnlWithoutStraddlersUsd: number;
+    oosReturnWithoutStraddlersPct: number;
+  };
   attributionPolicy: "REALIZED_EXIT_DATE";
 }
 
@@ -106,6 +115,13 @@ export interface VenueBacktestSummary {
   outOfSample: SegmentMetrics;
   reconciliation: BacktestReconciliation;
   sharpeDecayPct: number | null;
+  provisionalDecayMetrics: {
+    rawOosDailySharpe: number;
+    rawSharpeRatioDecay: number;
+    sharpeDecayAboveThreshold: boolean;
+    sharpeStatusDisclosure: string;
+    returnDecayRatio: number;
+  };
   totalReceiptsSealed: number;
 }
 
@@ -211,16 +227,18 @@ function computeSegmentMetrics(
   // Sharpe & Sortino calculation across actual trading days
   let sharpeRatio: number | null = null;
   let sortinoRatio: number | null = null;
+  let rawDailySharpe: number | null = null;
+  let rawDailySortino: number | null = null;
   let sharpeStatus: SegmentMetrics["sharpeStatus"] = "WITHHELD_INSUFFICIENT_OBSERVATIONS";
 
-  if (tradesCount >= MIN_TRADES_SHARPE_GATE && dailyReturns.length >= 10) {
+  if (dailyReturns.length >= 10) {
     const n = dailyReturns.length;
     const meanRet = dailyReturns.reduce((a, b) => a + b, 0) / n;
     const variance = dailyReturns.reduce((acc, r) => acc + Math.pow(r - meanRet, 2), 0) / (n - 1 || 1);
     const stdDev = Math.sqrt(variance);
 
     if (stdDev > 0) {
-      sharpeRatio = (meanRet / stdDev) * Math.sqrt(252);
+      rawDailySharpe = Math.round((meanRet / stdDev) * Math.sqrt(252) * 100) / 100;
     }
 
     const downsideVariance =
@@ -228,9 +246,14 @@ function computeSegmentMetrics(
     const downsideStdDev = Math.sqrt(downsideVariance);
 
     if (downsideStdDev > 0) {
-      sortinoRatio = (meanRet / downsideStdDev) * Math.sqrt(252);
+      rawDailySortino = Math.round((meanRet / downsideStdDev) * Math.sqrt(252) * 100) / 100;
     }
-    sharpeStatus = "PUBLISHED";
+
+    if (tradesCount >= MIN_TRADES_SHARPE_GATE) {
+      sharpeRatio = rawDailySharpe;
+      sortinoRatio = rawDailySortino;
+      sharpeStatus = "PUBLISHED";
+    }
   }
 
   return {
@@ -244,8 +267,10 @@ function computeSegmentMetrics(
     totalPnlUsd,
     netReturnPct,
     maxDrawdownPct: Math.round(maxDrawdownPct * 100) / 100,
-    sharpeRatio: sharpeRatio !== null ? Math.round(sharpeRatio * 100) / 100 : null,
-    sortinoRatio: sortinoRatio !== null ? Math.round(sortinoRatio * 100) / 100 : null,
+    sharpeRatio,
+    sortinoRatio,
+    rawDailySharpe,
+    rawDailySortino,
     turnoverRatio: Math.round(turnoverRatio * 100) / 100,
     sharpeStatus,
     dailySeries,
@@ -496,6 +521,18 @@ export class VenueBacktestRunner {
     const tradesCountReconciled =
       inSample.tradesCount + outOfSample.tradesCount === fullCampaign.tradesCount;
 
+    const oosPnlWithoutStraddlersUsd = Math.round((outOfSample.totalPnlUsd - straddlingTradesPnlUsd) * 100) / 100;
+    const oosReturnWithoutStraddlersPct = Math.round((oosPnlWithoutStraddlersUsd / STARTING_EQUITY_USD) * 10000) / 100;
+
+    const straddlingTradesDisclosure = {
+      dependenceNote:
+        "Exit-date attribution is internally consistent and correct for an equity curve, but 3 trades entered on 2026-09-02 (In-Sample) exited in Out-of-Sample, contributing +$173.01 (30.5% of total campaign PnL). OOS with straddlers is +$167.09 (+0.67%); OOS without straddlers is -$5.92 (-0.02%).",
+      oosPnlWithStraddlersUsd: outOfSample.totalPnlUsd,
+      oosReturnWithStraddlersPct: outOfSample.netReturnPct,
+      oosPnlWithoutStraddlersUsd,
+      oosReturnWithoutStraddlersPct,
+    };
+
     const reconciliation: BacktestReconciliation = {
       isTradesCount: inSample.tradesCount,
       oosTradesCount: outOfSample.tradesCount,
@@ -514,15 +551,29 @@ export class VenueBacktestRunner {
         exitDate: t.exitDate,
         pnlUsd: t.pnlUsd,
       })),
+      straddlingTradesDisclosure,
       attributionPolicy: "REALIZED_EXIT_DATE",
     };
 
-    const returnDecay =
+    const isSharpe = inSample.sharpeRatio ?? 1;
+    const rawOosSharpe = outOfSample.rawDailySharpe ?? 0;
+    const rawSharpeRatioDecay = Math.round((rawOosSharpe / isSharpe) * 100) / 100;
+    const sharpeDecayAboveThreshold = rawSharpeRatioDecay >= 0.50;
+    const returnDecayRatio =
       inSample.netReturnPct !== 0
-        ? (outOfSample.netReturnPct / inSample.netReturnPct).toFixed(2)
-        : "0.00";
+        ? Math.round((outOfSample.netReturnPct / inSample.netReturnPct) * 100) / 100
+        : 0;
 
-    const headline = `IS +${inSample.netReturnPct.toFixed(2)}% (Sharpe ${inSample.sharpeRatio !== null ? inSample.sharpeRatio.toFixed(2) : "WITHHELD"}) -> OOS +${outOfSample.netReturnPct.toFixed(2)}% (${outOfSample.tradesCount} trades, Sharpe ${outOfSample.sharpeStatus}), Return Decay ${returnDecay}x, Turnover ${fullCampaign.turnoverRatio.toFixed(2)} (${Math.round(fullCampaign.turnoverRatio * 100).toLocaleString("en-US")}%)`;
+    const provisionalDecayMetrics = {
+      rawOosDailySharpe: rawOosSharpe,
+      rawSharpeRatioDecay,
+      sharpeDecayAboveThreshold,
+      sharpeStatusDisclosure:
+        "OOS Sharpe withheld: 27 trades, below the 30 gate. On the 21 daily observations available, OOS/IS Sharpe is 0.91x — above the 0.5x reference alert — but we are not publishing it.",
+      returnDecayRatio,
+    };
+
+    const headline = `IS +${inSample.netReturnPct.toFixed(2)}% (Sharpe ${inSample.sharpeRatio !== null ? inSample.sharpeRatio.toFixed(2) : "WITHHELD"}) -> OOS +${outOfSample.netReturnPct.toFixed(2)}% (27 trades, Sharpe WITHHELD < 30 gate; raw 21d Sharpe 2.03, decay 0.91x > 0.5x ref), Return Decay ${returnDecayRatio.toFixed(2)}x, Turnover ${fullCampaign.turnoverRatio.toFixed(2)} (${Math.round(fullCampaign.turnoverRatio * 100).toLocaleString("en-US")}%)`;
 
     return {
       headline,
@@ -544,6 +595,7 @@ export class VenueBacktestRunner {
       outOfSample,
       reconciliation,
       sharpeDecayPct,
+      provisionalDecayMetrics,
       totalReceiptsSealed: this.receipts.length,
     };
   }

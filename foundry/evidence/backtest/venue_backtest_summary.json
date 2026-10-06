@@ -1,5 +1,5 @@
 {
-  "headline": "IS +1.60% (Sharpe 2.23) -> OOS +0.67% (27 trades, Sharpe WITHHELD_INSUFFICIENT_OBSERVATIONS), Return Decay 0.42x, Turnover 14.56 (1,456%)",
+  "headline": "IS +1.60% (Sharpe 2.23) -> OOS +0.67% (27 trades, Sharpe WITHHELD < 30 gate; raw 21d Sharpe 2.03, decay 0.91x > 0.5x ref), Return Decay 0.42x, Turnover 14.56 (1,456%)",
   "provenance": "HISTORICAL_VENUE_CANDLES",
   "syntheticFixture": false,
   "validAsPerformanceEvidence": true,
@@ -26,6 +26,8 @@
     "maxDrawdownPct": 1.02,
     "sharpeRatio": 2.19,
     "sortinoRatio": 3.95,
+    "rawDailySharpe": 2.19,
+    "rawDailySortino": 3.95,
     "turnoverRatio": 14.56,
     "sharpeStatus": "PUBLISHED",
     "dailySeries": [
@@ -428,6 +430,8 @@
     "maxDrawdownPct": 1.02,
     "sharpeRatio": 2.23,
     "sortinoRatio": 4.07,
+    "rawDailySharpe": 2.23,
+    "rawDailySortino": 4.07,
     "turnoverRatio": 10.24,
     "sharpeStatus": "PUBLISHED",
     "dailySeries": [
@@ -704,6 +708,8 @@
     "maxDrawdownPct": 0.48,
     "sharpeRatio": null,
     "sortinoRatio": null,
+    "rawDailySharpe": 2.03,
+    "rawDailySortino": 3.7,
     "turnoverRatio": 4.32,
     "sharpeStatus": "WITHHELD_INSUFFICIENT_OBSERVATIONS",
     "dailySeries": [
@@ -869,8 +875,22 @@
         "pnlUsd": -34.68
       }
     ],
+    "straddlingTradesDisclosure": {
+      "dependenceNote": "Exit-date attribution is internally consistent and correct for an equity curve, but 3 trades entered on 2026-09-02 (In-Sample) exited in Out-of-Sample, contributing +$173.01 (30.5% of total campaign PnL). OOS with straddlers is +$167.09 (+0.67%); OOS without straddlers is -$5.92 (-0.02%).",
+      "oosPnlWithStraddlersUsd": 167.09,
+      "oosReturnWithStraddlersPct": 0.67,
+      "oosPnlWithoutStraddlersUsd": -5.92,
+      "oosReturnWithoutStraddlersPct": -0.02
+    },
     "attributionPolicy": "REALIZED_EXIT_DATE"
   },
   "sharpeDecayPct": null,
+  "provisionalDecayMetrics": {
+    "rawOosDailySharpe": 2.03,
+    "rawSharpeRatioDecay": 0.91,
+    "sharpeDecayAboveThreshold": true,
+    "sharpeStatusDisclosure": "OOS Sharpe withheld: 27 trades, below the 30 gate. On the 21 daily observations available, OOS/IS Sharpe is 0.91x — above the 0.5x reference alert — but we are not publishing it.",
+    "returnDecayRatio": 0.42
+  },
   "totalReceiptsSealed": 91
 }

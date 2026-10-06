@@ -167,6 +167,9 @@ async function main(): Promise<void> {
     console.log(`Sharpe Decay (IS -> OOS): ${summary.sharpeDecayPct}%`);
   } else {
     console.log(`Sharpe Decay: N/A (Withheld due to trade observation threshold gate: OOS has ${summary.outOfSample.tradesCount} trades < 30 required)`);
+    console.log(`PROVISIONAL DISCLOSURE: ${summary.provisionalDecayMetrics.sharpeStatusDisclosure}`);
+    console.log(`  Raw OOS Daily Sharpe: ${summary.provisionalDecayMetrics.rawOosDailySharpe} (IS: ${summary.inSample.sharpeRatio})`);
+    console.log(`  Raw Sharpe Ratio Decay: ${summary.provisionalDecayMetrics.rawSharpeRatioDecay}x (Threshold >= 0.50x: ${summary.provisionalDecayMetrics.sharpeDecayAboveThreshold ? "PASSED" : "ALERT"})`);
   }
 
   console.log("\n--------------------------------------------------------------------------------");
@@ -177,6 +180,10 @@ async function main(): Promise<void> {
   for (const st of summary.reconciliation.straddlingTradesDetail) {
     console.log(`    - ${st.tradeId} (${st.symbol}): entry ${st.entryDate} -> exit ${st.exitDate}, PnL $${st.pnlUsd.toFixed(2)}`);
   }
+  console.log(`  STRADDLE SENSITIVITY DISCLOSURE:`);
+  console.log(`    ${summary.reconciliation.straddlingTradesDisclosure.dependenceNote}`);
+  console.log(`    OOS with straddlers:    +$${summary.reconciliation.straddlingTradesDisclosure.oosPnlWithStraddlersUsd.toFixed(2)} (+${summary.reconciliation.straddlingTradesDisclosure.oosReturnWithStraddlersPct.toFixed(2)}%)`);
+  console.log(`    OOS without straddlers:  $${summary.reconciliation.straddlingTradesDisclosure.oosPnlWithoutStraddlersUsd.toFixed(2)} (${summary.reconciliation.straddlingTradesDisclosure.oosReturnWithoutStraddlersPct.toFixed(2)}%)`);
   console.log("--------------------------------------------------------------------------------");
   console.log("================================================================================");
 }
