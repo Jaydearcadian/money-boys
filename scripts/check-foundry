@@ -54,6 +54,45 @@ for line in (root/"foundry/gaps.jsonl").read_text().splitlines():
 print("PASS: foundry ledgers parse + evidence paths for elevated claims")
 PY
 
+# --- Handoff freshness -----------------------------------------------------
+# A hand-maintained gap/claim table drifts the moment anything commits, and a
+# stale handoff is worse than none: it sends the next agent to build a
+# backtest on a split that FAILS the track's out-of-sample requirement and to
+# use a data source whose terms were never settled. Fingerprint the LEDGER
+# CONTENT rather than the commit SHA, so this fires when the FACTS change and
+# not on every unrelated commit (which would train everyone to ignore it).
+python3 - <<'PY'
+import hashlib, json, pathlib, re, sys
+root = pathlib.Path(".")
+handoff = root / "docs/canonical/NEXT_AGENT_HANDOFF.md"
+if not handoff.exists():
+    print("FAIL: docs/canonical/NEXT_AGENT_HANDOFF.md missing")
+    print("      run: node scripts/render-handoff.mjs")
+    sys.exit(1)
+# Raw bytes, not re-serialized objects: see render-handoff.mjs for why.
+want = hashlib.sha256(
+    (root/"foundry/gaps.jsonl").read_bytes() + (root/"foundry/claims.jsonl").read_bytes()
+).hexdigest()[:16]
+text = handoff.read_text()
+m = re.search(r"Ledger fingerprint \| `([0-9a-f]+)`", text)
+if not m:
+    print("FAIL: handoff has no ledger fingerprint")
+    sys.exit(1)
+if m.group(1) != want:
+    print(f"FAIL: handoff is STALE (fingerprint {m.group(1)} != ledger {want})")
+    print("      the gap/claim ledgers moved after the handoff was generated")
+    print("      run: node scripts/render-handoff.mjs")
+    sys.exit(1)
+gaps = [json.loads(l) for l in (root/"foundry/gaps.jsonl").read_text().splitlines() if l.strip()]
+nonclosed = [g["id"] for g in gaps if g.get("status") != "CLOSED"]
+listed = set(re.findall(r"\| `(GAP-\d+)` \|", text))
+missing = [i for i in nonclosed if i not in listed]
+if missing:
+    print(f"FAIL: handoff omits non-closed gaps: {', '.join(missing)}")
+    sys.exit(1)
+print(f"PASS: handoff fresh + lists all {len(nonclosed)} non-closed gaps")
+PY
+
 if [[ "$FAIL" -ne 0 ]]; then
   echo "check-foundry FAILED"
   exit 1
