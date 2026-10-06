@@ -7,12 +7,12 @@
 
 | | |
 |---|---|
-| Generated at commit | `a5434a3` |
-| Ledger fingerprint | `49d0a891059e261f` |
-| Non-closed gaps | **9** (of 22) |
+| Generated at commit | `73e5291` |
+| Ledger fingerprint | `8defeed867c90d2e` |
+| Non-closed gaps | **10** (of 22) |
 | Blocked external | 1 |
-| Evidence-integrity | 1 |
-| Legal/compliance | 0 |
+| Evidence-integrity | 2 |
+| Legal/compliance | 1 |
 
 ## Prime directive
 
@@ -23,14 +23,15 @@
 
 | Gap | Status | Category | Residual closure actions |
 |---|---|---|---|
-| `GAP-012` | OPEN | undefined | Order-state read-back against a venue that actually serves the route. This Bitget Demo deployment serves NO mix order read routes: /api/v2/mix/order/orderInfo, /pending-orders and /history-order all return 40404 Request URL NOT FOUND on GET and POST, while place-order and cancel-order both succeed. This is a substrate limitation, not a missing implementation. See GAP-020.<br>A position held across at least one funding settlement interval with funding cost/profit read back. No funding reader exists in the module and no test implies settlement coverage. |
-| `GAP-013` | PARTIAL | undefined | A bounded Demo campaign with positive net edge exercises the corrected market-data paths against the venue, which is the only thing that closes this (getMixTicker with the bare futures symbol).<br>No symbol-mapping regression has run against the live venue outside unit tests. |
-| `GAP-014` | PARTIAL | undefined | A bounded Demo campaign with positive net edge exercises the corrected market-data paths against the venue, which is the only thing that closes this (getMixOrderbook against /api/v2/mix/market/orderbook).<br>No orderbook read has driven a real VWAP/slippage calculation on venue. |
-| `GAP-015` | PARTIAL | undefined | A bounded Demo campaign with positive net edge exercises the corrected market-data paths against the venue, which is the only thing that closes this.<br>The freshness gate has blocked live runs correctly, but no run has yet passed it on venue evidence before this Robinhood integration. |
-| `GAP-017` | PARTIAL | undefined | An AUTHORISED machine-readable US equity session calendar. NYSE and Nasdaq publish authoritative dated calendars only as PDF/HTML and prohibit automated capture in their terms of use; the machine-readable endpoints are undocumented, robots-disallowed and terms-prohibited, so none may be ingested. This is a contact/permission problem, not a code problem.<br>The same-day Trader Alert channel, which Nasdaq itself directs readers to for per-day information, is not machine-readable and its published HTML URL is retired. A same-day closure announced outside the annual calendar therefore cannot be detected automatically. |
-| `GAP-018` | PARTIAL | undefined | GAP-019 resolved: written terms clarification from Robinhood, or a recorded operator legal decision that the intended read-only documented-API use is permitted. Automated use remains BLOCKED_EXTERNAL until then.<br>A positive-edge open-session read. Every live read so far has been NEUTRAL or vetoed, so the benchmark has never driven an authorisation even under a permissive read-only surface. |
-| `GAP-019` | BLOCKED_EXTERNAL | undefined | Operator signature on docs/risk/GAP-019-OPERATOR-DECISION.md, scoped to unauthenticated read-only access to the public price endpoint only, or written clarification from Robinhood. Either closes the gap; silence does not.<br>ESCALATE to legal counsel is a recorded third option and would leave the gap open with the risk formally transferred rather than informally absorbed. |
+| `GAP-012` | OPEN | INTEGRATION | Order-state read-back against a venue that actually serves the route. This Bitget Demo deployment serves NO mix order read routes: /api/v2/mix/order/orderInfo, /pending-orders and /history-order all return 40404 Request URL NOT FOUND on GET and POST, while place-order and cancel-order both succeed. This is a substrate limitation, not a missing implementation. See GAP-020.<br>A position held across at least one funding settlement interval with funding cost/profit read back. No funding reader exists in the module and no test implies settlement coverage. |
+| `GAP-013` | PARTIAL | INTEGRATION | A bounded Demo campaign with positive net edge exercises the corrected market-data paths against the venue, which is the only thing that closes this (getMixTicker with the bare futures symbol).<br>No symbol-mapping regression has run against the live venue outside unit tests. |
+| `GAP-014` | PARTIAL | INTEGRATION | A bounded Demo campaign with positive net edge exercises the corrected market-data paths against the venue, which is the only thing that closes this (getMixOrderbook against /api/v2/mix/market/orderbook).<br>No orderbook read has driven a real VWAP/slippage calculation on venue. |
+| `GAP-015` | PARTIAL | SAFETY | A bounded Demo campaign with positive net edge exercises the corrected market-data paths against the venue, which is the only thing that closes this.<br>The freshness gate has blocked live runs correctly, but no run has yet passed it on venue evidence before this Robinhood integration. |
+| `GAP-017` | PARTIAL | INTEGRATION | An AUTHORISED machine-readable US equity session calendar. NYSE and Nasdaq publish authoritative dated calendars only as PDF/HTML and prohibit automated capture in their terms of use; the machine-readable endpoints are undocumented, robots-disallowed and terms-prohibited, so none may be ingested. This is a contact/permission problem, not a code problem.<br>The same-day Trader Alert channel, which Nasdaq itself directs readers to for per-day information, is not machine-readable and its published HTML URL is retired. A same-day closure announced outside the annual calendar therefore cannot be detected automatically. |
+| `GAP-018` | PARTIAL | INTEGRATION | GAP-019 resolved: written terms clarification from Robinhood, or a recorded operator legal decision that the intended read-only documented-API use is permitted. Automated use remains BLOCKED_EXTERNAL until then.<br>A positive-edge open-session read. Every live read so far has been NEUTRAL or vetoed, so the benchmark has never driven an authorisation even under a permissive read-only surface. |
+| `GAP-019` | BLOCKED_EXTERNAL | LEGAL_COMPLIANCE | Operator signature on docs/risk/GAP-019-OPERATOR-DECISION.md, scoped to unauthenticated read-only access to the public price endpoint only, or written clarification from Robinhood. Either closes the gap; silence does not.<br>ESCALATE to legal counsel is a recorded third option and would leave the gap open with the risk formally transferred rather than informally absorbed. |
 | `GAP-020` | OPEN | SUBSTRATE | Confirmation from Bitget, or another Demo deployment/environment, that serves the mix order read routes, so order-state read-back can be proven rather than reported unavailable.<br>Until then GAP-012's placed-read-back-cancelled condition cannot be satisfied in this environment, regardless of implementation quality. |
+| `GAP-021` | PARTIAL | EVIDENCE_INTEGRITY | A sustained holdout observation window accumulating >=30 completed round-trip trades in Out-of-Sample so that out-of-sample Sharpe, Sortino, and Sharpe decay can be empirically computed rather than withheld.<br>Rolling 30-day Sharpe stability metric computed from daily returns once holdout observation depth is sufficient. |
 | `GAP-022` | PARTIAL | EVIDENCE_INTEGRITY | A live inference pipeline connecting the LLM decision authority arm to actual Qwen-Plus / DashScope API responses with real token latency and temperature-induced variance.<br>A sustained paper campaign driven by genuine model calls against live venue quotes, accumulating empirical decision consistency and agreement metrics. |
 
 ## Claims

@@ -13,6 +13,7 @@
  * Writes:
  *  - foundry/evidence/backtest/venue_backtest.jsonl
  *  - foundry/evidence/backtest/venue_backtest_summary.json
+ *  - foundry/evidence/backtest/venue_backtest_daily_series.json
  *
  * Run: pnpm exec tsx scripts/run-venue-backtest.ts
  */
@@ -68,76 +69,96 @@ async function main(): Promise<void> {
   writeFileSync(summaryPath, JSON.stringify(summary, null, 2) + "\n", "utf8");
   console.log(`Wrote summary to: ${summaryPath}`);
 
-  // Print comparison table
+  // Write daily return series JSON for exact reproducibility
+  const dailySeriesPath = join(OUT_DIR, "venue_backtest_daily_series.json");
+  const dailySeriesPayload = {
+    asOf: new Date().toISOString(),
+    methodology: "True trading-day returns aggregation with sqrt(252) annualization",
+    fullCampaign: summary.fullCampaign.dailySeries,
+    inSample: summary.inSample.dailySeries,
+    outOfSample: summary.outOfSample.dailySeries,
+  };
+  writeFileSync(dailySeriesPath, JSON.stringify(dailySeriesPayload, null, 2) + "\n", "utf8");
+  console.log(`Wrote daily returns series to: ${dailySeriesPath}`);
+
+  // Print headline leading with Out-of-Sample reality
   console.log("\n--------------------------------------------------------------------------------");
-  console.log(" SEGMENT METRICS COMPARISON");
+  console.log(`HEADLINE: ${summary.headline}`);
   console.log("--------------------------------------------------------------------------------");
+
+  // Print comparison table
   const tableData = [
     {
       Metric: "Calendar Days",
-      "In-Sample (IS)": summary.inSample.calendarDays,
       "Out-of-Sample (OOS)": summary.outOfSample.calendarDays,
+      "In-Sample (IS)": summary.inSample.calendarDays,
       "Full Campaign": summary.fullCampaign.calendarDays,
     },
     {
       Metric: "Trading Days",
-      "In-Sample (IS)": summary.inSample.tradingDays,
       "Out-of-Sample (OOS)": summary.outOfSample.tradingDays,
+      "In-Sample (IS)": summary.inSample.tradingDays,
       "Full Campaign": summary.fullCampaign.tradingDays,
     },
     {
       Metric: "Trades Count",
-      "In-Sample (IS)": summary.inSample.tradesCount,
       "Out-of-Sample (OOS)": summary.outOfSample.tradesCount,
+      "In-Sample (IS)": summary.inSample.tradesCount,
       "Full Campaign": summary.fullCampaign.tradesCount,
     },
     {
       Metric: "Win Rate",
-      "In-Sample (IS)": `${summary.inSample.winRatePct}%`,
       "Out-of-Sample (OOS)": `${summary.outOfSample.winRatePct}%`,
+      "In-Sample (IS)": `${summary.inSample.winRatePct}%`,
       "Full Campaign": `${summary.fullCampaign.winRatePct}%`,
     },
     {
       Metric: "Total PnL (USD)",
-      "In-Sample (IS)": `$${summary.inSample.totalPnlUsd.toFixed(2)}`,
       "Out-of-Sample (OOS)": `$${summary.outOfSample.totalPnlUsd.toFixed(2)}`,
+      "In-Sample (IS)": `$${summary.inSample.totalPnlUsd.toFixed(2)}`,
       "Full Campaign": `$${summary.fullCampaign.totalPnlUsd.toFixed(2)}`,
     },
     {
       Metric: "Net Return",
-      "In-Sample (IS)": `${summary.inSample.netReturnPct}%`,
       "Out-of-Sample (OOS)": `${summary.outOfSample.netReturnPct}%`,
+      "In-Sample (IS)": `${summary.inSample.netReturnPct}%`,
       "Full Campaign": `${summary.fullCampaign.netReturnPct}%`,
     },
     {
       Metric: "Max Drawdown",
-      "In-Sample (IS)": `${summary.inSample.maxDrawdownPct}%`,
       "Out-of-Sample (OOS)": `${summary.outOfSample.maxDrawdownPct}%`,
+      "In-Sample (IS)": `${summary.inSample.maxDrawdownPct}%`,
       "Full Campaign": `${summary.fullCampaign.maxDrawdownPct}%`,
     },
     {
       Metric: "Turnover Ratio",
-      "In-Sample (IS)": summary.inSample.turnoverRatio,
       "Out-of-Sample (OOS)": summary.outOfSample.turnoverRatio,
+      "In-Sample (IS)": summary.inSample.turnoverRatio,
       "Full Campaign": summary.fullCampaign.turnoverRatio,
     },
     {
       Metric: "Sharpe Status",
-      "In-Sample (IS)": summary.inSample.sharpeStatus,
       "Out-of-Sample (OOS)": summary.outOfSample.sharpeStatus,
+      "In-Sample (IS)": summary.inSample.sharpeStatus,
       "Full Campaign": summary.fullCampaign.sharpeStatus,
     },
     {
-      Metric: "Sharpe Ratio",
-      "In-Sample (IS)": summary.inSample.sharpeRatio !== null ? summary.inSample.sharpeRatio : "WITHHELD",
+      Metric: "Sharpe Ratio (Daily Ann.)",
       "Out-of-Sample (OOS)": summary.outOfSample.sharpeRatio !== null ? summary.outOfSample.sharpeRatio : "WITHHELD",
+      "In-Sample (IS)": summary.inSample.sharpeRatio !== null ? summary.inSample.sharpeRatio : "WITHHELD",
       "Full Campaign": summary.fullCampaign.sharpeRatio !== null ? summary.fullCampaign.sharpeRatio : "WITHHELD",
     },
     {
-      Metric: "Sortino Ratio",
-      "In-Sample (IS)": summary.inSample.sortinoRatio !== null ? summary.inSample.sortinoRatio : "WITHHELD",
+      Metric: "Sortino Ratio (Daily Ann.)",
       "Out-of-Sample (OOS)": summary.outOfSample.sortinoRatio !== null ? summary.outOfSample.sortinoRatio : "WITHHELD",
+      "In-Sample (IS)": summary.inSample.sortinoRatio !== null ? summary.inSample.sortinoRatio : "WITHHELD",
       "Full Campaign": summary.fullCampaign.sortinoRatio !== null ? summary.fullCampaign.sortinoRatio : "WITHHELD",
+    },
+    {
+      Metric: "Daily Series Count",
+      "Out-of-Sample (OOS)": summary.outOfSample.dailySeries.length,
+      "In-Sample (IS)": summary.inSample.dailySeries.length,
+      "Full Campaign": summary.fullCampaign.dailySeries.length,
     },
   ];
   console.table(tableData);
@@ -145,7 +166,7 @@ async function main(): Promise<void> {
   if (summary.sharpeDecayPct !== null) {
     console.log(`Sharpe Decay (IS -> OOS): ${summary.sharpeDecayPct}%`);
   } else {
-    console.log("Sharpe Decay: N/A (Withheld due to trade observation threshold gate)");
+    console.log("Sharpe Decay: N/A (Withheld due to trade observation threshold gate: OOS has 24 trades < 30 required)");
   }
 
   console.log("================================================================================");

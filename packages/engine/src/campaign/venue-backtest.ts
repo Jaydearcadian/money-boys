@@ -40,6 +40,13 @@ export interface BacktestTrade {
   isOutSample: boolean;
 }
 
+export interface DailyReturnRecord {
+  date: string;
+  dayPnlUsd: number;
+  cumulativeEquityUsd: number;
+  dailyReturnPct: number;
+}
+
 export interface SegmentMetrics {
   segment: "IN_SAMPLE" | "OUT_OF_SAMPLE" | "FULL_CAMPAIGN";
   calendarDays: number;
@@ -55,9 +62,11 @@ export interface SegmentMetrics {
   sortinoRatio: number | null;
   turnoverRatio: number;
   sharpeStatus: "PUBLISHED" | "WITHHELD_INSUFFICIENT_OBSERVATIONS";
+  dailySeries: DailyReturnRecord[];
 }
 
 export interface VenueBacktestSummary {
+  headline: string;
   provenance: "HISTORICAL_VENUE_CANDLES";
   syntheticFixture: false;
   validAsPerformanceEvidence: true;
@@ -123,32 +132,33 @@ function computeSegmentMetrics(
   segment: "IN_SAMPLE" | "OUT_OF_SAMPLE" | "FULL_CAMPAIGN",
   trades: BacktestTrade[],
   calendarDays: number,
-  tradingDays: number,
+  tradingDates: string[],
   initialEquityUsd: number = STARTING_EQUITY_USD,
 ): SegmentMetrics {
   const tradesCount = trades.length;
   const winningTrades = trades.filter((t) => t.pnlUsd > 0).length;
   const losingTrades = trades.filter((t) => t.pnlUsd < 0).length;
   const winRatePct = tradesCount > 0 ? (winningTrades / tradesCount) * 100 : 0;
-  const totalPnlUsd = trades.reduce((acc, t) => acc + t.pnlUsd, 0);
-  const netReturnPct = (totalPnlUsd / initialEquityUsd) * 100;
 
-  // Build daily PnL series
-  const pnlByDate = new Map<string, number>();
+  // Build daily PnL series indexed by exit date
+  const pnlByExitDate = new Map<string, number>();
   for (const t of trades) {
-    const cur = pnlByDate.get(t.exitDate) ?? 0;
-    pnlByDate.set(t.exitDate, cur + t.pnlUsd);
+    const cur = pnlByExitDate.get(t.exitDate) ?? 0;
+    pnlByExitDate.set(t.exitDate, cur + t.pnlUsd);
   }
 
-  // Calculate cumulative equity and max drawdown
+  // Iterate across every single trading day in this segment
   let currentEquity = initialEquityUsd;
   let peakEquity = initialEquityUsd;
   let maxDrawdownPct = 0;
+  const dailySeries: DailyReturnRecord[] = [];
   const dailyReturns: number[] = [];
 
-  for (const [, pnl] of pnlByDate) {
+  for (const date of tradingDates) {
+    const dayPnlUsd = Math.round((pnlByExitDate.get(date) ?? 0) * 100) / 100;
     const prevEquity = currentEquity;
-    currentEquity += pnl;
+    currentEquity = Math.round((currentEquity + dayPnlUsd) * 100) / 100;
+
     if (currentEquity > peakEquity) {
       peakEquity = currentEquity;
     }
@@ -156,15 +166,27 @@ function computeSegmentMetrics(
     if (dd > maxDrawdownPct) {
       maxDrawdownPct = dd;
     }
-    const ret = prevEquity > 0 ? pnl / prevEquity : 0;
+
+    const retPct = prevEquity > 0 ? (dayPnlUsd / prevEquity) * 100 : 0;
+    const dailyReturnPct = Math.round(retPct * 10000) / 10000;
+    const ret = dailyReturnPct / 100;
     dailyReturns.push(ret);
+    dailySeries.push({
+      date,
+      dayPnlUsd,
+      cumulativeEquityUsd: currentEquity,
+      dailyReturnPct,
+    });
   }
+
+  const totalPnlUsd = Math.round((currentEquity - initialEquityUsd) * 100) / 100;
+  const netReturnPct = Math.round((totalPnlUsd / initialEquityUsd) * 10000) / 100;
 
   // Turnover ratio: total volume / initial equity
   const totalTurnoverUsd = trades.reduce((acc, t) => acc + t.notionalUsd * 2, 0);
   const turnoverRatio = initialEquityUsd > 0 ? totalTurnoverUsd / initialEquityUsd : 0;
 
-  // Sharpe & Sortino calculation
+  // Sharpe & Sortino calculation across actual trading days
   let sharpeRatio: number | null = null;
   let sortinoRatio: number | null = null;
   let sharpeStatus: SegmentMetrics["sharpeStatus"] = "WITHHELD_INSUFFICIENT_OBSERVATIONS";
@@ -192,18 +214,19 @@ function computeSegmentMetrics(
   return {
     segment,
     calendarDays,
-    tradingDays,
+    tradingDays: tradingDates.length,
     tradesCount,
     winningTrades,
     losingTrades,
     winRatePct: Math.round(winRatePct * 10) / 10,
-    totalPnlUsd: Math.round(totalPnlUsd * 100) / 100,
-    netReturnPct: Math.round(netReturnPct * 100) / 100,
+    totalPnlUsd,
+    netReturnPct,
     maxDrawdownPct: Math.round(maxDrawdownPct * 100) / 100,
     sharpeRatio: sharpeRatio !== null ? Math.round(sharpeRatio * 100) / 100 : null,
     sortinoRatio: sortinoRatio !== null ? Math.round(sortinoRatio * 100) / 100 : null,
     turnoverRatio: Math.round(turnoverRatio * 100) / 100,
     sharpeStatus,
+    dailySeries,
   };
 }
 
@@ -417,19 +440,19 @@ export class VenueBacktestRunner {
       "FULL_CAMPAIGN",
       this.completedTrades,
       89,
-      allDates.length,
+      allDates,
     );
     const inSample = computeSegmentMetrics(
       "IN_SAMPLE",
       inSampleTrades,
       59,
-      inSampleDates.length,
+      inSampleDates,
     );
     const outOfSample = computeSegmentMetrics(
       "OUT_OF_SAMPLE",
       outSampleTrades,
       30,
-      outSampleDates.length,
+      outSampleDates,
     );
 
     let sharpeDecayPct: number | null = null;
@@ -439,7 +462,10 @@ export class VenueBacktestRunner {
       ) / 10;
     }
 
+    const headline = `IS Sharpe ${inSample.sharpeRatio !== null ? inSample.sharpeRatio : "WITHHELD"} (daily) -> OOS flat at ${outOfSample.netReturnPct}% (${outOfSample.tradesCount} trades, Sharpe ${outOfSample.sharpeStatus}), Turnover ${fullCampaign.turnoverRatio} (${Math.round(fullCampaign.turnoverRatio * 100)}%)`;
+
     return {
+      headline,
       provenance: "HISTORICAL_VENUE_CANDLES",
       syntheticFixture: false,
       validAsPerformanceEvidence: true,

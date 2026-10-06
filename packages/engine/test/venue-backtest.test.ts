@@ -127,4 +127,40 @@ describe("Track 1 — Venue Candle Walk-Forward Backtest (GAP-021)", () => {
       );
     }
   });
+
+  it("7. emits complete daily return series allowing exact Sharpe reproducibility", () => {
+    const runner = new VenueBacktestRunner();
+    const summary = runner.runBacktest();
+
+    for (const seg of [summary.fullCampaign, summary.inSample, summary.outOfSample]) {
+      assert.equal(
+        seg.dailySeries.length,
+        seg.tradingDays,
+        `Daily series length (${seg.dailySeries.length}) must match tradingDays (${seg.tradingDays})`,
+      );
+
+      // Verify that every day is strictly chronological
+      for (let i = 1; i < seg.dailySeries.length; i++) {
+        assert.ok(
+          seg.dailySeries[i]!.date > seg.dailySeries[i - 1]!.date,
+          "Daily series must be strictly chronologically sorted",
+        );
+      }
+
+      // Recompute Sharpe from the daily series for published segments
+      if (seg.sharpeStatus === "PUBLISHED" && seg.sharpeRatio !== null) {
+        const rets = seg.dailySeries.map((s) => s.dailyReturnPct / 100);
+        const n = rets.length;
+        const mean = rets.reduce((a, b) => a + b, 0) / n;
+        const variance = rets.reduce((acc, r) => acc + Math.pow(r - mean, 2), 0) / (n - 1);
+        const std = Math.sqrt(variance);
+        const recomputedSharpe = Math.round((mean / std) * Math.sqrt(252) * 100) / 100;
+        assert.equal(
+          seg.sharpeRatio,
+          recomputedSharpe,
+          `Published Sharpe (${seg.sharpeRatio}) must match recomputed daily Sharpe (${recomputedSharpe})`,
+        );
+      }
+    }
+  });
 });

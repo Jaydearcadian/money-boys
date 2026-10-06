@@ -53,12 +53,13 @@ const fingerprint = createHash("sha256")
 const head = execSync("git rev-parse --short HEAD", { cwd: ROOT }).toString().trim();
 const nonClosed = gaps.filter((g) => g.status !== "CLOSED");
 const blocked = nonClosed.filter((g) => g.status === "BLOCKED_EXTERNAL");
-const evidenceIntegrity = nonClosed.filter((g) => g.category === "EVIDENCE_INTEGRITY");
-const legal = nonClosed.filter((g) => String(g.category).includes("LEGAL"));
+const evidenceIntegrity = nonClosed.filter((g) => (g.category ?? g.class) === "EVIDENCE_INTEGRITY");
+const legal = nonClosed.filter((g) => String(g.category ?? g.class).includes("LEGAL"));
 
 const row = (g) => {
   const residuals = (g.residual_closure ?? []).slice(0, 2).map((r) => r.replace(/\|/g, "\\|"));
-  return `| \`${g.id}\` | ${g.status} | ${g.category} | ${
+  const cat = g.category ?? g.class ?? "—";
+  return `| \`${g.id}\` | ${g.status} | ${cat} | ${
     residuals.length ? residuals.join("<br>") : "—"
   } |`;
 };
