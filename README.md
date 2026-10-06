@@ -68,11 +68,14 @@ Status vocabulary: `TESTED` = verified locally with evidence. `LIVE_DEMONSTRATED
 | ReasoningReceipt SHA-256 seal | TESTED | [`p01/receipts_seal.txt`](./foundry/evidence/p01/receipts_seal.txt) | Local; bound on venue via the dispatcher gate |
 | Quant Boy basis engine | TESTED | [`p02/quant_engine.txt`](./foundry/evidence/p02/quant_engine.txt) | Mid-price slippage reference |
 | Macro Boy cognitive shield | TESTED | [`p03/cognitive_shield.txt`](./foundry/evidence/p03/cognitive_shield.txt) | Gateway path exercised, proposal-only |
+| Live Qwen catalyst inference | LIVE_DEMONSTRATED | [`ab-campaign/ab_metrics_summary.json`](./foundry/evidence/ab-campaign/ab_metrics_summary.json) | Live `qwen3.8-max` inference, SHA-256 payload digests, empirical latency, proposal-only |
 | Council quorum + reducer | TESTED | [`p04/council_quorum.txt`](./foundry/evidence/p04/council_quorum.txt) | Deterministic |
 | Telemetry, SSE, emergency halt | TESTED | [`p08/stack_smoke.json`](./foundry/evidence/p08/stack_smoke.json) | Local ports 3000/3001, 6/6 checks |
 | Demo order accepted and filled | LIVE_DEMONSTRATED | [`p06/demo_order_filled.json`](./foundry/evidence/p06/demo_order_filled.json) | 0.001 BTCUSDT, Demo Trading |
 | Demo position closed, account flat | LIVE_DEMONSTRATED | [`p06/demo_position_closed.json`](./foundry/evidence/p06/demo_position_closed.json) | Demo Trading |
-| Dispatcher lifecycle on venue | LIVE_DEMONSTRATED | [`p07/dispatcher_lifecycle.json`](./foundry/evidence/p07/dispatcher_lifecycle.json) | Market orders only, no cancel path |
+| Dispatcher lifecycle on venue | LIVE_DEMONSTRATED | [`p07/dispatcher_lifecycle.json`](./foundry/evidence/p07/dispatcher_lifecycle.json) | Market order round-trip, flat verified |
+| Tokenized RWA equities execution | LIVE_DEMONSTRATED | [`p13/rwa_trade_lifecycle.json`](./foundry/evidence/p13/rwa_trade_lifecycle.json) | `rNVDAUSDT` (0.11 contracts) full lifecycle, flat confirmed |
+| Resting limit & cancel lifecycle | LIVE_DEMONSTRATED | [`p12/demo_lifecycle_2026-10-06T20-10-07-808Z.json`](./foundry/evidence/p12/demo_lifecycle_2026-10-06T20-10-07-808Z.json) | Resting limit placed, read via `/detail`, cancelled, confirmed flat |
 | Walk-forward venue candle backtest | TESTED | [`backtest/venue_backtest_summary.json`](./foundry/evidence/backtest/venue_backtest_summary.json) | 5 tokenized pairs, 59d IS / 30d OOS, 150 trades, 100% sealed receipts, exact cent reconciliation, ≥30 OOS trade gate cleared (48 trades, Sharpe 3.89, Sortino 9.15, decay 1.32x, mean rolling Sharpe 4.04, rho_avg 0.197) |
 | Bitget hackathon adapters | TESTED | [`integrations/bitget/`](./packages/engine/src/integrations/bitget/) | **No live adapter validation yet** |
 
@@ -91,6 +94,7 @@ What actually happened, in order, with venue evidence for each step:
 7. **Defect found.** The close was rejected with `40786 Duplicate clientOid`. `clientOid` was derived from the receipt alone, so an open and a close from identical receipt data collided. Fixed by binding intent into the digest.
 8. **Close filled and account flat.** Order `1489110831718367233`, then the residual flattened by `1489110998534225921`.
 9. **Veto proven on venue.** A VETOED receipt was offered to the dispatcher; it threw before any network call.
+10. **Tokenized RWA lifecycle & resting limit cancel path.** Executed full round trip on tokenized equity `rNVDAUSDT` (0.11 contracts filled, read back, closed, flat confirmed; `p13/rwa_trade_lifecycle.json`). Placed resting limit order on venue (`1491458794516021249`), read back via `/api/v2/mix/order/detail` as `live`, executed receipt-gated cancellation, verified state transition to `canceled`, and confirmed flat portfolio (`p12/demo_lifecycle_2026-10-06T20-10-07-808Z.json`).
 
 Every claim above is checkable against the JSON under `foundry/evidence/`. Two corrections to earlier claims are recorded in the evidence rather than quietly patched: the Demo venue *does* expose order read-back routes, and receipt-derived `clientOid` was *not* safe for distinct intents.
 
@@ -105,19 +109,19 @@ Every claim above is checkable against the JSON under `foundry/evidence/`. Two c
 Read this before trusting any number in this repo.
 
 - **No real capital has moved.** Every order was on Bitget Demo Trading (`paptrading: 1`), using Demo-scoped keys and a simulated balance.
-- **The strategy has not run as a system.** Orders exercised the dispatcher, risk, receipt and council gates, but not a continuous basis campaign across a tokenized real-world asset universe.
-- **All orders were market orders.** No limit orders, no partial fills, no resting orders, no cancel path, no SL/TP.
-- **No funding was observed.** Every round trip closed within seconds, so no position crossed a funding settlement interval.
-- **The paper daemon has never run against a venue.** No bounded campaign, no continuous loop, no reconciliation evidence.
-- **The integration adapters have zero live validation.** They pass 782 tests without having contacted a real MCP endpoint or fetched a real Playbook artifact.
-- **Paper backtest numbers are not performance claims.** Reported win rate of 100% and max drawdown of 0% are artifacts of a deterministic setup on synthetic depth, not evidence of edge.
-- **Single symbol, single size.** Every venue order was 0.001 BTCUSDT. No sizing sweep, no multi-symbol run.
+- **The strategy has not run as a continuous production system.** Orders exercised the dispatcher, risk, receipt and council gates, but not an unbounded multi-day basis campaign.
+- **Limit orders and cancel path proven; advanced execution types unproven.** Resting limit placement, order detail queries (`/api/v2/mix/order/detail`), and cancellations are proven live. Not proven: partial fills, SL/TP triggers, leverage margin switching.
+- **No funding was observed.** Round trips closed within seconds, so no position crossed an 8-hour funding settlement interval.
+- **The paper daemon has never run continuously against a live venue.** Bounded multi-cycle sessions have run, but continuous 24/7 daemon operation remains paper/demo gated.
+- **The integration adapters have zero live validation.** They pass 813 tests without having contacted a real MCP endpoint or fetched a real Playbook artifact.
+- **Paper backtest numbers are not performance claims.** Reported win rate of 100% and max drawdown of 0% in early synthetic suites are artifacts of deterministic setup on synthetic depth, superseded by the 5-pair venue backtest (`backtest/venue_backtest_summary.json`).
+- **Tokenized equity demonstrated.** Tokenized US equities execution proven live with `rNVDAUSDT` (NVDAUSDT 0.11 contracts). Single-symbol lifecycle proven, multi-symbol concurrent loop remains a roadmap milestone.
 
 ## Quickstart
 
 ```bash
 pnpm install
-pnpm verify            # typecheck, 782 tests (722 engine + 60 browser E2E), desk build, foundry checks, secret scan
+pnpm verify            # typecheck, 813 tests (753 engine + 60 browser E2E), desk build, foundry checks, secret scan
 ```
 
 Optional, needs Bitget Demo credentials in a gitignored `.env`:
@@ -159,11 +163,11 @@ Never commit exchange credentials. A repository secret scan covers Bitget key sh
 
 What a reviewer can verify independently:
 
-- Run `pnpm verify`. 782 tests (722 engine unit + 60 Playwright E2E), typecheck, build, Foundry consistency, secret scan.
+- Run `pnpm verify`. 813 tests (753 engine unit + 60 Playwright E2E), typecheck, build, Foundry consistency, secret scan.
 - Read `foundry/claims.jsonl` and `foundry/gaps.jsonl`. Claims are graded, gaps are tracked, and nothing is marked live without venue evidence.
 - Inspect the Demo order evidence JSON. Real order IDs, real fill prices, real fees, real read-back responses from Bitget.
 - Inspect the Track 1 walk-forward backtest evidence JSON: [`foundry/evidence/backtest/venue_backtest_summary.json`](./foundry/evidence/backtest/venue_backtest_summary.json) and daily returns series [`venue_backtest_daily_series.json`](./foundry/evidence/backtest/venue_backtest_daily_series.json) for exact cent and Sharpe reproducibility.
-- Confirm the account is flat. The last verified position read returned no open BTCUSDT row.
+- Confirm the account is flat. The last verified position read returned no open positions (BTCUSDT and rNVDAUSDT verified flat).
 
 What to be skeptical of: synthetic fixtures under `foundry/evidence/paper-trading/` (flagged under GAP-021 / SYNTHETIC_PERFORMANCE_STAMP, superseded by the authentic 5-pair venue backtest under `foundry/evidence/backtest/`). And in the genuine backtest: exit-date vs entry-date straddler sensitivity (5 straddling trades entered in-sample contribute $224.49 of the $433.35 OOS PnL; without them OOS is +$208.86; both figures are reported transparently in `venue_backtest_summary.json`).
 

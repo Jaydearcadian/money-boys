@@ -1,0 +1,68 @@
+{
+  "test": "AUTONOMOUS_DESK_DAEMON_MULTI_CYCLE",
+  "executedAt": "2026-10-06T20:43:10.000Z",
+  "mode": "DEMO",
+  "symbol": "rNVDAUSDT",
+  "venueSymbol": "NVDAUSDT",
+  "targetNotionalUsd": 25,
+  "cyclesConfigured": 3,
+  "cyclesCompleted": 3,
+  "qwenModel": "qwen3.8-max",
+  "cycles": [
+    {
+      "cycle": 1,
+      "timestamp": "2026-10-06T20:42:15.856Z",
+      "regime": "tradfi_closed",
+      "tokenPrice": 239.88,
+      "benchmarkMidpoint": 239.63,
+      "rawBasisPct": 0.1022,
+      "netEdgePct": -0.0408,
+      "action": "NEUTRAL",
+      "councilDecision": "VETOED",
+      "councilStatus": "REJECTED",
+      "receiptHashPrefix": "8671248bf6ca6b9a",
+      "dispatched": false,
+      "accountFlat": true,
+      "latencyMs": 13255
+    },
+    {
+      "cycle": 2,
+      "timestamp": "2026-10-06T20:42:33.113Z",
+      "regime": "tradfi_closed",
+      "tokenPrice": 239.88,
+      "benchmarkMidpoint": 239.63,
+      "rawBasisPct": 0.1022,
+      "netEdgePct": -0.0408,
+      "action": "NEUTRAL",
+      "councilDecision": "VETOED",
+      "councilStatus": "REJECTED",
+      "receiptHashPrefix": "fa1e59a05df3ac7e",
+      "dispatched": false,
+      "accountFlat": true,
+      "latencyMs": 12528
+    },
+    {
+      "cycle": 3,
+      "timestamp": "2026-10-06T20:42:49.641Z",
+      "regime": "tradfi_closed",
+      "tokenPrice": 239.88,
+      "benchmarkMidpoint": 239.62,
+      "rawBasisPct": 0.1106,
+      "netEdgePct": -0.0325,
+      "action": "NEUTRAL",
+      "councilDecision": "VETOED",
+      "councilStatus": "REJECTED",
+      "receiptHashPrefix": "7381c5c2572c1286",
+      "dispatched": false,
+      "accountFlat": true,
+      "latencyMs": 20863
+    }
+  ],
+  "invariantsVerified": {
+    "I_01_zero_direct_llm_authority": true,
+    "I_02_risk_guard_fail_closed": true,
+    "I_03_reasoning_receipt_sealing": true,
+    "I_05_clean_typescript_crypto": true
+  },
+  "finalAccountFlat": true
+}
