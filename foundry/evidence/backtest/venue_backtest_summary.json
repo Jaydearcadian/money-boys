@@ -1,0 +1,65 @@
+{
+  "provenance": "HISTORICAL_VENUE_CANDLES",
+  "syntheticFixture": false,
+  "validAsPerformanceEvidence": true,
+  "ingestedSources": {
+    "tokenData": "Bitget API v2 /api/v2/mix/market/candles (USDT-FUTURES 1D)",
+    "equityData": "Alpha Vantage TIME_SERIES_DAILY (DOCUMENTED_API)"
+  },
+  "splitParameters": {
+    "totalCalendarDays": 89,
+    "inSampleDays": 59,
+    "outOfSampleDays": 30,
+    "inSampleCutoffDate": "2026-09-02"
+  },
+  "fullCampaign": {
+    "segment": "FULL_CAMPAIGN",
+    "calendarDays": 89,
+    "tradingDays": 64,
+    "tradesCount": 91,
+    "winningTrades": 49,
+    "losingTrades": 42,
+    "winRatePct": 53.8,
+    "totalPnlUsd": 566.88,
+    "netReturnPct": 2.27,
+    "maxDrawdownPct": 1.02,
+    "sharpeRatio": 2.47,
+    "sortinoRatio": 4.47,
+    "turnoverRatio": 14.56,
+    "sharpeStatus": "PUBLISHED"
+  },
+  "inSample": {
+    "segment": "IN_SAMPLE",
+    "calendarDays": 59,
+    "tradingDays": 43,
+    "tradesCount": 67,
+    "winningTrades": 37,
+    "losingTrades": 30,
+    "winRatePct": 55.2,
+    "totalPnlUsd": 572.8,
+    "netReturnPct": 2.29,
+    "maxDrawdownPct": 1.02,
+    "sharpeRatio": 3.16,
+    "sortinoRatio": 6.28,
+    "turnoverRatio": 10.72,
+    "sharpeStatus": "PUBLISHED"
+  },
+  "outOfSample": {
+    "segment": "OUT_OF_SAMPLE",
+    "calendarDays": 30,
+    "tradingDays": 21,
+    "tradesCount": 24,
+    "winningTrades": 12,
+    "losingTrades": 12,
+    "winRatePct": 50,
+    "totalPnlUsd": -5.92,
+    "netReturnPct": -0.02,
+    "maxDrawdownPct": 0.49,
+    "sharpeRatio": null,
+    "sortinoRatio": null,
+    "turnoverRatio": 3.84,
+    "sharpeStatus": "WITHHELD_INSUFFICIENT_OBSERVATIONS"
+  },
+  "sharpeDecayPct": null,
+  "totalReceiptsSealed": 91
+}
