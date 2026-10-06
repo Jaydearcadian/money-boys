@@ -8,15 +8,15 @@
   "termsStatus": "DOCUMENTED_API",
   "termsNote": "Official Alpha Vantage TIME_SERIES_DAILY API with documented developer terms of service.",
   "endpoint": "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={key}&outputsize=compact",
-  "fetchedAt": "2026-10-06T13:23:52.929Z",
+  "fetchedAt": "2026-10-06T15:27:43.781Z",
   "barsCount": 100,
   "startDateIso": "2026-05-13",
   "endDateIso": "2026-10-05",
   "joinCoverage": {
     "rtokenBars": 90,
     "equityBars": 100,
-    "datesMatching": 64,
-    "rtokenDatesWithoutEquity": 26,
+    "datesMatching": 63,
+    "rtokenDatesWithoutEquity": 27,
     "note": "rToken quotes 24/7; the equity does not. Dates absent from the equity series are weekends/holidays and MUST NOT be paired with a stale prior close. The backtest engine must skip or explicitly flag them rather than forward-fill."
   },
   "bars": [

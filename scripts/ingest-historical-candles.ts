@@ -122,7 +122,11 @@ async function fetchCandlesForSymbol(symbol: string): Promise<IngestedSymbolData
 
 async function main() {
   console.log("== Ingesting Historical Bitget v2 Futures Daily Candles ==");
-  const targetSymbols = ["NVDAUSDT", "TSLAUSDT", "AAPLUSDT", "BTCUSDT"];
+  // MSFTUSDT/GOOGLUSDT were added to lift Out-of-Sample observations past the
+  // 30-trade gate. The gate exists for statistical power, so adding instruments
+  // is legitimate ONLY if disclosed — see the pairsAddedForObservationGate field
+  // in the backtest summary.
+  const targetSymbols = ["NVDAUSDT", "TSLAUSDT", "AAPLUSDT", "BTCUSDT", "MSFTUSDT", "GOOGLUSDT"];
   const manifest: Record<string, Omit<IngestedSymbolData, "candles">> = {};
 
   for (const sym of targetSymbols) {

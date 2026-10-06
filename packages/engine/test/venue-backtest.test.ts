@@ -83,7 +83,21 @@ describe("Track 1 — Venue Candle Walk-Forward Backtest (GAP-021)", () => {
     const receipts = runner.getReceipts();
     const trades = runner.getCompletedTrades();
 
-    assert.equal(receipts.length, trades.length, "Each trade must have an associated reasoning receipt");
+    // The invariant is ONE-DIRECTIONAL: every completed trade must carry a
+    // receipt. The converse is NOT true and never was. I-03 requires a receipt
+    // per DISPATCH, so a position approved on the final bar has a receipt but
+    // no completed trade because it never exited.
+    //
+    // The previous assertion (receipts.length === trades.length) passed only
+    // because the 3-pair campaign happened to end flat. That was an accidental
+    // property of the pair set, not a designed invariant, and it broke the
+    // moment a second pair landed with an open book at the cutoff.
+    assert.ok(
+      receipts.length >= trades.length,
+      `receipts (${receipts.length}) must cover completed trades (${trades.length})`,
+    );
+    const openAtEnd = receipts.length - trades.length;
+    console.log(`      [open positions at campaign end: ${openAtEnd}]`);
 
     const receiptHashes = new Set(receipts.map((r) => r.receiptHash));
     for (const t of trades) {
@@ -168,57 +182,98 @@ describe("Track 1 — Venue Candle Walk-Forward Backtest (GAP-021)", () => {
     }
   });
 
+  // -----------------------------------------------------------------------
+  // These assert STRUCTURAL INVARIANTS, not literal outputs.
+  //
+  // The previous version froze $399.79 / $167.09 / $566.88 / 3 straddlers /
+  // 2.03 / 0.91x. Adding two pairs legitimately changed every one of those
+  // numbers, and all three tests failed — reading as "the reconciliation broke"
+  // when in fact the data changed and the assertions did not. Worse, the
+  // narrative strings in the ENGINE were frozen too, so the artifact published
+  // an OOS Sharpe of 3.89 beside a note insisting it was withheld at 27 trades.
+  //
+  // A test that pins a number tests that number. A test that pins a RELATIONSHIP
+  // tests the thing that must never silently break.
+  // -----------------------------------------------------------------------
+
   it("8. reconciles In-Sample and Out-of-Sample PnL and trade counts to the exact cent", () => {
-    const runner = new VenueBacktestRunner();
-    const summary = runner.runBacktest();
+    const summary = new VenueBacktestRunner().runBacktest();
     const rec = summary.reconciliation;
 
     assert.equal(rec.attributionPolicy, "REALIZED_EXIT_DATE");
     assert.equal(rec.tradesCountReconciled, true);
     assert.equal(rec.pnlReconciledToTheCent, true);
 
-    // Trade counts exact sum
+    // Relationships, not literals.
     assert.equal(rec.isTradesCount + rec.oosTradesCount, rec.fullTradesCount);
-    assert.equal(rec.isTradesCount, 64);
-    assert.equal(rec.oosTradesCount, 27);
-    assert.equal(rec.fullTradesCount, 91);
-
-    // Total PnL exact sum to the cent ($399.79 + $167.09 = $566.88)
-    const summedPnl = Math.round((rec.isTotalPnlUsd + rec.oosTotalPnlUsd) * 100) / 100;
-    assert.equal(summedPnl, rec.fullTotalPnlUsd);
-    assert.equal(rec.isTotalPnlUsd, 399.79);
-    assert.equal(rec.oosTotalPnlUsd, 167.09);
-    assert.equal(rec.fullTotalPnlUsd, 566.88);
-
-    // Straddling trades verification: 3 trades entered on 2026-09-02 and exited in OOS
-    assert.equal(rec.straddlingTradesCount, 3);
-    assert.equal(rec.straddlingTradesPnlUsd, 173.01);
-    assert.equal(rec.straddlingTradesDetail.length, 3);
+    assert.equal(
+      Math.round((rec.isTotalPnlUsd + rec.oosTotalPnlUsd) * 100) / 100,
+      rec.fullTotalPnlUsd,
+    );
+    assert.equal(rec.isTradesCount + rec.oosTradesCount, summary.fullCampaign.tradesCount);
+    assert.equal(rec.straddlingTradesCount, rec.straddlingTradesDetail.length);
     for (const st of rec.straddlingTradesDetail) {
-      assert.ok(st.entryDate <= IN_SAMPLE_CUTOFF_DATE);
-      assert.ok(st.exitDate > IN_SAMPLE_CUTOFF_DATE);
+      assert.ok(st.entryDate <= IN_SAMPLE_CUTOFF_DATE, "straddler must be entered in-sample");
+      assert.ok(st.exitDate > IN_SAMPLE_CUTOFF_DATE, "straddler must exit out-of-sample");
+    }
+    // Straddler PnL must equal the sum of the individual straddlers.
+    const detailSum = Math.round(rec.straddlingTradesDetail.reduce((a, t) => a + t.pnlUsd, 0) * 100) / 100;
+    assert.equal(rec.straddlingTradesPnlUsd, detailSum);
+  });
+
+  it("9. discloses straddling dependence, and every disclosed NUMBER matches the data", () => {
+    const summary = new VenueBacktestRunner().runBacktest();
+    const rec = summary.reconciliation;
+    const disc = rec.straddlingTradesDisclosure;
+
+    // The disclosure is DERIVED. The real assertion is that the prose agrees
+    // with the figures sitting next to it.
+    assert.equal(disc.oosPnlWithStraddlersUsd, rec.oosTotalPnlUsd);
+    assert.equal(disc.oosPnlWithoutStraddlersUsd, rec.oosTotalPnlUsd - rec.straddlingTradesPnlUsd);
+    assert.ok(disc.dependenceNote.includes(`${rec.straddlingTradesCount} trade(s)`));
+    assert.ok(disc.dependenceNote.includes(rec.straddlingTradesPnlUsd.toFixed(2)));
+    assert.ok(disc.dependenceNote.includes(rec.oosTotalPnlUsd.toFixed(2)));
+  });
+
+  it("10. never claims an OOS Sharpe is withheld when it is published, or vice versa", () => {
+    const summary = new VenueBacktestRunner().runBacktest();
+    const prov = summary.provisionalDecayMetrics;
+    const oos = summary.outOfSample;
+
+    // THE contradiction that shipped: OOS Sharpe published at 3.89 next to a
+    // note reading "withheld ... 27 trades". The narrative must track the gate.
+    if (oos.sharpeRatio === null) {
+      assert.ok(
+        prov.sharpeStatusDisclosure.includes("withheld"),
+        `narrative must say withheld when gate withheld it (${oos.tradesCount} trades)`,
+      );
+      assert.ok(prov.sharpeStatusDisclosure.includes(String(oos.tradesCount)));
+    } else {
+      assert.ok(
+        prov.sharpeStatusDisclosure.includes("PUBLISHED"),
+        "narrative must say PUBLISHED when the OOS Sharpe is published",
+      );
+      assert.ok(prov.sharpeStatusDisclosure.includes(String(oos.tradesCount)));
+      assert.equal(prov.rawOosDailySharpe, oos.sharpeRatio);
     }
   });
 
-  it("9. discloses straddling trades dependence and provisional decay metrics", () => {
-    const runner = new VenueBacktestRunner();
-    const summary = runner.runBacktest();
+  it("11. discloses that pairs were added to clear the observation gate", () => {
+    const summary = new VenueBacktestRunner().runBacktest();
+    const d = summary.pairsAddedForObservationGate;
 
-    // Straddling disclosure checks
-    const straddleDisc = summary.reconciliation.straddlingTradesDisclosure;
-    assert.equal(straddleDisc.oosPnlWithStraddlersUsd, 167.09);
-    assert.equal(straddleDisc.oosReturnWithStraddlersPct, 0.67);
-    assert.equal(straddleDisc.oosPnlWithoutStraddlersUsd, -5.92);
-    assert.equal(straddleDisc.oosReturnWithoutStraddlersPct, -0.02);
-    assert.ok(straddleDisc.dependenceNote.includes("30.5% of total campaign PnL"));
-
-    // Provisional decay checks
-    const prov = summary.provisionalDecayMetrics;
-    assert.equal(prov.rawOosDailySharpe, 2.03);
-    assert.equal(prov.rawSharpeRatioDecay, 0.91);
-    assert.equal(prov.sharpeDecayAboveThreshold, true);
-    assert.equal(prov.returnDecayRatio, 0.42);
-    assert.ok(prov.sharpeStatusDisclosure.includes("OOS Sharpe withheld: 27 trades, below the 30 gate"));
-    assert.ok(prov.sharpeStatusDisclosure.includes("OOS/IS Sharpe is 0.91x — above the 0.5x reference alert"));
+    assert.deepEqual(d.addedPairs, ["MSFTUSDT", "GOOGLUSDT"]);
+    assert.equal(d.allPairs.length, d.addedPairs.length + 3);
+    assert.match(d.reason, /after observing the gate fail/i);
+    assert.match(d.correlationCaveat, /correlated/i);
+    // If OOS Sharpe ever exceeds IS again, the artifact must say it is atypical.
+    if (
+      summary.outOfSample.sharpeRatio !== null &&
+      summary.inSample.sharpeRatio !== null &&
+      summary.outOfSample.sharpeRatio > summary.inSample.sharpeRatio
+    ) {
+      assert.match(d.effectiveObservationNote, /atypical/);
+      assert.match(d.effectiveObservationNote, /variance compression/i);
+    }
   });
 });

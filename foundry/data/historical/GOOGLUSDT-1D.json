@@ -1,0 +1,902 @@
+[
+  {
+    "timestampMs": 1783526400000,
+    "dateIso": "2026-07-08T16:00:00.000Z",
+    "open": 360,
+    "high": 363.13,
+    "low": 351.24,
+    "close": 352.79,
+    "baseVolume": 14218.65,
+    "quoteVolume": 5077628.0779
+  },
+  {
+    "timestampMs": 1783612800000,
+    "dateIso": "2026-07-09T16:00:00.000Z",
+    "open": 352.79,
+    "high": 360.93,
+    "low": 352.79,
+    "close": 354.63,
+    "baseVolume": 9463.8,
+    "quoteVolume": 3375094.7841
+  },
+  {
+    "timestampMs": 1783699200000,
+    "dateIso": "2026-07-10T16:00:00.000Z",
+    "open": 354.63,
+    "high": 358.78,
+    "low": 354.12,
+    "close": 357.75,
+    "baseVolume": 1948.38,
+    "quoteVolume": 695513.9622
+  },
+  {
+    "timestampMs": 1783785600000,
+    "dateIso": "2026-07-11T16:00:00.000Z",
+    "open": 357.75,
+    "high": 359.43,
+    "low": 357.41,
+    "close": 358.17,
+    "baseVolume": 1576.53,
+    "quoteVolume": 565028.5125
+  },
+  {
+    "timestampMs": 1783872000000,
+    "dateIso": "2026-07-12T16:00:00.000Z",
+    "open": 358.17,
+    "high": 358.78,
+    "low": 354.43,
+    "close": 355.66,
+    "baseVolume": 3527.19,
+    "quoteVolume": 1257662.152
+  },
+  {
+    "timestampMs": 1783958400000,
+    "dateIso": "2026-07-13T16:00:00.000Z",
+    "open": 355.66,
+    "high": 358.62,
+    "low": 350,
+    "close": 356.1,
+    "baseVolume": 7057.84,
+    "quoteVolume": 2494831.6655
+  },
+  {
+    "timestampMs": 1784044800000,
+    "dateIso": "2026-07-14T16:00:00.000Z",
+    "open": 356.1,
+    "high": 372.54,
+    "low": 354.83,
+    "close": 372.01,
+    "baseVolume": 6175.44,
+    "quoteVolume": 2238057.9664
+  },
+  {
+    "timestampMs": 1784131200000,
+    "dateIso": "2026-07-15T16:00:00.000Z",
+    "open": 372.01,
+    "high": 379.59,
+    "low": 369.39,
+    "close": 371.81,
+    "baseVolume": 8695,
+    "quoteVolume": 3242902.955
+  },
+  {
+    "timestampMs": 1784217600000,
+    "dateIso": "2026-07-16T16:00:00.000Z",
+    "open": 371.81,
+    "high": 372.31,
+    "low": 341.77,
+    "close": 347.93,
+    "baseVolume": 15082.71,
+    "quoteVolume": 5367180.1499
+  },
+  {
+    "timestampMs": 1784304000000,
+    "dateIso": "2026-07-17T16:00:00.000Z",
+    "open": 347.93,
+    "high": 348.1,
+    "low": 343.2,
+    "close": 346.96,
+    "baseVolume": 2603.44,
+    "quoteVolume": 901445.5943
+  },
+  {
+    "timestampMs": 1784390400000,
+    "dateIso": "2026-07-18T16:00:00.000Z",
+    "open": 346.96,
+    "high": 347.86,
+    "low": 345.2,
+    "close": 347.86,
+    "baseVolume": 26009.39,
+    "quoteVolume": 9018261.6209
+  },
+  {
+    "timestampMs": 1784476800000,
+    "dateIso": "2026-07-19T16:00:00.000Z",
+    "open": 347.86,
+    "high": 359.81,
+    "low": 347.09,
+    "close": 356.98,
+    "baseVolume": 5529.15,
+    "quoteVolume": 1952398.6539
+  },
+  {
+    "timestampMs": 1784563200000,
+    "dateIso": "2026-07-20T16:00:00.000Z",
+    "open": 356.98,
+    "high": 357.55,
+    "low": 347.97,
+    "close": 349.77,
+    "baseVolume": 13716.23,
+    "quoteVolume": 4846426.5745
+  },
+  {
+    "timestampMs": 1784649600000,
+    "dateIso": "2026-07-21T16:00:00.000Z",
+    "open": 349.77,
+    "high": 350.66,
+    "low": 346.43,
+    "close": 348.42,
+    "baseVolume": 11228.99,
+    "quoteVolume": 3916133.7586
+  },
+  {
+    "timestampMs": 1784736000000,
+    "dateIso": "2026-07-22T16:00:00.000Z",
+    "open": 348.42,
+    "high": 353.62,
+    "low": 315.51,
+    "close": 320.25,
+    "baseVolume": 88243.2,
+    "quoteVolume": 29440817.6071
+  },
+  {
+    "timestampMs": 1784822400000,
+    "dateIso": "2026-07-23T16:00:00.000Z",
+    "open": 320.25,
+    "high": 324.5,
+    "low": 317.1,
+    "close": 320.56,
+    "baseVolume": 24905.3,
+    "quoteVolume": 7975540.0449
+  },
+  {
+    "timestampMs": 1784908800000,
+    "dateIso": "2026-07-24T16:00:00.000Z",
+    "open": 320.56,
+    "high": 321.56,
+    "low": 317.55,
+    "close": 318.21,
+    "baseVolume": 8573.17,
+    "quoteVolume": 2741918.7754
+  },
+  {
+    "timestampMs": 1784995200000,
+    "dateIso": "2026-07-25T16:00:00.000Z",
+    "open": 318.21,
+    "high": 322,
+    "low": 315.42,
+    "close": 322,
+    "baseVolume": 5373.12,
+    "quoteVolume": 1719817.9167
+  },
+  {
+    "timestampMs": 1785081600000,
+    "dateIso": "2026-07-26T16:00:00.000Z",
+    "open": 322,
+    "high": 330.66,
+    "low": 320.85,
+    "close": 328.76,
+    "baseVolume": 23025.73,
+    "quoteVolume": 7508845.2355
+  },
+  {
+    "timestampMs": 1785168000000,
+    "dateIso": "2026-07-27T16:00:00.000Z",
+    "open": 328.76,
+    "high": 334,
+    "low": 323.89,
+    "close": 333.94,
+    "baseVolume": 21242.44,
+    "quoteVolume": 6954001.8701
+  },
+  {
+    "timestampMs": 1785254400000,
+    "dateIso": "2026-07-28T16:00:00.000Z",
+    "open": 333.94,
+    "high": 337.35,
+    "low": 330.89,
+    "close": 333.29,
+    "baseVolume": 23427.39,
+    "quoteVolume": 7837566.2542
+  },
+  {
+    "timestampMs": 1785340800000,
+    "dateIso": "2026-07-29T16:00:00.000Z",
+    "open": 333.29,
+    "high": 342.86,
+    "low": 329.43,
+    "close": 333.32,
+    "baseVolume": 36894.92,
+    "quoteVolume": 12366437.9431
+  },
+  {
+    "timestampMs": 1785427200000,
+    "dateIso": "2026-07-30T16:00:00.000Z",
+    "open": 333.32,
+    "high": 354.1,
+    "low": 332.57,
+    "close": 351.98,
+    "baseVolume": 44589.19,
+    "quoteVolume": 15163315.4229
+  },
+  {
+    "timestampMs": 1785513600000,
+    "dateIso": "2026-07-31T16:00:00.000Z",
+    "open": 351.98,
+    "high": 359.11,
+    "low": 351.98,
+    "close": 353.45,
+    "baseVolume": 9129.19,
+    "quoteVolume": 3242281.5851
+  },
+  {
+    "timestampMs": 1785600000000,
+    "dateIso": "2026-08-01T16:00:00.000Z",
+    "open": 353.45,
+    "high": 356.57,
+    "low": 350.29,
+    "close": 355.5,
+    "baseVolume": 2165.01,
+    "quoteVolume": 766033.0923
+  },
+  {
+    "timestampMs": 1785686400000,
+    "dateIso": "2026-08-02T16:00:00.000Z",
+    "open": 355.5,
+    "high": 376.23,
+    "low": 355.47,
+    "close": 375.1,
+    "baseVolume": 23318.82,
+    "quoteVolume": 8556222.0208
+  },
+  {
+    "timestampMs": 1785772800000,
+    "dateIso": "2026-08-03T16:00:00.000Z",
+    "open": 375.1,
+    "high": 378.45,
+    "low": 366.67,
+    "close": 376.09,
+    "baseVolume": 21425.35,
+    "quoteVolume": 7991541.6938
+  },
+  {
+    "timestampMs": 1785859200000,
+    "dateIso": "2026-08-04T16:00:00.000Z",
+    "open": 376.09,
+    "high": 384.63,
+    "low": 375.8,
+    "close": 376.09,
+    "baseVolume": 32139.14,
+    "quoteVolume": 12215809.115
+  },
+  {
+    "timestampMs": 1785945600000,
+    "dateIso": "2026-08-05T16:00:00.000Z",
+    "open": 376.09,
+    "high": 376.1,
+    "low": 357.5,
+    "close": 359.65,
+    "baseVolume": 61414.66,
+    "quoteVolume": 22292587.9146
+  },
+  {
+    "timestampMs": 1786032000000,
+    "dateIso": "2026-08-06T16:00:00.000Z",
+    "open": 359.65,
+    "high": 360.26,
+    "low": 354.16,
+    "close": 356.23,
+    "baseVolume": 22535.07,
+    "quoteVolume": 8068489.1812
+  },
+  {
+    "timestampMs": 1786118400000,
+    "dateIso": "2026-08-07T16:00:00.000Z",
+    "open": 356.23,
+    "high": 356.67,
+    "low": 354.3,
+    "close": 356.24,
+    "baseVolume": 8102.67,
+    "quoteVolume": 2880895.9421
+  },
+  {
+    "timestampMs": 1786204800000,
+    "dateIso": "2026-08-08T16:00:00.000Z",
+    "open": 356.24,
+    "high": 358.35,
+    "low": 355.77,
+    "close": 357.98,
+    "baseVolume": 2640.35,
+    "quoteVolume": 943284.9778
+  },
+  {
+    "timestampMs": 1786291200000,
+    "dateIso": "2026-08-09T16:00:00.000Z",
+    "open": 357.98,
+    "high": 359.46,
+    "low": 353.23,
+    "close": 354.73,
+    "baseVolume": 14373.4,
+    "quoteVolume": 5117535.8657
+  },
+  {
+    "timestampMs": 1786377600000,
+    "dateIso": "2026-08-10T16:00:00.000Z",
+    "open": 354.73,
+    "high": 358.59,
+    "low": 349.62,
+    "close": 350.26,
+    "baseVolume": 19648.54,
+    "quoteVolume": 6970737.1798
+  },
+  {
+    "timestampMs": 1786464000000,
+    "dateIso": "2026-08-11T16:00:00.000Z",
+    "open": 350.26,
+    "high": 350.74,
+    "low": 341.88,
+    "close": 342.02,
+    "baseVolume": 44488.39,
+    "quoteVolume": 15373689.9053
+  },
+  {
+    "timestampMs": 1786550400000,
+    "dateIso": "2026-08-12T16:00:00.000Z",
+    "open": 342.02,
+    "high": 348.4,
+    "low": 341.58,
+    "close": 345.34,
+    "baseVolume": 22242.03,
+    "quoteVolume": 7672038.5825
+  },
+  {
+    "timestampMs": 1786636800000,
+    "dateIso": "2026-08-13T16:00:00.000Z",
+    "open": 345.34,
+    "high": 350.8,
+    "low": 344.92,
+    "close": 345.62,
+    "baseVolume": 32810.11,
+    "quoteVolume": 11388693.1419
+  },
+  {
+    "timestampMs": 1786723200000,
+    "dateIso": "2026-08-14T16:00:00.000Z",
+    "open": 345.62,
+    "high": 348.73,
+    "low": 344.75,
+    "close": 347.43,
+    "baseVolume": 6760.32,
+    "quoteVolume": 2344507.6545
+  },
+  {
+    "timestampMs": 1786809600000,
+    "dateIso": "2026-08-15T16:00:00.000Z",
+    "open": 347.43,
+    "high": 348.68,
+    "low": 347.4,
+    "close": 348.43,
+    "baseVolume": 2713.59,
+    "quoteVolume": 944602.0938
+  },
+  {
+    "timestampMs": 1786896000000,
+    "dateIso": "2026-08-16T16:00:00.000Z",
+    "open": 348.43,
+    "high": 350.02,
+    "low": 342.19,
+    "close": 344.12,
+    "baseVolume": 30270.82,
+    "quoteVolume": 10489648.9026
+  },
+  {
+    "timestampMs": 1786982400000,
+    "dateIso": "2026-08-17T16:00:00.000Z",
+    "open": 344.12,
+    "high": 344.9,
+    "low": 340.33,
+    "close": 343.53,
+    "baseVolume": 23484.84,
+    "quoteVolume": 8054079.2235
+  },
+  {
+    "timestampMs": 1787068800000,
+    "dateIso": "2026-08-18T16:00:00.000Z",
+    "open": 343.53,
+    "high": 346.59,
+    "low": 341.18,
+    "close": 345.05,
+    "baseVolume": 25373.68,
+    "quoteVolume": 8721767.6487
+  },
+  {
+    "timestampMs": 1787155200000,
+    "dateIso": "2026-08-19T16:00:00.000Z",
+    "open": 345.05,
+    "high": 347.07,
+    "low": 338.94,
+    "close": 339.94,
+    "baseVolume": 31625.67,
+    "quoteVolume": 10859106.7679
+  },
+  {
+    "timestampMs": 1787241600000,
+    "dateIso": "2026-08-20T16:00:00.000Z",
+    "open": 339.94,
+    "high": 345.8,
+    "low": 339.85,
+    "close": 345.25,
+    "baseVolume": 30083.84,
+    "quoteVolume": 10302256.8083
+  },
+  {
+    "timestampMs": 1787328000000,
+    "dateIso": "2026-08-21T16:00:00.000Z",
+    "open": 345.25,
+    "high": 346.53,
+    "low": 342.82,
+    "close": 343.26,
+    "baseVolume": 12547.16,
+    "quoteVolume": 4323447.5928
+  },
+  {
+    "timestampMs": 1787414400000,
+    "dateIso": "2026-08-22T16:00:00.000Z",
+    "open": 343.26,
+    "high": 345.2,
+    "low": 343.13,
+    "close": 344.57,
+    "baseVolume": 2760.37,
+    "quoteVolume": 950575.2991
+  },
+  {
+    "timestampMs": 1787500800000,
+    "dateIso": "2026-08-23T16:00:00.000Z",
+    "open": 344.57,
+    "high": 351.94,
+    "low": 342.16,
+    "close": 351.25,
+    "baseVolume": 28205.76,
+    "quoteVolume": 9800704.4214
+  },
+  {
+    "timestampMs": 1787587200000,
+    "dateIso": "2026-08-24T16:00:00.000Z",
+    "open": 351.25,
+    "high": 351.72,
+    "low": 346,
+    "close": 346.8,
+    "baseVolume": 22993.7,
+    "quoteVolume": 8021413.5408
+  },
+  {
+    "timestampMs": 1787673600000,
+    "dateIso": "2026-08-25T16:00:00.000Z",
+    "open": 346.8,
+    "high": 348.18,
+    "low": 341.75,
+    "close": 341.77,
+    "baseVolume": 12249.9,
+    "quoteVolume": 4233874.7617
+  },
+  {
+    "timestampMs": 1787760000000,
+    "dateIso": "2026-08-26T16:00:00.000Z",
+    "open": 341.77,
+    "high": 343.53,
+    "low": 338.98,
+    "close": 340.81,
+    "baseVolume": 28118.92,
+    "quoteVolume": 9595858.3189
+  },
+  {
+    "timestampMs": 1787846400000,
+    "dateIso": "2026-08-27T16:00:00.000Z",
+    "open": 340.81,
+    "high": 349.17,
+    "low": 340.43,
+    "close": 346.87,
+    "baseVolume": 18554.28,
+    "quoteVolume": 6390158.9673
+  },
+  {
+    "timestampMs": 1787932800000,
+    "dateIso": "2026-08-28T16:00:00.000Z",
+    "open": 346.87,
+    "high": 348.34,
+    "low": 345.24,
+    "close": 346.02,
+    "baseVolume": 3665.93,
+    "quoteVolume": 1270737.9257
+  },
+  {
+    "timestampMs": 1788019200000,
+    "dateIso": "2026-08-29T16:00:00.000Z",
+    "open": 346.02,
+    "high": 347.02,
+    "low": 345.71,
+    "close": 346.98,
+    "baseVolume": 1486.91,
+    "quoteVolume": 515088.6235
+  },
+  {
+    "timestampMs": 1788105600000,
+    "dateIso": "2026-08-30T16:00:00.000Z",
+    "open": 346.98,
+    "high": 347.44,
+    "low": 337.69,
+    "close": 338.58,
+    "baseVolume": 16518.74,
+    "quoteVolume": 5640635.6939
+  },
+  {
+    "timestampMs": 1788192000000,
+    "dateIso": "2026-08-31T16:00:00.000Z",
+    "open": 338.58,
+    "high": 341.6,
+    "low": 333.49,
+    "close": 336.43,
+    "baseVolume": 20488.05,
+    "quoteVolume": 6915095.3671
+  },
+  {
+    "timestampMs": 1788278400000,
+    "dateIso": "2026-09-01T16:00:00.000Z",
+    "open": 336.43,
+    "high": 340.08,
+    "low": 333.48,
+    "close": 338.97,
+    "baseVolume": 19241.05,
+    "quoteVolume": 6483959.0088
+  },
+  {
+    "timestampMs": 1788364800000,
+    "dateIso": "2026-09-02T16:00:00.000Z",
+    "open": 338.97,
+    "high": 344.86,
+    "low": 336.68,
+    "close": 342.85,
+    "baseVolume": 16248.42,
+    "quoteVolume": 5533544.917
+  },
+  {
+    "timestampMs": 1788451200000,
+    "dateIso": "2026-09-03T16:00:00.000Z",
+    "open": 342.85,
+    "high": 344.02,
+    "low": 337.45,
+    "close": 338.52,
+    "baseVolume": 15245.28,
+    "quoteVolume": 5209987.9557
+  },
+  {
+    "timestampMs": 1788537600000,
+    "dateIso": "2026-09-04T16:00:00.000Z",
+    "open": 338.52,
+    "high": 339.92,
+    "low": 337.98,
+    "close": 339.8,
+    "baseVolume": 2792.29,
+    "quoteVolume": 946423.0571
+  },
+  {
+    "timestampMs": 1788624000000,
+    "dateIso": "2026-09-05T16:00:00.000Z",
+    "open": 339.8,
+    "high": 340.12,
+    "low": 338.18,
+    "close": 338.64,
+    "baseVolume": 1298.17,
+    "quoteVolume": 440912.068
+  },
+  {
+    "timestampMs": 1788710400000,
+    "dateIso": "2026-09-06T16:00:00.000Z",
+    "open": 338.64,
+    "high": 339.69,
+    "low": 338.22,
+    "close": 338.55,
+    "baseVolume": 2636.29,
+    "quoteVolume": 893496.7756
+  },
+  {
+    "timestampMs": 1788796800000,
+    "dateIso": "2026-09-07T16:00:00.000Z",
+    "open": 338.55,
+    "high": 339.68,
+    "low": 333.75,
+    "close": 338.87,
+    "baseVolume": 8943.11,
+    "quoteVolume": 3010984.3594
+  },
+  {
+    "timestampMs": 1788883200000,
+    "dateIso": "2026-09-08T16:00:00.000Z",
+    "open": 338.87,
+    "high": 340.11,
+    "low": 328.4,
+    "close": 329.96,
+    "baseVolume": 22364.04,
+    "quoteVolume": 7457822.7749
+  },
+  {
+    "timestampMs": 1788969600000,
+    "dateIso": "2026-09-09T16:00:00.000Z",
+    "open": 329.96,
+    "high": 332.93,
+    "low": 328.07,
+    "close": 330.27,
+    "baseVolume": 16035.55,
+    "quoteVolume": 5304655.5203
+  },
+  {
+    "timestampMs": 1789056000000,
+    "dateIso": "2026-09-10T16:00:00.000Z",
+    "open": 330.27,
+    "high": 343.18,
+    "low": 330.27,
+    "close": 341.75,
+    "baseVolume": 26104.38,
+    "quoteVolume": 8761761.3878
+  },
+  {
+    "timestampMs": 1789142400000,
+    "dateIso": "2026-09-11T16:00:00.000Z",
+    "open": 341.75,
+    "high": 342.04,
+    "low": 338.27,
+    "close": 339.83,
+    "baseVolume": 4367.51,
+    "quoteVolume": 1486103.9562
+  },
+  {
+    "timestampMs": 1789228800000,
+    "dateIso": "2026-09-12T16:00:00.000Z",
+    "open": 339.83,
+    "high": 342.2,
+    "low": 336.65,
+    "close": 337.44,
+    "baseVolume": 5136.01,
+    "quoteVolume": 1741637.7714
+  },
+  {
+    "timestampMs": 1789315200000,
+    "dateIso": "2026-09-13T16:00:00.000Z",
+    "open": 337.44,
+    "high": 347.48,
+    "low": 334.85,
+    "close": 345.8,
+    "baseVolume": 25775.25,
+    "quoteVolume": 8845754.3698
+  },
+  {
+    "timestampMs": 1789401600000,
+    "dateIso": "2026-09-14T16:00:00.000Z",
+    "open": 345.8,
+    "high": 350.09,
+    "low": 343.44,
+    "close": 344.18,
+    "baseVolume": 22481.16,
+    "quoteVolume": 7804405.2711
+  },
+  {
+    "timestampMs": 1789488000000,
+    "dateIso": "2026-09-15T16:00:00.000Z",
+    "open": 344.18,
+    "high": 348.76,
+    "low": 343.08,
+    "close": 346.49,
+    "baseVolume": 12461.21,
+    "quoteVolume": 4307208.2579
+  },
+  {
+    "timestampMs": 1789574400000,
+    "dateIso": "2026-09-16T16:00:00.000Z",
+    "open": 346.49,
+    "high": 349.79,
+    "low": 341.21,
+    "close": 345.99,
+    "baseVolume": 15869.48,
+    "quoteVolume": 5495258.0089
+  },
+  {
+    "timestampMs": 1789660800000,
+    "dateIso": "2026-09-17T16:00:00.000Z",
+    "open": 345.99,
+    "high": 359.88,
+    "low": 345.49,
+    "close": 349.84,
+    "baseVolume": 32047.16,
+    "quoteVolume": 11341259.2611
+  },
+  {
+    "timestampMs": 1789747200000,
+    "dateIso": "2026-09-18T16:00:00.000Z",
+    "open": 349.84,
+    "high": 352.43,
+    "low": 348.82,
+    "close": 350.9,
+    "baseVolume": 7123.23,
+    "quoteVolume": 2496720.566
+  },
+  {
+    "timestampMs": 1789833600000,
+    "dateIso": "2026-09-19T16:00:00.000Z",
+    "open": 350.9,
+    "high": 353.21,
+    "low": 349.27,
+    "close": 350.1,
+    "baseVolume": 6250.48,
+    "quoteVolume": 2193988.9277
+  },
+  {
+    "timestampMs": 1789920000000,
+    "dateIso": "2026-09-20T16:00:00.000Z",
+    "open": 350.1,
+    "high": 357.88,
+    "low": 349.5,
+    "close": 357.09,
+    "baseVolume": 21852.36,
+    "quoteVolume": 7706351.8285
+  },
+  {
+    "timestampMs": 1790006400000,
+    "dateIso": "2026-09-21T16:00:00.000Z",
+    "open": 357.09,
+    "high": 364.46,
+    "low": 354.27,
+    "close": 355.67,
+    "baseVolume": 22408.21,
+    "quoteVolume": 8018848.8586
+  },
+  {
+    "timestampMs": 1790092800000,
+    "dateIso": "2026-09-22T16:00:00.000Z",
+    "open": 355.67,
+    "high": 355.77,
+    "low": 340.53,
+    "close": 340.96,
+    "baseVolume": 26075.14,
+    "quoteVolume": 9077093.127
+  },
+  {
+    "timestampMs": 1790179200000,
+    "dateIso": "2026-09-23T16:00:00.000Z",
+    "open": 340.96,
+    "high": 343.23,
+    "low": 335.55,
+    "close": 339.52,
+    "baseVolume": 19994.68,
+    "quoteVolume": 6780040.1645
+  },
+  {
+    "timestampMs": 1790265600000,
+    "dateIso": "2026-09-24T16:00:00.000Z",
+    "open": 339.52,
+    "high": 347.4,
+    "low": 339.43,
+    "close": 344.94,
+    "baseVolume": 19534.21,
+    "quoteVolume": 6702169.7885
+  },
+  {
+    "timestampMs": 1790352000000,
+    "dateIso": "2026-09-25T16:00:00.000Z",
+    "open": 344.94,
+    "high": 345.88,
+    "low": 343.31,
+    "close": 343.49,
+    "baseVolume": 7297.08,
+    "quoteVolume": 2513948.5655
+  },
+  {
+    "timestampMs": 1790438400000,
+    "dateIso": "2026-09-26T16:00:00.000Z",
+    "open": 343.49,
+    "high": 345.19,
+    "low": 343.46,
+    "close": 343.89,
+    "baseVolume": 2260.86,
+    "quoteVolume": 778073.3446
+  },
+  {
+    "timestampMs": 1790524800000,
+    "dateIso": "2026-09-27T16:00:00.000Z",
+    "open": 343.89,
+    "high": 344.86,
+    "low": 340.18,
+    "close": 341.03,
+    "baseVolume": 9855.39,
+    "quoteVolume": 3369788.0887
+  },
+  {
+    "timestampMs": 1790611200000,
+    "dateIso": "2026-09-28T16:00:00.000Z",
+    "open": 341.03,
+    "high": 344.17,
+    "low": 338.6,
+    "close": 338.86,
+    "baseVolume": 8141.68,
+    "quoteVolume": 2779686.7541
+  },
+  {
+    "timestampMs": 1790697600000,
+    "dateIso": "2026-09-29T16:00:00.000Z",
+    "open": 338.86,
+    "high": 352.86,
+    "low": 338.76,
+    "close": 352.08,
+    "baseVolume": 15544.79,
+    "quoteVolume": 5388362.8418
+  },
+  {
+    "timestampMs": 1790784000000,
+    "dateIso": "2026-09-30T16:00:00.000Z",
+    "open": 352.08,
+    "high": 361.47,
+    "low": 340.07,
+    "close": 340.73,
+    "baseVolume": 73191.24,
+    "quoteVolume": 25652472.7598
+  },
+  {
+    "timestampMs": 1790870400000,
+    "dateIso": "2026-10-01T16:00:00.000Z",
+    "open": 340.73,
+    "high": 346,
+    "low": 336.25,
+    "close": 342.86,
+    "baseVolume": 21260.06,
+    "quoteVolume": 7259619.3288
+  },
+  {
+    "timestampMs": 1790956800000,
+    "dateIso": "2026-10-02T16:00:00.000Z",
+    "open": 342.86,
+    "high": 344.9,
+    "low": 342.74,
+    "close": 343.09,
+    "baseVolume": 3852.98,
+    "quoteVolume": 1323626.8378
+  },
+  {
+    "timestampMs": 1791043200000,
+    "dateIso": "2026-10-03T16:00:00.000Z",
+    "open": 343.09,
+    "high": 344.83,
+    "low": 343.03,
+    "close": 344.5,
+    "baseVolume": 1433.51,
+    "quoteVolume": 493263.2519
+  },
+  {
+    "timestampMs": 1791129600000,
+    "dateIso": "2026-10-04T16:00:00.000Z",
+    "open": 344.5,
+    "high": 346.21,
+    "low": 342.67,
+    "close": 345.43,
+    "baseVolume": 10823.65,
+    "quoteVolume": 3728066.8531
+  },
+  {
+    "timestampMs": 1791216000000,
+    "dateIso": "2026-10-05T16:00:00.000Z",
+    "open": 345.43,
+    "high": 349.33,
+    "low": 344.88,
+    "close": 348.8,
+    "baseVolume": 13008.24,
+    "quoteVolume": 4517669.6744
+  }
+]

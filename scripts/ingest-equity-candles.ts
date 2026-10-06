@@ -43,6 +43,9 @@ const EQUITIES: ReadonlyArray<{ symbol: string; rtoken: string }> = [
   { symbol: "NVDA", rtoken: "NVDAUSDT" },
   { symbol: "TSLA", rtoken: "TSLAUSDT" },
   { symbol: "AAPL", rtoken: "AAPLUSDT" },
+  { symbol: "MSFT", rtoken: "MSFTUSDT" },
+  // The venue ticker is GOOGLUSDT; GOOGUSDT is rejected 40034 by the matcher.
+  { symbol: "GOOGL", rtoken: "GOOGLUSDT" },
 ];
 
 interface Bar {
@@ -197,36 +200,33 @@ const yahoo: Provider = {
 
 const PROVIDERS: Provider[] = [alphaVantage, nasdaq, yahoo];
 
-function loadTokenDates(): Map<string, Set<string>> {
+function loadTokenDates(rtokens: ReadonlyArray<string>): Map<string, Set<string>> {
   const map = new Map<string, Set<string>>();
-  for (const sym of ["NVDAUSDT", "TSLAUSDT", "AAPLUSDT", "BTCUSDT"]) {
+  for (const sym of rtokens) {
     try {
       // The rToken files are a bare ARRAY of bar objects, not an object with a
       // `bars` key. Reading it the wrong way yields an EMPTY set, which would
       // report join coverage as 0/0 and read like "no overlap" instead of
-      // "could not read the series". A silent 0/0 is a false negative, so the
-      // count is asserted to be non-zero.
+      // "could not read the series". A silent 0/0 is a false negative.
       const raw = JSON.parse(readFileSync(join(OUT_DIR, `${sym}-1D.json`), "utf8")) as
-        | Array<{ timestampMs: number; dateIso?: string }>
-        | { bars?: Array<{ timestampMs: number; dateIso?: string }> };
+        | Array<{ timestampMs: number }>
+        | { bars?: Array<{ timestampMs: number }> };
       const arr = Array.isArray(raw) ? raw : (raw.bars ?? []);
       if (arr.length === 0) throw new Error(`${sym}-1D.json contained no bars`);
       const dates = new Set<string>();
-      for (const b of arr) {
-        // dateIso is a UTC instant at 16:00Z; the ET session date is the bar's
-        // own date, so derive it from the instant consistently for both legs.
-        dates.add(new Date(b.timestampMs).toISOString().slice(0, 10));
-      }
+      for (const b of arr) dates.add(new Date(b.timestampMs).toISOString().slice(0, 10));
       map.set(sym, dates);
-    } catch (e) {
-      throw new Error(`cannot read rToken series for ${sym}: ${String(e)}`);
+    } catch (err) {
+      throw new Error(`cannot read rToken series for ${sym}: ${String(err)}`);
     }
   }
   return map;
 }
 
 async function main(): Promise<void> {
-  const tokenDates = loadTokenDates();
+  // Load from the SAME pair list, not a hardcoded subset, so adding a pair
+  // cannot silently skip the join-coverage check for its token leg.
+  const tokenDates = loadTokenDates(EQUITIES.map((e) => e.rtoken));
   const out: Record<string, unknown> = {};
   const summary: string[] = [];
 
@@ -317,7 +317,7 @@ async function main(): Promise<void> {
   writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`);
 
   for (const line of summary) console.log(line);
-  console.log("\nmanifest extended with equityLeg. Terms posture is UNRESOLVED — see docs/data/EQUITY_SOURCE_DECISION.md");
+  console.log("\nmanifest extended with equityLeg. Provider + termsStatus are stamped in-band on every file.");
 }
 
 main().catch((e: unknown) => {

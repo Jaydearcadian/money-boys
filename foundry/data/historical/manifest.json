@@ -1,5 +1,5 @@
 {
-  "ingestedAt": "2026-10-03T11:58:24.618Z",
+  "ingestedAt": "2026-10-06T15:27:26.108Z",
   "sourceEndpoint": "https://api.bitget.com/api/v2/mix/market/candles",
   "granularity": "1D",
   "symbols": {
@@ -8,44 +8,64 @@
       "productType": "USDT-FUTURES",
       "granularity": "1D",
       "barsCount": 90,
-      "startDateIso": "2026-07-05T16:00:00.000Z",
-      "endDateIso": "2026-10-02T16:00:00.000Z",
+      "startDateIso": "2026-07-08T16:00:00.000Z",
+      "endDateIso": "2026-10-05T16:00:00.000Z",
       "spanDays": 89,
-      "fileSha256": "6b4eca4530e78b6c7809bc8c33d72cd5e829c71f66cf026b260ce8d99a8a7792"
+      "fileSha256": "69f6cb9ab3d41bf58e7ca299488e816177a11a467541ab7ba1f3e88c9f0c55bf"
     },
     "TSLAUSDT": {
       "symbol": "TSLAUSDT",
       "productType": "USDT-FUTURES",
       "granularity": "1D",
       "barsCount": 90,
-      "startDateIso": "2026-07-05T16:00:00.000Z",
-      "endDateIso": "2026-10-02T16:00:00.000Z",
+      "startDateIso": "2026-07-08T16:00:00.000Z",
+      "endDateIso": "2026-10-05T16:00:00.000Z",
       "spanDays": 89,
-      "fileSha256": "0a383fb0404b7804c28a5eddb6c9f2b8f02ebef71d76e1b1d0f0428e03030296"
+      "fileSha256": "f7dddc9ec0c86f8df1e785f5b130369385d8dd4991cd10e4c88d880a0e6ebe86"
     },
     "AAPLUSDT": {
       "symbol": "AAPLUSDT",
       "productType": "USDT-FUTURES",
       "granularity": "1D",
       "barsCount": 90,
-      "startDateIso": "2026-07-05T16:00:00.000Z",
-      "endDateIso": "2026-10-02T16:00:00.000Z",
+      "startDateIso": "2026-07-08T16:00:00.000Z",
+      "endDateIso": "2026-10-05T16:00:00.000Z",
       "spanDays": 89,
-      "fileSha256": "816eea8f7e441d919f958fad749ccc2547b93994f9121819336405f5038fae59"
+      "fileSha256": "014513102c261c4c3d6185b5d193c6133edc6e32b8371e467d6ae84f986b974e"
     },
     "BTCUSDT": {
       "symbol": "BTCUSDT",
       "productType": "USDT-FUTURES",
       "granularity": "1D",
       "barsCount": 90,
-      "startDateIso": "2026-07-05T16:00:00.000Z",
-      "endDateIso": "2026-10-02T16:00:00.000Z",
+      "startDateIso": "2026-07-08T16:00:00.000Z",
+      "endDateIso": "2026-10-05T16:00:00.000Z",
       "spanDays": 89,
-      "fileSha256": "418d8fa65138a20c0286eb879fd275820bb82b66386b0e131cf1b4d499fc16cf"
+      "fileSha256": "bc7ff39a4e5cfdd8e813cefa93edc634e64f8ffdc28cd729b84ca4046681bac6"
+    },
+    "MSFTUSDT": {
+      "symbol": "MSFTUSDT",
+      "productType": "USDT-FUTURES",
+      "granularity": "1D",
+      "barsCount": 90,
+      "startDateIso": "2026-07-08T16:00:00.000Z",
+      "endDateIso": "2026-10-05T16:00:00.000Z",
+      "spanDays": 89,
+      "fileSha256": "c6334dd686e325cdb6b47feb3f28188d05a8c1e745444a400d233f37bbe79b51"
+    },
+    "GOOGLUSDT": {
+      "symbol": "GOOGLUSDT",
+      "productType": "USDT-FUTURES",
+      "granularity": "1D",
+      "barsCount": 90,
+      "startDateIso": "2026-07-08T16:00:00.000Z",
+      "endDateIso": "2026-10-05T16:00:00.000Z",
+      "spanDays": 89,
+      "fileSha256": "d23a1d334670ba44b3028d74d40f03ba8112df29f9a35cf6a1b2766195dfc146"
     }
   },
   "equityLeg": {
-    "ingestedAt": "2026-10-06T13:23:57.163Z",
+    "ingestedAt": "2026-10-06T15:27:52.392Z",
     "purpose": "Underlying equity closes required by evaluateBasisSpread(tradFiClosePrice). The rToken ingest alone cannot produce a basis.",
     "termsDecisionDoc": "docs/data/EQUITY_SOURCE_DECISION.md",
     "symbols": {
@@ -56,12 +76,12 @@
         "barsCount": 100,
         "startDateIso": "2026-05-13",
         "endDateIso": "2026-10-05",
-        "fileSha256": "dd0a60ec36acb96e969a9f60ceee4ab53814d1d41f4070a31a8c5bd9cabfe4ab",
+        "fileSha256": "4a8de7e5b931bca6a68367c29bf236ba1ac79ac24a2144fa5fdd57b6fd77dfb5",
         "joinCoverage": {
           "rtokenBars": 90,
           "equityBars": 100,
-          "datesMatching": 64,
-          "rtokenDatesWithoutEquity": 26
+          "datesMatching": 63,
+          "rtokenDatesWithoutEquity": 27
         }
       },
       "TSLA": {
@@ -71,12 +91,12 @@
         "barsCount": 100,
         "startDateIso": "2026-05-13",
         "endDateIso": "2026-10-05",
-        "fileSha256": "b6bec3a841fdc7fb71a4bc64eda44f30a1c8d7574a87d847bd1a7fd288961dfc",
+        "fileSha256": "8fe7a856bd948ebe768fcf4a7996376807c0d9687ad0ec550130035eaf570428",
         "joinCoverage": {
           "rtokenBars": 90,
           "equityBars": 100,
-          "datesMatching": 64,
-          "rtokenDatesWithoutEquity": 26
+          "datesMatching": 63,
+          "rtokenDatesWithoutEquity": 27
         }
       },
       "AAPL": {
@@ -86,12 +106,42 @@
         "barsCount": 100,
         "startDateIso": "2026-05-13",
         "endDateIso": "2026-10-05",
-        "fileSha256": "3f91494cbda35fcf422848ab0256feaccc9d68afc578d95e7cceb0b52f3e6130",
+        "fileSha256": "88b92a43aecf3dd498116b498536c1fd75fafe920cbefa0b6e52e1980bb51ee9",
         "joinCoverage": {
           "rtokenBars": 90,
           "equityBars": 100,
-          "datesMatching": 64,
-          "rtokenDatesWithoutEquity": 26
+          "datesMatching": 63,
+          "rtokenDatesWithoutEquity": 27
+        }
+      },
+      "MSFT": {
+        "file": "EQUITY-MSFT-1D.json",
+        "provider": "alpha_vantage_daily",
+        "termsStatus": "DOCUMENTED_API",
+        "barsCount": 100,
+        "startDateIso": "2026-05-13",
+        "endDateIso": "2026-10-05",
+        "fileSha256": "714d5ef586027646120f644fbc09e696cc52e6e1d92b4739bab9eb925e145469",
+        "joinCoverage": {
+          "rtokenBars": 90,
+          "equityBars": 100,
+          "datesMatching": 63,
+          "rtokenDatesWithoutEquity": 27
+        }
+      },
+      "GOOGL": {
+        "file": "EQUITY-GOOGL-1D.json",
+        "provider": "alpha_vantage_daily",
+        "termsStatus": "DOCUMENTED_API",
+        "barsCount": 100,
+        "startDateIso": "2026-05-13",
+        "endDateIso": "2026-10-05",
+        "fileSha256": "bd8ff4dd9fb6499700133c8b1d5ba5d63f66fb4041b26b0fe9ab64624c6a5fb0",
+        "joinCoverage": {
+          "rtokenBars": 90,
+          "equityBars": 100,
+          "datesMatching": 63,
+          "rtokenDatesWithoutEquity": 27
         }
       }
     }
