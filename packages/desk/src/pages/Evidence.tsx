@@ -74,7 +74,7 @@ export function EvidencePage() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-6 py-3">
           <a href="#/" className="font-mono text-xs text-zinc-500 hover:text-orange-600">← MONEY BOYS</a>
           <span className="font-mono text-xs text-zinc-500">
-            <a href="#/evidence" className="text-orange-600">EVIDENCE</a>
+            <a href="#/evidence" className="text-orange-600">MARKET AUDIT</a>
             {" · "}
             <a href="#/desk" className="hover:text-orange-600">BITGET DEMO LIFECYCLE</a>
           </span>

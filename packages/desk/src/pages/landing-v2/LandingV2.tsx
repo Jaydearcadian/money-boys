@@ -29,6 +29,7 @@ function Logo({ className = "h-7 w-7" }: { className?: string }) {
 }
 
 import { PersistentLedgerBanner } from "../../components/TrackNav";
+import { ProvenanceModal, VerifyBadge, PROVENANCE_DATA, type ProvenanceDetails } from "../../components/ProvenanceDrawer";
 
 const NAV = [
   ["how", "How it works"],
@@ -253,6 +254,158 @@ function Strip() {
   );
 }
 
+function RefusalAndPlainLanguage() {
+  return (
+    <section aria-label="Plain language summary and refusal proof" className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="rounded-3xl border border-amber-500/30 bg-[oklch(0.16_0.012_265)] p-6 sm:p-7 relative overflow-hidden">
+          <span className="pill mono text-xs uppercase tracking-wider text-amber-300 bg-amber-500/10 border-amber-500/30 font-bold">
+            The Human Story · Disciplined Invariants
+          </span>
+          <h2 className="text-xl font-bold text-white mt-2">
+            It Said No, Every Time.
+          </h2>
+          <p className="mt-3 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+            In every live market check we ran, the price gap was smaller than the cost of trading &mdash; so the desk refused. Most automated trading software trades anyway.
+          </p>
+          <div className="mt-4 p-3.5 rounded-xl bg-black/50 border border-amber-500/20 text-xs mono text-amber-200/90 leading-relaxed">
+            &ldquo;A trading desk that trades without edge is just donating capital to market makers. Our Quant Boy and Risk Boy vetoed 100% of sub-hurdle dislocations until the true edge cleared friction.&rdquo;
+          </div>
+          <p className="mt-3 text-[11px] text-[var(--text-muted)]">
+            Two out of two live probes returned NEUTRAL. Invariants I-01 and I-02 held without failure.
+          </p>
+        </div>
+
+        <div className="rounded-3xl border border-[var(--line)] bg-[oklch(0.16_0.012_265)] p-6 sm:p-7 space-y-4">
+          <span className="pill mono text-xs uppercase tracking-wider text-[var(--accent)] font-bold">
+            Boringly Clear · Three-Tier Summary
+          </span>
+
+          <div className="space-y-3 text-xs">
+            <div className="p-3 rounded-xl bg-white/5 border border-[var(--line)]">
+              <span className="mono text-[10px] uppercase text-[var(--accent)] font-bold block mb-0.5">
+                SHELF 1 · What This Is (Everyday)
+              </span>
+              <p className="text-zinc-200">
+                A trading robot for stocks that trade on a crypto exchange, 24 hours a day. It follows NVIDIA, Apple, Tesla, Microsoft, and Google.
+              </p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-white/5 border border-[var(--line)]">
+              <span className="mono text-[10px] uppercase text-blue-300 font-bold block mb-0.5">
+                SHELF 2 · What It Did (Everyday)
+              </span>
+              <p className="text-zinc-200">
+                Over 89 days of real prices it would have traded 150 times and made +4.92%. On the 30 days it was tested without looking, it made +1.73%.
+              </p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-white/5 border border-[var(--line)]">
+              <span className="mono text-[10px] uppercase text-purple-300 font-bold block mb-0.5">
+                SHELF 3 · How We Know (Engineer / Judge)
+              </span>
+              <p className="mono text-zinc-300">
+                OOS Sharpe 3.89, Sortino 9.15, decay 1.32&times; vs 0.5&times; IS floor, 48 held-out trades (gate &ge; 30), cent-exact P&amp;L ($1,228.83).
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function RubricRouter() {
+  return (
+    <section aria-labelledby="router-h" className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <div className="rounded-3xl border border-[var(--line)] bg-[oklch(0.18_0.014_265_/_0.5)] p-6 sm:p-8 backdrop-blur-md">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] pb-4">
+          <div>
+            <span className="pill mono text-xs uppercase tracking-wider text-[var(--accent)] font-bold">
+              Hub-and-Spoke Navigation
+            </span>
+            <h2 id="router-h" className="text-xl sm:text-2xl font-bold text-white mt-1">
+              Which Rubric Are You Scoring?
+            </h2>
+          </div>
+          <span className="mono text-xs text-[var(--text-muted)]">
+            One Click &rarr; Uncontaminated Track View
+          </span>
+        </div>
+
+        <p className="mt-3 text-xs sm:text-sm text-[var(--text-muted)] max-w-2xl leading-relaxed">
+          Each competition track has a distinct scoring rubric. Rather than wading through mixed metrics, jump directly to the uncontaminated evidence for your track:
+        </p>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <a
+            href="#/track1"
+            className="group rounded-2xl border border-[var(--line)] bg-[oklch(0.14_0.012_265)] p-5 hover:border-[var(--accent)] hover:bg-[oklch(0.16_0.012_265)] transition-all flex flex-col justify-between"
+          >
+            <div>
+              <span className="pill mono text-[10px] text-blue-400 bg-blue-500/10 border-blue-500/30 font-bold uppercase">
+                Track 1 · Pure Quant
+              </span>
+              <h3 className="text-base font-bold text-white mt-2 group-hover:text-[var(--accent)] transition-colors">
+                OOS Sharpe 3.89 with 1.32× Decay
+              </h3>
+              <p className="mt-2 text-xs text-[var(--text-muted)] leading-relaxed">
+                Judged on out-of-sample survival vs 0.5× IS floor, rolling Sharpe dispersion (1.13–7.31), and multi-asset decorrelation.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs mono text-[var(--accent)] font-bold">
+              <span>View Track 1 Rubric</span>
+              <span>&rarr;</span>
+            </div>
+          </a>
+
+          <a
+            href="#/track2"
+            className="group rounded-2xl border border-[var(--line)] bg-[oklch(0.14_0.012_265)] p-5 hover:border-amber-400 hover:bg-[oklch(0.16_0.012_265)] transition-all flex flex-col justify-between"
+          >
+            <div>
+              <span className="pill mono text-[10px] text-amber-400 bg-amber-500/10 border-amber-500/30 font-bold uppercase">
+                Track 2 · 50/50 Agentic
+              </span>
+              <h3 className="text-base font-bold text-white mt-2 group-hover:text-amber-400 transition-colors">
+                Three-Beat Event &rarr; Decision &rarr; Execution
+              </h3>
+              <p className="mt-2 text-xs text-[var(--text-muted)] leading-relaxed">
+                Judged on agentic pipeline separation: Macro Boy proposes (dispatched: false), Risk Boy hard vetoes, and Execution Boy fills on Bitget.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs mono text-amber-400 font-bold">
+              <span>View Track 2 Rubric</span>
+              <span>&rarr;</span>
+            </div>
+          </a>
+
+          <a
+            href="#/track3"
+            className="group rounded-2xl border border-[var(--line)] bg-[oklch(0.14_0.012_265)] p-5 hover:border-purple-400 hover:bg-[oklch(0.16_0.012_265)] transition-all flex flex-col justify-between"
+          >
+            <div>
+              <span className="pill mono text-[10px] text-purple-400 bg-purple-500/10 border-purple-500/30 font-bold uppercase">
+                Track 3 · Feature Depth
+              </span>
+              <h3 className="text-base font-bold text-white mt-2 group-hover:text-purple-400 transition-colors">
+                Portfolio Copilot &amp; Risk Engine
+              </h3>
+              <p className="mt-2 text-xs text-[var(--text-muted)] leading-relaxed">
+                Judged on architectural depth: live net beta gauge (&le; 2.50), sector concentration bars (&le; 60%), and trade impact diff simulation.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs mono text-purple-400 font-bold">
+              <span>View Track 3 Rubric</span>
+              <span>&rarr;</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 const STEPS = [
   { n: "01", name: "Macro Boy", Icon: BrainIcon, path: "Warm path", line: "Reads catalysts and proposes. A model suggests; it holds no keys and signs nothing." },
   { n: "02", name: "Quant Boy", Icon: LayersIcon, path: "Hot path", line: "Prices the gap between the token and its benchmark, net of fees and funding drag." },
@@ -391,6 +544,7 @@ function Guardrails() {
 
 function PerformanceSection() {
   const [tab, setTab] = useState<"backtest" | "venue">("backtest");
+  const [provDetails, setProvDetails] = useState<ProvenanceDetails | null>(null);
 
   return (
     <section id="performance" aria-labelledby="perf-h" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
@@ -444,7 +598,10 @@ function PerformanceSection() {
           </div>
 
           <div className="glass rounded-3xl p-6">
-            <span className="mono text-xs uppercase text-[var(--text-muted)]">Out-of-Sample Sharpe</span>
+            <div className="flex items-center justify-between">
+              <span className="mono text-xs uppercase text-[var(--text-muted)]">Out-of-Sample Sharpe</span>
+              <VerifyBadge onClick={() => setProvDetails(PROVENANCE_DATA["sharpe"]!)} />
+            </div>
             <div className="mono mt-2 text-4xl font-extrabold text-[var(--accent)]">3.89</div>
             <p className="mt-2 text-xs text-[var(--text-muted)]">In-Sample Sharpe: 2.94. Decay ratio 1.32x (benchmarked against 0.5x IS decay hurdle; variance compression across staggered triggers).</p>
           </div>
@@ -480,7 +637,7 @@ function PerformanceSection() {
           <div className="glass rounded-3xl p-6">
             <div className="flex items-center justify-between">
               <span className="pill mono !py-0.5 !text-xs text-[var(--accent)]">rNVDAUSDT LIFECYCLE</span>
-              <span className="mono text-xs text-[var(--text-muted)]">Bitget Demo Venue</span>
+              <VerifyBadge onClick={() => setProvDetails(PROVENANCE_DATA["roundTrip"]!)} />
             </div>
             <h3 className="mt-4 text-lg font-bold">Tokenized US Equity Round-Trip</h3>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
@@ -498,7 +655,7 @@ function PerformanceSection() {
           <div className="glass rounded-3xl p-6">
             <div className="flex items-center justify-between">
               <span className="pill mono !py-0.5 !text-xs text-[var(--warn)]">GAP-020 RESOLVED</span>
-              <span className="mono text-xs text-[var(--text-muted)]">Bitget Demo API v2</span>
+              <VerifyBadge onClick={() => setProvDetails(PROVENANCE_DATA["restingCancel"]!)} />
             </div>
             <h3 className="mt-4 text-lg font-bold">/detail Discovery &amp; Resting Cancel</h3>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
@@ -534,7 +691,7 @@ function PerformanceSection() {
           <div className="glass rounded-3xl p-6">
             <div className="flex items-center justify-between">
               <span className="pill mono !py-0.5 !text-xs text-[var(--accent)]">QWEN 3.8-MAX</span>
-              <span className="mono text-xs text-[var(--text-muted)]">Cognitive Shield (GAP-022)</span>
+              <VerifyBadge onClick={() => setProvDetails(PROVENANCE_DATA["qwen"]!)} />
             </div>
             <h3 className="mt-4 text-lg font-bold">Live Qwen Catalyst Extraction</h3>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
@@ -568,6 +725,8 @@ function PerformanceSection() {
           Reproducibility &amp; Quarantine &rarr;
         </a>
       </div>
+
+      <ProvenanceModal details={provDetails} onClose={() => setProvDetails(null)} />
     </section>
   );
 }

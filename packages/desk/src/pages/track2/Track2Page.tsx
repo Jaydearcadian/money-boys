@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { TrackNav } from "../../components/TrackNav";
+import { ProvenanceModal, VerifyBadge, PROVENANCE_DATA, type ProvenanceDetails } from "../../components/ProvenanceDrawer";
 
 export function Track2Page() {
+  const [provDetails, setProvDetails] = useState<ProvenanceDetails | null>(null);
   return (
     <div className="lv2 min-h-screen bg-[var(--bg)] text-[var(--text)]">
       <TrackNav current="track2" />
@@ -69,9 +72,12 @@ export function Track2Page() {
               <div className="flex-1 rounded-2xl border border-[var(--line)] bg-[oklch(0.14_0.012_265)] p-5 sm:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] pb-4">
                   <div>
-                    <span className="pill mono text-xs uppercase text-amber-300 bg-amber-500/10 border-amber-500/30">
-                      Beat 1 · Event Ingestion &amp; Advisory Thesis
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="pill mono text-xs uppercase text-amber-300 bg-amber-500/10 border-amber-500/30">
+                        Beat 1 · Event Ingestion &amp; Advisory Thesis
+                      </span>
+                      <VerifyBadge onClick={() => setProvDetails(PROVENANCE_DATA["qwen"]!)} />
+                    </div>
                     <h3 className="text-lg font-bold text-white mt-1">Macro Boy (Qwen-3.8-Max via DashScope)</h3>
                   </div>
 
@@ -196,7 +202,10 @@ export function Track2Page() {
 
                 <div className="mt-4 grid gap-4 md:grid-cols-2 text-xs">
                   <div>
-                    <span className="mono text-[var(--text-muted)] uppercase block mb-1">Live Venue Round-Trip Fill</span>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="mono text-[var(--text-muted)] uppercase">Live Venue Round-Trip Fill</span>
+                      <VerifyBadge onClick={() => setProvDetails(PROVENANCE_DATA["roundTrip"]!)} />
+                    </div>
                     <ul className="space-y-1 text-zinc-300 mono bg-white/5 p-3 rounded-xl border border-[var(--line)]">
                       <li>&bull; Open Order ID: <span className="text-white">1491434982630129665</span></li>
                       <li>&bull; Contract Fill: 0.11 NVDA @ $240.42</li>
@@ -206,7 +215,10 @@ export function Track2Page() {
                   </div>
 
                   <div>
-                    <span className="mono text-[var(--text-muted)] uppercase block mb-1">GAP-020 Resting Limit &amp; /detail Cancel</span>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="mono text-[var(--text-muted)] uppercase">GAP-020 Resting Limit &amp; /detail Cancel</span>
+                      <VerifyBadge onClick={() => setProvDetails(PROVENANCE_DATA["restingCancel"]!)} />
+                    </div>
                     <ul className="space-y-1 text-zinc-300 mono bg-white/5 p-3 rounded-xl border border-[var(--line)]">
                       <li>&bull; Resting Limit: <span className="text-white">1491458794516021249</span></li>
                       <li>&bull; /detail Read-Back: <span className="text-white font-bold">&quot;live&quot; (code 00000)</span></li>
@@ -225,6 +237,8 @@ export function Track2Page() {
           </div>
         </section>
       </main>
+
+      <ProvenanceModal details={provDetails} onClose={() => setProvDetails(null)} />
     </div>
   );
 }

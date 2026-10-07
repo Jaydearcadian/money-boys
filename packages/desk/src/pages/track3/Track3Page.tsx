@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { TrackNav } from "../../components/TrackNav";
+import { ProvenanceModal, VerifyBadge, PROVENANCE_DATA, type ProvenanceDetails } from "../../components/ProvenanceDrawer";
 
 interface TradePreset {
   id: string;
@@ -77,6 +78,7 @@ const PRESETS: TradePreset[] = [
 
 export function Track3Page() {
   const [selectedTrade, setSelectedTrade] = useState<TradePreset>(PRESETS[0]!);
+  const [provDetails, setProvDetails] = useState<ProvenanceDetails | null>(null);
 
   const baseMetrics = {
     equityUsd: 21795.18,
@@ -152,7 +154,10 @@ export function Track3Page() {
                   <span className="mono text-xs uppercase tracking-wider text-[var(--accent)]">Market Risk Factor</span>
                   <h2 className="text-xl font-bold text-white mt-1">Portfolio Net Beta Magnitude (&beta;)</h2>
                 </div>
-                <span className="pill mono text-xs text-[var(--accent)] font-bold">STATUS: SAFE</span>
+                <div className="flex items-center gap-2">
+                  <span className="pill mono text-xs text-[var(--accent)] font-bold">STATUS: SAFE</span>
+                  <VerifyBadge onClick={() => setProvDetails(PROVENANCE_DATA["copilotBeta"]!)} />
+                </div>
               </div>
 
               <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
@@ -318,6 +323,8 @@ export function Track3Page() {
           </div>
         </section>
       </main>
+
+      <ProvenanceModal details={provDetails} onClose={() => setProvDetails(null)} />
     </div>
   );
 }

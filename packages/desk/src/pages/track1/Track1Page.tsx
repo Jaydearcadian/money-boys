@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { TrackNav } from "../../components/TrackNav";
+import { ProvenanceModal, VerifyBadge, PROVENANCE_DATA, type ProvenanceDetails } from "../../components/ProvenanceDrawer";
 
 export function Track1Page() {
   const [selectedPair, setSelectedPair] = useState<string>("NVDAUSDT");
+  const [provDetails, setProvDetails] = useState<ProvenanceDetails | null>(null);
 
   const correlationMatrix: Record<string, Record<string, number>> = {
     NVDAUSDT: { NVDAUSDT: 1.0, TSLAUSDT: 0.249, AAPLUSDT: -0.063, MSFTUSDT: 0.1, GOOGLUSDT: 0.24 },
@@ -101,7 +103,10 @@ export function Track1Page() {
 
             {/* OOS Sharpe Card */}
             <div className="glass rounded-2xl p-5 border border-emerald-500/40 bg-emerald-500/5">
-              <span className="mono text-xs text-emerald-300 uppercase">Out-of-Sample Sharpe (30 Days)</span>
+              <div className="flex items-center justify-between">
+                <span className="mono text-xs text-emerald-300 uppercase">Out-of-Sample Sharpe (30 Days)</span>
+                <VerifyBadge onClick={() => setProvDetails(PROVENANCE_DATA["sharpe"]!)} />
+              </div>
               <div className="mono text-4xl font-extrabold text-[var(--accent)] mt-2">3.89</div>
               <div className="mt-3 flex items-center justify-between text-xs border-t border-emerald-500/20 pt-2 text-[var(--text-muted)]">
                 <span>Trades (Gate &ge; 30)</span><span className="text-white font-semibold">48</span>
@@ -177,7 +182,10 @@ export function Track1Page() {
               <span className="text-[11px] text-[var(--text-muted)]">Worst 30-day regime</span>
             </div>
             <div className="glass rounded-2xl p-4 text-center border-emerald-500/30">
-              <span className="mono text-xs text-[var(--text-muted)] uppercase">Mean Window</span>
+              <div className="flex items-center justify-between mb-1">
+                <span className="mono text-xs text-[var(--text-muted)] uppercase">Mean Window</span>
+                <VerifyBadge onClick={() => setProvDetails(PROVENANCE_DATA["dispersion"]!)} />
+              </div>
               <div className="mono text-3xl font-extrabold text-[var(--accent)] mt-1">4.04</div>
               <span className="text-[11px] text-[var(--text-muted)]">Average rolling performance</span>
             </div>
@@ -286,9 +294,12 @@ export function Track1Page() {
                   <span className="text-[var(--text-muted)]">Annualized Turnover</span>
                   <span className="text-white font-bold">24.00 (2,400%)</span>
                 </li>
-                <li className="flex justify-between p-2.5 rounded-xl border border-[var(--line)] bg-white/5">
+                <li className="flex justify-between items-center p-2.5 rounded-xl border border-[var(--line)] bg-white/5">
                   <span className="text-[var(--text-muted)]">Out-of-Sample Sortino</span>
-                  <span className="text-[var(--accent)] font-bold">9.15</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[var(--accent)] font-bold">9.15</span>
+                    <VerifyBadge onClick={() => setProvDetails(PROVENANCE_DATA["sortino"]!)} />
+                  </div>
                 </li>
                 <li className="flex justify-between p-2.5 rounded-xl border border-[var(--line)] bg-white/5">
                   <span className="text-[var(--text-muted)]">Cryptographic Reasoning Receipts</span>
@@ -299,6 +310,8 @@ export function Track1Page() {
           </div>
         </section>
       </main>
+
+      <ProvenanceModal details={provDetails} onClose={() => setProvDetails(null)} />
     </div>
   );
 }

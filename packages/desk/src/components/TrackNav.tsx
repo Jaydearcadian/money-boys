@@ -25,12 +25,13 @@ export function TrackNav({ current }: { current: "overview" | "track1" | "track2
   const [menuOpen, setMenuOpen] = useState(false);
 
   const links = [
-    { id: "overview", hash: "#/", label: "Overview" },
+    { id: "overview", hash: "#/", label: "Dashboard" },
     { id: "track1", hash: "#/track1", label: "Track 1 (Quant)" },
     { id: "track2", hash: "#/track2", label: "Track 2 (Agentic 50/50)" },
     { id: "track3", hash: "#/track3", label: "Track 3 (Copilot)" },
     { id: "repro", hash: "#/repro", label: "Reproducibility" },
     { id: "desk", hash: "#/desk", label: "Trading Cockpit" },
+    { id: "evidence", hash: "#/evidence", label: "Market Audit" },
   ] as const;
 
   return (
