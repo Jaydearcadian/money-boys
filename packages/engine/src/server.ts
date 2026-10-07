@@ -11,6 +11,27 @@ import { verifyHaltReceipt } from "./council/halt-receipt.js";
 import { fixture, setCors, json, readBody } from "./server-helpers.js";
 import { buildEvidenceResponse } from "./evidence-surface.js";
 
+function isOperatorAuthorized(req: IncomingMessage): boolean {
+  const operatorToken = process.env["OPERATOR_TOKEN"];
+  const isCloudflare = Boolean(req.headers["cf-ray"] || req.headers["cf-connecting-ip"]);
+  if (isCloudflare) {
+    if (!operatorToken) return false;
+    const authHeader = req.headers["authorization"] ?? "";
+    const bearer = typeof authHeader === "string" && authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+    const tokenHeader = req.headers["x-operator-token"];
+    return tokenHeader === operatorToken || bearer === operatorToken;
+  }
+  if (operatorToken) {
+    const authHeader = req.headers["authorization"] ?? "";
+    const bearer = typeof authHeader === "string" && authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+    const tokenHeader = req.headers["x-operator-token"];
+    if (tokenHeader === operatorToken || bearer === operatorToken) return true;
+    const ip = req.socket.remoteAddress ?? "";
+    return ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1";
+  }
+  return true;
+}
+
 async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? "/", "http://localhost");
   const path = url.pathname;
@@ -19,6 +40,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   if (method === "GET" && path === "/health") { json(res, 200, { status: "ok", uptime: process.uptime(), commit: COMMIT }); return; }
   if (method === "GET" && path === "/api/desk/state") { json(res, 200, snapshot()); return; }
   if (method === "POST" && path === "/api/desk/sync-account") {
+    if (!isOperatorAuthorized(req)) { json(res, 403, { error: "Forbidden: Mutating desk operations via public tunnel require valid x-operator-token" }); return; }
     try {
       const synced = await syncLiveAccountState();
       json(res, 200, { synced, state: snapshot() });
@@ -44,6 +66,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     return;
   }
   if (method === "POST" && path === "/api/desk/halt") {
+    if (!isOperatorAuthorized(req)) { json(res, 403, { error: "Forbidden: Mutating desk operations via public tunnel require valid x-operator-token" }); return; }
     // This route used to flip state.systemHalt with NO audit trail at all. An
     // emergency halt is the most consequential state change the desk can make,
     // so it is now SHA-256 receipt-sealed through the SAME applyHalt() the MCP
@@ -75,6 +98,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     return;
   }
   if (method === "POST" && path === "/api/desk/simulate-cycle") {
+    if (!isOperatorAuthorized(req)) { json(res, 403, { error: "Forbidden: Mutating desk operations via public tunnel require valid x-operator-token" }); return; }
     if (state.systemHalt === true) { json(res, 403, { error: "System emergency halt engaged. Deliberation prohibited." }); return; }
     try {
       let overrides: { symbol?: unknown; side?: unknown; quantity?: unknown; priceUsd?: unknown } = {};

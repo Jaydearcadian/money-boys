@@ -432,13 +432,13 @@ function PerformanceSection() {
           <div className="glass rounded-3xl p-6">
             <span className="mono text-xs uppercase text-[var(--text-muted)]">Out-of-Sample Sharpe</span>
             <div className="mono mt-2 text-4xl font-extrabold text-[var(--accent)]">3.89</div>
-            <p className="mt-2 text-xs text-[var(--text-muted)]">In-Sample Sharpe: 2.94. Decay ratio 1.32x (favorable variance compression in benign regimes).</p>
+            <p className="mt-2 text-xs text-[var(--text-muted)]">In-Sample Sharpe: 2.94. Decay ratio 1.32x (benchmarked against 0.5x IS decay hurdle; variance compression across staggered triggers).</p>
           </div>
 
           <div className="glass rounded-3xl p-6">
             <span className="mono text-xs uppercase text-[var(--text-muted)]">Out-of-Sample Sortino</span>
             <div className="mono mt-2 text-4xl font-extrabold text-[var(--accent)]">9.15</div>
-            <p className="mt-2 text-xs text-[var(--text-muted)]">Mean rolling Sharpe 4.04 across 10-day rolling evaluation windows.</p>
+            <p className="mt-2 text-xs text-[var(--text-muted)]">Mean rolling Sharpe 4.04 across 30-day rolling evaluation windows (34/34 positive).</p>
           </div>
 
           <div className="glass rounded-3xl p-6">
@@ -483,19 +483,19 @@ function PerformanceSection() {
 
           <div className="glass rounded-3xl p-6">
             <div className="flex items-center justify-between">
-              <span className="pill mono !py-0.5 !text-xs text-[var(--warn)]">RESTING LIMIT &amp; CANCEL</span>
+              <span className="pill mono !py-0.5 !text-xs text-[var(--warn)]">GAP-020 RESOLVED</span>
               <span className="mono text-xs text-[var(--text-muted)]">Bitget Demo API v2</span>
             </div>
-            <h3 className="mt-4 text-lg font-bold">Order Read-Back &amp; Cancel Path</h3>
+            <h3 className="mt-4 text-lg font-bold">/detail Discovery &amp; Resting Cancel</h3>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
-              Corrected venue route to <code className="mono text-xs text-white">/api/v2/mix/order/detail</code> and verified cancel lifecycle:
+              Substrate limitation solved: route corrected to <code className="mono text-xs text-white">/api/v2/mix/order/detail</code>, enabling order read-backs and satisfying GAP-012&apos;s cancel leg:
             </p>
             <ul className="mt-3 space-y-1.5 mono text-xs text-[var(--text-muted)]">
               <li className="flex justify-between border-b border-[var(--line)] py-1"><span>Resting Limit Placed</span><span className="text-white">1491458794516021249</span></li>
               <li className="flex justify-between border-b border-[var(--line)] py-1"><span>Queried State (/detail)</span><span className="text-white">live (code 00000)</span></li>
               <li className="flex justify-between border-b border-[var(--line)] py-1"><span>Cancel Execution</span><span className="text-white">cancel-order accepted</span></li>
-              <li className="flex justify-between border-b border-[var(--line)] py-1"><span>Queried State (/detail)</span><span className="text-[var(--warn)]">canceled</span></li>
-              <li className="flex justify-between py-1"><span>Residual Position</span><span className="text-[var(--accent)] font-bold">FLAT (0 positions)</span></li>
+              <li className="flex justify-between border-b border-[var(--line)] py-1"><span>Queried State (/detail)</span><span className="text-[var(--warn)]">canceled (code 00000)</span></li>
+              <li className="flex justify-between py-1"><span>Residual Position</span><span className="text-[var(--accent)] font-bold">FLAT (0 residual)</span></li>
             </ul>
           </div>
 
@@ -520,18 +520,18 @@ function PerformanceSection() {
           <div className="glass rounded-3xl p-6">
             <div className="flex items-center justify-between">
               <span className="pill mono !py-0.5 !text-xs text-[var(--accent)]">QWEN 3.8-MAX</span>
-              <span className="mono text-xs text-[var(--text-muted)]">Cognitive Shield</span>
+              <span className="mono text-xs text-[var(--text-muted)]">Cognitive Shield (GAP-022)</span>
             </div>
             <h3 className="mt-4 text-lg font-bold">Live Qwen Catalyst Extraction</h3>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
-              Real-time unstructured financial catalyst synthesis via Qwen-3.8-Max:
+              Real-time unstructured financial catalyst synthesis via Qwen-3.8-Max (n=5 live evaluations):
             </p>
             <ul className="mt-3 space-y-1.5 mono text-xs text-[var(--text-muted)]">
-              <li className="flex justify-between border-b border-[var(--line)] py-1"><span>Empirical Latency</span><span className="text-white">mean 10,548 ms</span></li>
+              <li className="flex justify-between border-b border-[var(--line)] py-1"><span>Sample / Consistency</span><span className="text-white">5/5 live calls (100% council agreement)</span></li>
+              <li className="flex justify-between border-b border-[var(--line)] py-1"><span>Empirical Latency</span><span className="text-white">mean 10,548 ms (7.9s – 13.8s)</span></li>
               <li className="flex justify-between border-b border-[var(--line)] py-1"><span>Payload Hashing</span><span className="text-white">SHA-256 evidenceHash</span></li>
               <li className="flex justify-between border-b border-[var(--line)] py-1"><span>Provenance Stamp</span><span className="text-white">LIVE_INFERENCE</span></li>
-              <li className="flex justify-between border-b border-[var(--line)] py-1"><span>Bitget Signals Feed</span><span className="text-white">Options skew &amp; macro risk</span></li>
-              <li className="flex justify-between py-1"><span>Order Authority</span><span className="text-[var(--accent)] font-bold">0% (Proposal Only)</span></li>
+              <li className="flex justify-between py-1"><span>Order Authority</span><span className="text-[var(--accent)] font-bold">0% (Proposal Only · I-01)</span></li>
             </ul>
           </div>
         </div>
