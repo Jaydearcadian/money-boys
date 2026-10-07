@@ -117,9 +117,9 @@ function Nav({ onOpenTour }: { onOpenTour: () => void }) {
               <li className="border-t border-[var(--line)] pt-3 mt-2">
                 <div className="text-xs mono uppercase text-[var(--text-muted)] px-1 mb-2 font-bold">Track Rubrics:</div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <a href="#/track1" className="p-2 rounded-lg bg-white/5 text-white font-bold">Track 1 (Quant)</a>
-                  <a href="#/track2" className="p-2 rounded-lg bg-white/5 text-white font-bold">Track 2 (Agentic)</a>
-                  <a href="#/track3" className="p-2 rounded-lg bg-white/5 text-white font-bold">Track 3 (Copilot)</a>
+                  <a href="#/track1" className="p-2 rounded-lg bg-white/5 text-white font-bold">Strategy</a>
+                  <a href="#/track2" className="p-2 rounded-lg bg-white/5 text-white font-bold">Agents</a>
+                  <a href="#/track3" className="p-2 rounded-lg bg-white/5 text-white font-bold">Portfolio</a>
                   <a href="#/repro" className="p-2 rounded-lg bg-white/5 text-white font-bold">Reproducibility</a>
                 </div>
               </li>
@@ -574,7 +574,7 @@ function RubricRouter({ onOpenProvenance }: { onOpenProvenance: (details: Proven
               </p>
             </div>
             <div className="mt-4 pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs mono text-[var(--accent)] font-bold">
-              <span>View Track 1 Rubric &rarr;</span>
+              <span>View the Strategy layer &rarr;</span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -605,7 +605,7 @@ function RubricRouter({ onOpenProvenance }: { onOpenProvenance: (details: Proven
               </p>
             </div>
             <div className="mt-4 pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs mono text-amber-400 font-bold">
-              <span>View Track 2 Rubric &rarr;</span>
+              <span>View the Agents layer &rarr;</span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -636,7 +636,7 @@ function RubricRouter({ onOpenProvenance }: { onOpenProvenance: (details: Proven
               </p>
             </div>
             <div className="mt-4 pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs mono text-purple-400 font-bold">
-              <span>View Track 3 Rubric &rarr;</span>
+              <span>View the Portfolio layer &rarr;</span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -823,7 +823,7 @@ function PerformanceSection() {
 
   return (
     <section id="performance" aria-labelledby="perf-h" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-      <div className="reveal"><Badge>Track 1 &amp; Live Proof</Badge></div>
+      <div className="reveal"><Badge>Strategy &amp; Live Proof</Badge></div>
       <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
         <div>
           <h2 id="perf-h" className="dim-text reveal mt-5 max-w-3xl font-extrabold leading-tight tracking-tight" style={{ fontSize: "var(--h2)", ["--i" as string]: 1 }}>

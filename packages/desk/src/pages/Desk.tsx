@@ -172,7 +172,7 @@ export function DeskPage() {
                 <tr>
                   <td className="py-3 pr-4 font-bold text-white">5</td>
                   <td className="py-3 pr-4 text-zinc-300 font-semibold">
-                    <a href="#/copilot" className="text-[var(--accent)] hover:underline">Track 3 Copilot</a> Tamper Test
+                    <a href="#/copilot" className="text-[var(--accent)] hover:underline">Portfolio Copilot</a> Tamper Test
                   </td>
                   <td className="py-3 pr-4 text-zinc-200">
                     Paste tampered receipt into W3C WebCrypto Verifier → Reports <strong>SEAL MISMATCH / Untampered: false</strong>.

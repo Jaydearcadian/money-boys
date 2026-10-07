@@ -135,7 +135,7 @@ export function Track1Page() {
 
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-amber-400">Track 1 Floor Threshold (0.5× IS)</span>
+                  <span className="text-amber-400">Out-of-Sample Floor Threshold (0.5× IS)</span>
                   <span className="mono text-amber-400 font-bold">1.47</span>
                 </div>
                 <div className="h-4 rounded-full bg-white/10 overflow-hidden relative">
