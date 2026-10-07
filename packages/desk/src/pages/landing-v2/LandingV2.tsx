@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./landing-v2.css";
 import claimsRaw from "../../../../../foundry/claims.jsonl?raw";
 import type { DeskState } from "../../lib/api";
@@ -16,6 +16,11 @@ import {
   TerminalIcon,
 } from "../../components/icons";
 import { useAnchorScroll, useNow, useParallax, useReveal } from "./hooks";
+import {
+  SANDBOX_PRESETS,
+  runSandboxDeliberation,
+  sandboxCanonicalJson,
+} from "@money-boys/engine/council/browser-sandbox";
 
 const CLAIMS = parseClaims(claimsRaw);
 
@@ -134,8 +139,51 @@ function Telemetry({ desk }: { desk: DeskState | null }) {
   const nodes = desk
     ? ([["Macro", desk.activeNodes.macro.status], ["Quant", desk.activeNodes.quant.status], ["Risk", desk.activeNodes.risk.status], ["Exec", desk.activeNodes.exec.status]] as const)
     : null;
+
+  // Interactive Live Council Deliberator (In-Browser Web Crypto)
+  const [presetId, setPresetId] = useState<string>("clean-edge");
+  const [tampered, setTampered] = useState<boolean>(false);
+  const [sealHash, setSealHash] = useState<string>("");
+  const [sealValid, setSealValid] = useState<boolean | null>(true);
+
+  const activePreset = useMemo(
+    () => SANDBOX_PRESETS.find((p) => p.id === presetId) ?? SANDBOX_PRESETS[0]!,
+    [presetId]
+  );
+  const result = useMemo(() => runSandboxDeliberation(activePreset), [activePreset]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function seal() {
+      try {
+        const payloadToHash = tampered
+          ? { ...result.receiptPayload, tampered: true }
+          : result.receiptPayload;
+        const json = sandboxCanonicalJson(payloadToHash);
+        const encoded = new TextEncoder().encode(json);
+        const buf = await crypto.subtle.digest("SHA-256", encoded);
+        const hash = Array.from(new Uint8Array(buf))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        if (!cancelled) {
+          setSealHash(hash);
+          setSealValid(!tampered);
+        }
+      } catch {
+        if (!cancelled) {
+          setSealHash("hash-error");
+          setSealValid(false);
+        }
+      }
+    }
+    void seal();
+    return () => {
+      cancelled = true;
+    };
+  }, [result, tampered]);
+
   return (
-    <aside aria-label="Engine telemetry" className="glass w-full max-w-sm rounded-3xl p-5" style={{ background: "oklch(0.15 0.012 265 / 0.9)" }}>
+    <aside aria-label="Engine telemetry" className="glass w-full max-w-sm rounded-3xl p-5 shadow-2xl" style={{ background: "oklch(0.15 0.012 265 / 0.92)" }}>
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-sm font-bold">Engine telemetry</h2>
         <span className="pill mono !py-1 whitespace-nowrap text-[0.7rem]">
@@ -192,6 +240,123 @@ function Telemetry({ desk }: { desk: DeskState | null }) {
           ? "Hot path: deterministic gate and receipt, budget under 50 ms. No model call."
           : "Warm path: async. The Macro model proposes catalysts; it cannot place orders."}
       </p>
+
+      {/* --- LIVE IN-BROWSER COUNCIL DELIBERATOR --- */}
+      <div className="mt-5 pt-4 border-t border-[var(--line)]">
+        <div className="flex items-center justify-between mb-2">
+          <span className="mono text-xs font-bold text-white flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-[var(--accent)] animate-pulse" />
+            Live Deliberator
+          </span>
+          <span className="mono text-[10px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-full font-bold">
+            Web Crypto · 0 API Keys
+          </span>
+        </div>
+        <p className="text-[11px] text-[var(--text-muted)] mb-2.5 leading-tight">
+          Click any preset to deliberate live in your browser:
+        </p>
+
+        {/* 4 Quick Presets */}
+        <div className="grid grid-cols-2 gap-1.5 mb-2.5">
+          {SANDBOX_PRESETS.map((p) => {
+            const isSelected = p.id === presetId;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  setPresetId(p.id);
+                  setTampered(false);
+                }}
+                className={`min-h-[34px] rounded-xl px-2 py-1 text-left text-[11px] font-bold transition-all border cursor-pointer ${
+                  isSelected
+                    ? "bg-white text-[oklch(0.15_0.012_265)] border-white shadow-sm"
+                    : "bg-[oklch(0.18_0.014_265)] text-[var(--text-muted)] border-[var(--line)] hover:text-white hover:border-zinc-400"
+                }`}
+              >
+                <div className="truncate font-semibold">{p.label}</div>
+                <div className="mono text-[9px] opacity-75 truncate">{p.symbol} · ${p.notionalUsd}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Real-time Deliberation Output */}
+        <div className="rounded-2xl border border-[var(--line)] bg-[oklch(0.12_0.012_265)] p-3 text-xs space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="mono text-[10px] uppercase text-[var(--text-muted)] font-bold">Council Verdict:</span>
+            <span
+              className={`mono text-[10px] font-black px-2 py-0.5 rounded-md ${
+                result.council.status === "APPROVED"
+                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                  : result.council.status.includes("VETO")
+                  ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                  : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+              }`}
+            >
+              {result.council.status}
+            </span>
+          </div>
+
+          {/* 4 Agent Score strip */}
+          <div className="grid grid-cols-4 gap-1 text-center mono text-[10px]">
+            <div className="rounded-lg bg-white/5 p-1 border border-white/5">
+              <div className="text-[var(--text-muted)] text-[8px]">MACRO</div>
+              <div className="font-bold text-white">{activePreset.macroScore}</div>
+            </div>
+            <div className="rounded-lg bg-white/5 p-1 border border-white/5">
+              <div className="text-[var(--text-muted)] text-[8px]">QUANT</div>
+              <div className="font-bold text-white">{result.quant.rawBasisPct >= 0 ? "+" : ""}{result.quant.rawBasisPct.toFixed(2)}%</div>
+            </div>
+            <div className="rounded-lg bg-white/5 p-1 border border-white/5">
+              <div className="text-[var(--text-muted)] text-[8px]">RISK</div>
+              <div className={`font-bold ${result.risk.permitted ? "text-emerald-400" : "text-rose-400"}`}>
+                {result.risk.permitted ? "PASS" : "VETO"}
+              </div>
+            </div>
+            <div className="rounded-lg bg-white/5 p-1 border border-white/5">
+              <div className="text-[var(--text-muted)] text-[8px]">EXEC</div>
+              <div className="font-bold text-white">{activePreset.execScore}</div>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-zinc-300 leading-snug">
+            {result.verdictPlain}
+          </p>
+
+          {/* Cryptographic Seal Status */}
+          <div className="pt-2 border-t border-[var(--line)] flex items-center justify-between text-[10px] mono">
+            <span className="text-[var(--text-muted)] truncate max-w-[130px]" title={sealHash}>
+              SHA: {sealHash ? `${sealHash.slice(0, 8)}…${sealHash.slice(-6)}` : "computing…"}
+            </span>
+            <span className={`font-bold ${sealValid && !tampered ? "text-emerald-400" : "text-rose-400"}`}>
+              {tampered ? "MISMATCH ✗" : "untampered ✓"}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setTampered((t) => !t)}
+            className={`w-full py-1 px-2 rounded-xl mono text-[10px] font-bold transition-colors cursor-pointer border ${
+              tampered
+                ? "bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-500"
+                : "bg-rose-500/10 text-rose-300 border-rose-500/30 hover:bg-rose-500/20"
+            }`}
+          >
+            {tampered ? "Restore Genuine Seal ✓" : "Tamper Payload (Test Rejection) ✗"}
+          </button>
+        </div>
+
+        <div className="mt-2 text-center">
+          <a
+            href="#test"
+            className="mono text-[10px] text-[var(--accent)] hover:underline inline-flex items-center gap-1"
+          >
+            <span>Open Full Custom Scenario Arena</span>
+            <span>↓</span>
+          </a>
+        </div>
+      </div>
     </aside>
   );
 }
@@ -202,6 +367,8 @@ function Hero({ desk, onOpenTour }: { desk: DeskState | null; onOpenTour: () => 
   const regime = useMemo(() => usEquityRegime(now), [now]);
   const imgRef = useRef<HTMLDivElement>(null);
   useParallax(imgRef);
+  const [tone, setTone] = useState<"plain" | "technical">("plain");
+
   return (
     <section aria-labelledby="hero-h" className="px-3 pb-4 pt-3 sm:px-6">
       <div className="relative mx-auto max-w-7xl overflow-clip rounded-[2rem] border border-[var(--line)] bg-[var(--bg)]">
@@ -216,19 +383,54 @@ function Hero({ desk, onOpenTour }: { desk: DeskState | null; onOpenTour: () => 
         </div>
         <div className="relative grid gap-10 px-6 pb-10 pt-14 sm:px-12 lg:min-h-[44rem] lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:px-16 lg:py-20">
           <div className="min-w-0">
-            <p className="rise" style={{ ["--i" as string]: 0 }}>
+            <div className="rise flex flex-wrap items-center gap-3" style={{ ["--i" as string]: 0 }}>
               <span className="pill max-w-full flex-wrap">
                 <span className={`h-2 w-2 rounded-full ${regime.open ? "bg-[var(--accent)]" : "bg-[var(--warn)]"}`} aria-hidden="true" />
                 {regime.label}
                 {regime.nextOpen ? <span className="mono text-[var(--text-muted)]">· next open {regime.nextOpen}</span> : null}
               </span>
-            </p>
+
+              {/* Tone Toggle */}
+              <div role="group" aria-label="Explanation tone" className="inline-flex rounded-full border border-[var(--line)] bg-[oklch(0.14_0.012_265)] p-0.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setTone("plain")}
+                  className={`min-h-[28px] rounded-full px-3 py-0.5 font-bold transition-colors cursor-pointer ${
+                    tone === "plain"
+                      ? "bg-white text-[oklch(0.15_0.012_265)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-white"
+                  }`}
+                >
+                  Plain English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTone("technical")}
+                  className={`min-h-[28px] rounded-full px-3 py-0.5 font-bold transition-colors cursor-pointer ${
+                    tone === "technical"
+                      ? "bg-white text-[oklch(0.15_0.012_265)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-white"
+                  }`}
+                >
+                  Technical Quant
+                </button>
+              </div>
+            </div>
+
             <h1 id="hero-h" className="dim-text rise mt-6 font-extrabold leading-[1.02] tracking-tight" style={{ fontSize: "var(--h1)", ["--i" as string]: 1 }}>
               The desk that trades while Wall Street sleeps.
             </h1>
-            <p className="measure rise mt-6 text-lg leading-relaxed text-[var(--text-muted)]" style={{ ["--i" as string]: 2 }}>
-              Money Boys is an autonomous agentic desk for tokenized US equities on Bitget. Four agents cooperate; a deterministic risk gate can veto any of them; every order is sealed with a SHA-256 receipt you can verify yourself.
-            </p>
+
+            {tone === "plain" ? (
+              <p className="measure rise mt-6 text-lg leading-relaxed text-[var(--text-muted)]" style={{ ["--i" as string]: 2 }}>
+                Money Boys trades Apple and NVIDIA on a crypto exchange 24 hours a day while traditional stock markets are closed. In 89 days of real prices it traded 150 times and made +4.92%, protected by non-negotiable risk rules that prevent it from gambling.
+              </p>
+            ) : (
+              <p className="measure rise mt-6 text-lg leading-relaxed text-[var(--text-muted)]" style={{ ["--i" as string]: 2 }}>
+                Money Boys is an autonomous agentic desk for tokenized US equities on Bitget. Four agents cooperate; a deterministic risk gate can veto any of them; every order is sealed with a SHA-256 receipt you can verify yourself.
+              </p>
+            )}
+
             <div className="rise mt-8 flex flex-wrap gap-3" style={{ ["--i" as string]: 3 }}>
               <a href="#test" onClick={(e) => go(e, "test")} className="btn btn-primary">⚡ Test it yourself</a>
               <button type="button" onClick={onOpenTour} className="btn btn-ghost cursor-pointer">✨ 60-Second Tour</button>
@@ -333,7 +535,7 @@ function RefusalAndPlainLanguage() {
   );
 }
 
-function RubricRouter() {
+function RubricRouter({ onOpenProvenance }: { onOpenProvenance: (details: ProvenanceDetails) => void }) {
   return (
     <section aria-labelledby="router-h" className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <div className="rounded-3xl border border-[var(--line)] bg-[oklch(0.18_0.014_265_/_0.5)] p-6 sm:p-8 backdrop-blur-md">
@@ -371,9 +573,19 @@ function RubricRouter() {
                 Judged on out-of-sample survival vs 0.5× IS floor, rolling Sharpe dispersion (1.13–7.31), and multi-asset decorrelation.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs mono text-[var(--accent)] font-bold">
-              <span>View Track 1 Rubric</span>
-              <span>&rarr;</span>
+            <div className="mt-4 pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs mono text-[var(--accent)] font-bold">
+              <span>View Track 1 Rubric &rarr;</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onOpenProvenance(PROVENANCE_DATA.sharpe);
+                }}
+                className="rounded-full bg-[var(--accent)]/15 border border-[var(--accent)]/40 px-2.5 py-1 text-[11px] font-bold text-emerald-300 hover:bg-[var(--accent)]/25 transition-colors cursor-pointer"
+              >
+                Verify Sharpe 🔍
+              </button>
             </div>
           </a>
 
@@ -392,9 +604,19 @@ function RubricRouter() {
                 Judged on agentic pipeline separation: Macro Boy proposes (dispatched: false), Risk Boy hard vetoes, and Execution Boy fills on Bitget.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs mono text-amber-400 font-bold">
-              <span>View Track 2 Rubric</span>
-              <span>&rarr;</span>
+            <div className="mt-4 pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs mono text-amber-400 font-bold">
+              <span>View Track 2 Rubric &rarr;</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onOpenProvenance(PROVENANCE_DATA.restingCancel);
+                }}
+                className="rounded-full bg-amber-500/15 border border-amber-500/40 px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:bg-amber-500/25 transition-colors cursor-pointer"
+              >
+                Verify Beat 1 🔍
+              </button>
             </div>
           </a>
 
@@ -413,9 +635,19 @@ function RubricRouter() {
                 Judged on architectural depth: live net beta gauge (&le; 2.50), sector concentration bars (&le; 60%), and trade impact diff simulation.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs mono text-purple-400 font-bold">
-              <span>View Track 3 Rubric</span>
-              <span>&rarr;</span>
+            <div className="mt-4 pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs mono text-purple-400 font-bold">
+              <span>View Track 3 Rubric &rarr;</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onOpenProvenance(PROVENANCE_DATA.dispersion);
+                }}
+                className="rounded-full bg-purple-500/15 border border-purple-500/40 px-2.5 py-1 text-[11px] font-bold text-purple-300 hover:bg-purple-500/25 transition-colors cursor-pointer"
+              >
+                Verify Stability 🔍
+              </button>
             </div>
           </a>
         </div>
@@ -933,6 +1165,7 @@ export function LandingV2({ desk }: { desk: DeskState | null }) {
   const root = useRef<HTMLDivElement>(null);
   const go = useAnchorScroll();
   const [tourOpen, setTourOpen] = useState(false);
+  const [provDetails, setProvDetails] = useState<ProvenanceDetails | null>(null);
   useReveal(root);
   return (
     <div ref={root} className="lv2 min-h-[100vh] min-h-[100svh]">
@@ -941,6 +1174,8 @@ export function LandingV2({ desk }: { desk: DeskState | null }) {
       <main id="main">
         <Hero desk={desk} onOpenTour={() => setTourOpen(true)} />
         <Strip />
+        <RubricRouter onOpenProvenance={setProvDetails} />
+        <RefusalAndPlainLanguage />
         <How />
         <Basis />
         <TestItYourselfSection />
@@ -962,6 +1197,10 @@ export function LandingV2({ desk }: { desk: DeskState | null }) {
             el.scrollIntoView({ behavior: "smooth" });
           }
         }}
+      />
+      <ProvenanceModal
+        details={provDetails}
+        onClose={() => setProvDetails(null)}
       />
     </div>
   );
