@@ -195,4 +195,19 @@ test.describe("landing-v2 page", () => {
     });
     for (const [k, r] of Object.entries(ratios)) expect(r, k).toBeGreaterThanOrEqual(4.5);
   });
+
+  test("performance tabs switch between backtest and live execution without vanishing", async ({ page }) => {
+    await stubState(page);
+    await open(page);
+    const liveBtn = page.getByRole("button", { name: "Live Bitget Execution" });
+    await liveBtn.click();
+    await expect(page.getByText("Tokenized US Equity Round-Trip")).toBeVisible();
+    await expect(page.getByText("GAP-020 RESOLVED")).toBeVisible();
+    await expect(page.getByText("1491458794516021249", { exact: true }).first()).toBeVisible();
+
+    const backtestBtn = page.getByRole("button", { name: "Track 1 Alpha Backtest" });
+    await backtestBtn.click();
+    await expect(page.getByText("Out-of-Sample Sharpe", { exact: true })).toBeVisible();
+    await expect(page.getByText("3.89", { exact: true })).toBeVisible();
+  });
 });

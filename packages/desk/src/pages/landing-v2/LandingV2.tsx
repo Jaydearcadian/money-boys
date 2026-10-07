@@ -579,7 +579,7 @@ function PerformanceSection() {
       </div>
 
       {tab === "backtest" ? (
-        <div className="reveal mt-10 grid gap-6 md:grid-cols-3" style={{ ["--i" as string]: 3 }}>
+        <div className="mt-10 grid gap-6 md:grid-cols-3">
           <div className="glass rounded-3xl p-6 md:col-span-3">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--line)] pb-4">
               <div>
@@ -633,7 +633,7 @@ function PerformanceSection() {
           </div>
         </div>
       ) : (
-        <div className="reveal mt-10 grid gap-6 md:grid-cols-2" style={{ ["--i" as string]: 3 }}>
+        <div className="mt-10 grid gap-6 md:grid-cols-2">
           <div className="glass rounded-3xl p-6">
             <div className="flex items-center justify-between">
               <span className="pill mono !py-0.5 !text-xs text-[var(--accent)]">rNVDAUSDT LIFECYCLE</span>

@@ -8,7 +8,6 @@ export function useReveal(root: RefObject<HTMLElement>) {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced || typeof IntersectionObserver === "undefined") return;
     el.setAttribute("data-motion", "on");
-    const targets = Array.from(el.querySelectorAll<HTMLElement>(".reveal"));
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
@@ -20,9 +19,22 @@ export function useReveal(root: RefObject<HTMLElement>) {
       },
       { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
     );
-    targets.forEach((t) => io.observe(t));
+    const observeTargets = () => {
+      const targets = Array.from(el.querySelectorAll<HTMLElement>(".reveal:not(.in)"));
+      targets.forEach((t) => io.observe(t));
+    };
+    observeTargets();
+
+    const mo = typeof MutationObserver !== "undefined"
+      ? new MutationObserver(() => observeTargets())
+      : null;
+    if (mo) {
+      mo.observe(el, { childList: true, subtree: true });
+    }
+
     return () => {
       io.disconnect();
+      if (mo) mo.disconnect();
       el.removeAttribute("data-motion");
     };
   }, [root]);
