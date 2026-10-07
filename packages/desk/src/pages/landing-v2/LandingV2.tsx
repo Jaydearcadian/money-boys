@@ -1198,6 +1198,26 @@ export function LandingV2({ desk }: { desk: DeskState | null }) {
           }
         }}
       />
+      {/* ── Try it yourself: inline on the Overview ──────────────────────
+          A judge should never have to FIND the sandbox to discover the product
+          works. It ran behind a nav item, which meant effectively nobody
+          clicked it. Inlined here, immediately below the hero. */}
+      <section id="try-it" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <div className="mb-8">
+          <p className="mono text-[11px] tracking-[0.2em] uppercase text-[var(--text-muted)]">
+            Run it yourself — no server, no keys
+          </p>
+          <h2 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl">
+            Click a scenario. Watch it refuse.
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--text-muted)]">
+            A real deliberation runs in your browser, a receipt is sealed with Web Crypto, and the
+            server is never contacted. The desk still cannot trade — that is the point of the design.
+          </p>
+        </div>
+        <CouncilSandbox />
+      </section>
+
       <ProvenanceModal
         details={provDetails}
         onClose={() => setProvDetails(null)}

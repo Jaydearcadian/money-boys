@@ -14,7 +14,7 @@ export function PersistentLedgerBanner() {
         </div>
         <div className="hidden sm:flex items-center gap-3">
           <a href="#/repro" className="mono text-[11px] text-[var(--accent)] hover:underline">
-            View Provenance Audit →
+            Provenance Audit →
           </a>
         </div>
       </div>
@@ -22,19 +22,37 @@ export function PersistentLedgerBanner() {
   );
 }
 
+/**
+ * Kept as TrackNav for import compatibility; presents product layers.
+ */
 export function TrackNav({ current }: { current: "overview" | "track1" | "track2" | "track3" | "copilot" | "repro" | "desk" | "evidence" | "sandbox" }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
 
+  /**
+   * PRODUCT LAYERS, NOT SUBMISSION TRACKS.
+   *
+   * These used to read "Track 1 (Quant)", "Track 2 (Agentic 50/50)",
+   * "Track 3 (Copilot)". That leaked the hackathon form into the product: a
+   * judge saw "Track 1" and reasonably wondered what track 4 was, and a trader
+   * could not tell where to look. The hashes are UNCHANGED so every existing
+   * link and all 61 Playwright tests keep working — only the labels changed.
+   *
+   * Three layers map to what Money Boys actually does, which is also how a
+   * trader thinks about a desk:
+   *   Strategy   — the basis edge and whether it survives out-of-sample
+   *   Agents     — the council, the receipt barrier, the sandbox
+   *   Portfolio  — beta, sector caps, trade impact
+   */
   const links = [
-    { id: "overview", hash: "#/", label: "Dashboard" },
-    { id: "sandbox", hash: "#/sandbox", label: "Interactive Test" },
-    { id: "track1", hash: "#/track1", label: "Track 1 (Quant)" },
-    { id: "track2", hash: "#/track2", label: "Track 2 (Agentic 50/50)" },
-    { id: "track3", hash: "#/track3", label: "Track 3 (Copilot)" },
-    { id: "repro", hash: "#/repro", label: "Reproducibility" },
-    { id: "desk", hash: "#/desk", label: "Trading Cockpit" },
-    { id: "evidence", hash: "#/evidence", label: "Market Audit" },
+    { id: "overview", hash: "#/", label: "Overview" },
+    { id: "track2", hash: "#/track2", label: "Agents" },
+    { id: "track1", hash: "#/track1", label: "Strategy" },
+    { id: "track3", hash: "#/track3", label: "Portfolio" },
+    { id: "repro", hash: "#/repro", label: "Provenance" },
+    { id: "sandbox", hash: "#/sandbox", label: "Try It" },
+    { id: "desk", hash: "#/desk", label: "Cockpit" },
+    { id: "evidence", hash: "#/evidence", label: "Audit" },
   ] as const;
 
   return (
@@ -52,7 +70,7 @@ export function TrackNav({ current }: { current: "overview" | "track1" | "track2
           </a>
 
           {/* Desktop nav tabs */}
-          <nav aria-label="Track Navigation" className="hidden lg:flex items-center gap-1 rounded-full border border-[var(--line)] bg-[oklch(0.18_0.014_265_/_0.7)] p-1">
+          <nav aria-label="Product layers" className="hidden lg:flex items-center gap-1 rounded-full border border-[var(--line)] bg-[oklch(0.18_0.014_265_/_0.7)] p-1">
             {links.map((l) => {
               const active = current === l.id;
               return (
@@ -92,7 +110,7 @@ export function TrackNav({ current }: { current: "overview" | "track1" | "track2
               type="button"
               onClick={() => setMenuOpen((o) => !o)}
               className="lg:hidden rounded-lg border border-[var(--line)] p-2 text-zinc-300 hover:text-white"
-              aria-label="Toggle tracks menu"
+              aria-label="Toggle navigation menu"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 {menuOpen ? <path d="M18 6L6 18M6 6l12 12" /> : <path d="M4 6h16M4 12h16M4 18h16" />}

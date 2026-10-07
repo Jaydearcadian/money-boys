@@ -163,6 +163,24 @@ export const API_BASE =
   (import.meta as unknown as { env?: Record<string, string> }).env?.["VITE_API_BASE"] ?? "";
 
 
+/**
+ * Turn a mutating-endpoint refusal into an INSTRUCTION, not a bare status.
+ *
+ * Over the public tunnel every mutating route answers 403 until OPERATOR_TOKEN
+ * is set on the engine. Surfacing that as raw "403 Forbidden" reads as a broken
+ * site, when in fact it is a correctly-firing access control. The operator needs
+ * to know the fix, and a visitor needs to know it is deliberate.
+ */
+export function describeOperatorRefusal(status: number, serverMessage?: string): string | null {
+  if (status !== 401 && status !== 403) return null;
+  if (serverMessage && /operator.token/i.test(serverMessage)) return serverMessage;
+  return (
+    "Operator token required. This action is a state mutation and is blocked on the public " +
+    "tunnel by design. To run it: set OPERATOR_TOKEN on the engine process (pm2 restart " +
+    "money-boys-engine), then reload. Read-only pages work without it."
+  );
+}
+
 export async function fetchEvidence(symbol?: string): Promise<EvidenceResponse> {
   const qs = symbol ? "?symbol=" + encodeURIComponent(symbol) : "";
   const res = await fetch(API_BASE + "/api/desk/evidence" + qs);
@@ -193,7 +211,10 @@ export async function toggleHalt(current: boolean): Promise<{ systemHalt: boolea
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ systemHalt: !current }),
   });
-  if (!res.ok) throw new Error("halt " + res.status);
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "");
+    throw new Error(describeOperatorRefusal(res.status, msg) ?? `halt ${res.status}`);
+  }
   return (await res.json()) as { systemHalt: boolean };
 }
 
