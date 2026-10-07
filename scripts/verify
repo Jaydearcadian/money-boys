@@ -66,7 +66,21 @@ if [[ -d packages/engine/node_modules ]] || [[ -d node_modules ]]; then
   # build is absent, so a fresh clone without `playwright install` still gets a
   # full verify signal rather than a hard failure.
   if [[ -d "${PLAYWRIGHT_BROWSERS_PATH:-$HOME/.cache/ms-playwright}" ]]; then
-    if pnpm --filter @money-boys/desk test:e2e; then pass "desk browser E2E (playwright)"; else fail "desk browser E2E (playwright)"; fi
+    # Automatically pause PM2 money-boys-engine if holding port 3001 so fixture server can bind cleanly
+    STOPPED_PM2_ENGINE=0
+    if command -v pm2 >/dev/null 2>&1 && pm2 status 2>/dev/null | grep -q "money-boys-engine.*online"; then
+      pm2 stop money-boys-engine >/dev/null 2>&1 || true
+      STOPPED_PM2_ENGINE=1
+    fi
+    if pnpm --filter @money-boys/desk test:e2e; then
+      pass "desk browser E2E (playwright)"
+    else
+      fail "desk browser E2E (playwright)"
+    fi
+    if [[ "$STOPPED_PM2_ENGINE" -eq 1 ]]; then
+      pm2 restart money-boys-engine >/dev/null 2>&1 || true
+      STOPPED_PM2_ENGINE=0
+    fi
   else
     echo "SKIP: desk browser E2E — no Playwright browsers installed (run: npx playwright install chromium)"
   fi

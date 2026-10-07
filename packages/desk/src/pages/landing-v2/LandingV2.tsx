@@ -30,10 +30,13 @@ function Logo({ className = "h-7 w-7" }: { className?: string }) {
 
 import { PersistentLedgerBanner } from "../../components/TrackNav";
 import { ProvenanceModal, VerifyBadge, PROVENANCE_DATA, type ProvenanceDetails } from "../../components/ProvenanceDrawer";
+import { OnboardingModal } from "../../components/OnboardingModal";
+import { CouncilSandbox } from "../../components/desk/CouncilSandbox";
 
 const NAV = [
   ["how", "How it works"],
   ["basis", "The edge"],
+  ["test", "Test it yourself"],
   ["guardrails", "Guardrails"],
   ["performance", "Track 1 & Live"],
   ["proof", "Proof"],
@@ -44,7 +47,7 @@ function Badge({ children }: { children: React.ReactNode }) {
   return <span className="pill mono uppercase tracking-wider text-[0.72rem]">{children}</span>;
 }
 
-function Nav() {
+function Nav({ onOpenTour }: { onOpenTour: () => void }) {
   const go = useAnchorScroll();
   const [open, setOpen] = useState(false);
   return (
@@ -59,20 +62,34 @@ function Nav() {
           <ul className="hidden items-center gap-6 text-sm font-semibold lg:flex lg:flex-1">
             {NAV.slice(0, 3).map(([id, label]) => (
               <li key={id}>
-                <a href={`#${id}`} onClick={(e) => go(e, id)} className="text-[var(--text-muted)] hover:text-white">{label}</a>
+                <a href={`#${id}`} onClick={(e) => go(e, id)} className="text-[var(--text-muted)] hover:text-white transition-colors">{label}</a>
               </li>
             ))}
           </ul>
           <a href="#/" className="flex min-h-[44px] items-center gap-2 font-extrabold tracking-tight lg:justify-center">
             <Logo /> <span>MONEY BOYS</span>
           </a>
-          <div className="hidden items-center justify-end gap-6 text-sm font-semibold lg:flex lg:flex-1">
+          <div className="hidden items-center justify-end gap-5 text-sm font-semibold lg:flex lg:flex-1">
             {NAV.slice(3).map(([id, label]) => (
-              <a key={id} href={`#${id}`} onClick={(e) => go(e, id)} className="text-[var(--text-muted)] hover:text-white">{label}</a>
+              <a key={id} href={`#${id}`} onClick={(e) => go(e, id)} className="text-[var(--text-muted)] hover:text-white transition-colors">{label}</a>
             ))}
-            <a href="#/desk" className="btn btn-primary !min-h-[44px] !px-5 !text-sm">Open the cockpit</a>
+            <button
+              type="button"
+              onClick={onOpenTour}
+              className="rounded-full border border-[var(--line)] bg-[oklch(0.20_0.015_265)] px-3.5 py-1.5 mono text-xs font-bold text-zinc-200 hover:border-[var(--accent)] hover:text-white transition-colors cursor-pointer"
+            >
+              <span>✨</span> Tour (60s)
+            </button>
+            <a href="#/desk" className="btn btn-primary !min-h-[40px] !px-4 !text-xs font-bold">Cockpit</a>
           </div>
-          <div className="lg:hidden">
+          <div className="lg:hidden flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onOpenTour}
+              className="rounded-full border border-[var(--line)] bg-white/10 px-2.5 py-1 text-xs font-bold text-zinc-200"
+            >
+              ✨ Tour
+            </button>
             <button
               type="button"
               className="btn btn-ghost !min-h-[44px] !px-4 !text-sm"
@@ -179,7 +196,7 @@ function Telemetry({ desk }: { desk: DeskState | null }) {
   );
 }
 
-function Hero({ desk }: { desk: DeskState | null }) {
+function Hero({ desk, onOpenTour }: { desk: DeskState | null; onOpenTour: () => void }) {
   const go = useAnchorScroll();
   const now = useNow();
   const regime = useMemo(() => usEquityRegime(now), [now]);
@@ -213,8 +230,9 @@ function Hero({ desk }: { desk: DeskState | null }) {
               Money Boys is an autonomous agentic desk for tokenized US equities on Bitget. Four agents cooperate; a deterministic risk gate can veto any of them; every order is sealed with a SHA-256 receipt you can verify yourself.
             </p>
             <div className="rise mt-8 flex flex-wrap gap-3" style={{ ["--i" as string]: 3 }}>
-              <a href="#/desk" className="btn btn-primary">Open the cockpit <ArrowRightIcon className="h-4 w-4" aria-hidden="true" /></a>
-              <a href="#verify" onClick={(e) => go(e, "verify")} className="btn btn-ghost">Verify a receipt</a>
+              <a href="#test" onClick={(e) => go(e, "test")} className="btn btn-primary">⚡ Test it yourself</a>
+              <button type="button" onClick={onOpenTour} className="btn btn-ghost cursor-pointer">✨ 60-Second Tour</button>
+              <a href="#/desk" className="btn btn-ghost">Open cockpit <ArrowRightIcon className="h-4 w-4" aria-hidden="true" /></a>
             </div>
             <p className="mt-6 text-sm text-[var(--text-muted)]">Bitget Demo / paper only. Not investment advice.</p>
           </div>
@@ -500,6 +518,31 @@ function Basis() {
           </div>
         </div>
       </div>
+    </section>
+  );
+}
+
+function TestItYourselfSection() {
+  return (
+    <section id="test" aria-labelledby="test-h" className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+      <div className="reveal"><Badge>Interactive Simulation</Badge></div>
+      <div className="flex flex-wrap items-center justify-between gap-4 mt-4 mb-6">
+        <div>
+          <h2 id="test-h" className="dim-text font-extrabold leading-tight tracking-tight text-white" style={{ fontSize: "var(--h2)" }}>
+            Drive the 4 agents in your browser.
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm sm:text-base text-[var(--text-muted)] leading-relaxed">
+            Zero API keys required. Zero server state changes. Test how Macro, Quant, Risk, and Execution evaluate basis spreads, enforce hard vetoes, and seal SHA-256 receipts with real Web Crypto.
+          </p>
+        </div>
+        <a
+          href="#/sandbox"
+          className="rounded-full border border-[var(--line)] bg-[oklch(0.20_0.015_265)] px-4 py-2 mono text-xs font-bold text-zinc-200 hover:border-[var(--accent)] hover:text-white transition-colors"
+        >
+          Dedicated Arena View ↗
+        </a>
+      </div>
+      <CouncilSandbox />
     </section>
   );
 }
@@ -889,16 +932,18 @@ function Footer() {
 export function LandingV2({ desk }: { desk: DeskState | null }) {
   const root = useRef<HTMLDivElement>(null);
   const go = useAnchorScroll();
+  const [tourOpen, setTourOpen] = useState(false);
   useReveal(root);
   return (
     <div ref={root} className="lv2 min-h-[100vh] min-h-[100svh]">
       <a href="#main" onClick={(e) => go(e, "main")} className="absolute left-3 top-3 z-10 -translate-y-20 rounded-full bg-white px-5 py-3 font-bold text-black focus:translate-y-0">Skip to content</a>
-      <Nav />
+      <Nav onOpenTour={() => setTourOpen(true)} />
       <main id="main">
-        <Hero desk={desk} />
+        <Hero desk={desk} onOpenTour={() => setTourOpen(true)} />
         <Strip />
         <How />
         <Basis />
+        <TestItYourselfSection />
         <Guardrails />
         <PerformanceSection />
         <VerifySection desk={desk} />
@@ -907,6 +952,17 @@ export function LandingV2({ desk }: { desk: DeskState | null }) {
         <Closing />
       </main>
       <Footer />
+      <OnboardingModal
+        isOpen={tourOpen}
+        onClose={() => setTourOpen(false)}
+        onOpenSandbox={() => {
+          setTourOpen(false);
+          const el = document.getElementById("test");
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth" });
+          }
+        }}
+      />
     </div>
   );
 }

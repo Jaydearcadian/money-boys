@@ -8,11 +8,13 @@ import { Track1Page } from "./pages/track1/Track1Page";
 import { Track2Page } from "./pages/track2/Track2Page";
 import { Track3Page } from "./pages/track3/Track3Page";
 import { ReproPage } from "./pages/repro/ReproPage";
+import { SandboxPage } from "./pages/sandbox/SandboxPage";
 
-type Route = "desk" | "evidence" | "landing" | "v1" | "track1" | "track2" | "track3" | "copilot" | "repro";
+type Route = "desk" | "evidence" | "landing" | "v1" | "track1" | "track2" | "track3" | "copilot" | "repro" | "sandbox";
 
 function route(): Route {
   const h = window.location.hash;
+  if (h.startsWith("#/sandbox") || h.startsWith("#/test")) return "sandbox";
   if (h.startsWith("#/desk")) return "desk";
   if (h.startsWith("#/evidence")) return "evidence";
   if (h.startsWith("#/track1")) return "track1";
@@ -33,6 +35,7 @@ export default function App() {
     fetchState().then(setDesk).catch(() => { /* landing renders without engine */ });
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+  if (r === "sandbox") return <SandboxPage />;
   if (r === "desk") return <DeskPage />;
   if (r === "evidence") return <EvidencePage />;
   if (r === "track1") return <Track1Page />;
