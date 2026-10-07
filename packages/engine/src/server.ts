@@ -125,7 +125,10 @@ export function stopServer(server: Server): Promise<void> {
 
 export { TELEMETRY_PORT, COMMIT };
 
-const isMain = process.argv[1] != null && import.meta.url === pathToFileURL(process.argv[1]).href;
+const isMain =
+  (process.argv[1] != null && import.meta.url === pathToFileURL(process.argv[1]).href) ||
+  process.argv.some((a) => typeof a === "string" && a.endsWith("server.ts")) ||
+  process.env["RUN_SERVER"] === "1";
 if (isMain) {
   const server = createTelemetryServer();
   server.listen(TELEMETRY_PORT, "127.0.0.1", () => { console.log("[telemetry] MONEY BOYS desk telemetry listening on 127.0.0.1:" + TELEMETRY_PORT + " commit=" + COMMIT); });

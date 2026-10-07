@@ -29,12 +29,13 @@ module.exports = {
       interpreter_args: "--import tsx",
       env: {
         PORT: 3001,
+        RUN_SERVER: "1",
         NODE_ENV: "production",
       },
     },
     {
       name: "money-boys-desk",
-      script: "node_modules/.bin/vite",
+      script: "node_modules/vite/bin/vite.js",
       args: "preview --host 0.0.0.0 --port 3000",
       cwd: "packages/desk",
       env: {
