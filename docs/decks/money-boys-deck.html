@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Money Boys — Bitget Agentic Trading Desk</title>
+<style>
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   Include this ENTIRE file in every presentation.
+   Slides are authored at 1920×1080 and scaled as a whole.
+   =========================================== */
+
+/* 1. Lock the browser viewport */
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+/* 2. Full-window deck viewport */
+.deck-viewport {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+/* 3. Fixed 16:9 design canvas.
+   JavaScript sets transform: translate(...) scale(...). */
+.deck-stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    transform-origin: 0 0;
+    background: var(--slide-bg, #fff);
+}
+
+/* 4. Slides stack inside the fixed stage.
+   Content must be laid out at 1920×1080, not reflowed per device. */
+.slide {
+    position: absolute;
+    inset: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    background: var(--slide-bg, #fff);
+}
+
+.slide.active,
+.slide.visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 1;
+}
+
+/* 5. Keep media inside authored slide bounds */
+img,
+video,
+canvas,
+svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* 6. Presentation chrome stays outside the slide design system */
+.deck-controls {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+
+/* 7. Print one fixed-size slide per page */
+@media print {
+    html,
+    body {
+        width: 1920px;
+        height: auto;
+        overflow: visible;
+        background: #fff;
+    }
+
+    .deck-viewport {
+        position: static;
+        overflow: visible;
+        background: #fff;
+    }
+
+    .deck-stage {
+        position: static;
+        width: auto;
+        height: auto;
+        transform: none !important;
+        background: none;
+    }
+
+    .slide {
+        position: relative;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        width: 1920px;
+        height: 1080px;
+        break-after: page;
+        page-break-after: always;
+    }
+
+    .slide:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+
+    .deck-controls {
+        display: none !important;
+    }
+}
+
+/* 8. Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+}
+
+
+/* ── Money Boys institutional palette: obsidian substrate ───────────────── */
+:root {
+  --stage-bg: #05070B;
+  --slide-bg: #07090E;
+  --ink: #E8ECF4;
+  --ink-dim: #8B97AC;
+  --ink-faint: #4A5567;
+  --rule: #1B2230;
+  --accent: #C8FF4D;      /* signal lime — the "go" colour, used sparingly */
+  --warn: #FF6B4A;        /* veto red */
+  --cool: #5BC8FF;        /* measurement blue */
+  --panel: #0D1119;
+  --font-display: "Bodoni Moda", "Didot", "Playfair Display", Georgia, serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  --font-body: "Work Sans", "Helvetica Neue", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+/* ── Entrance choreography: one orchestrated load, staggered ───────────── */
+@keyframes rise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+@keyframes draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+
+.slide.active .rise { animation: rise .8s cubic-bezier(.16,1,.3,1) backwards; }
+.d1 { animation-delay:.05s } .d2 { animation-delay:.14s } .d3 { animation-delay:.23s }
+.d4 { animation-delay:.32s } .d5 { animation-delay:.41s } .d6 { animation-delay:.50s }
+.slide.active .draw { animation: draw 1.1s cubic-bezier(.16,1,.3,1) backwards; transform-origin: left; }
+
+.pad { padding: 96px 120px; height: 100%; display: flex; flex-direction: column; }
+.eyebrow { font-family: var(--font-mono); font-size: 20px; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--ink-faint); margin: 0 0 28px; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: 132px; line-height: .96;
+  letter-spacing: -.02em; margin: 0; color: var(--ink); }
+h2 { font-family: var(--font-display); font-weight: 400; font-size: 84px; line-height: 1.02;
+  letter-spacing: -.015em; margin: 0 0 20px; color: var(--ink); }
+.lede { font-family: var(--font-body); font-size: 32px; line-height: 1.45; color: var(--ink-dim);
+  max-width: 1180px; margin: 0; }
+.rule { height: 1px; background: var(--rule); margin: 44px 0; transform-origin: left; }
+.mono { font-family: var(--font-mono); color: var(--ink-dim); font-size: 21px; }
+em { font-style: normal; color: var(--accent); }
+
+/* ── Stat row ─────────────────────────────────────────────────────────── */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+  background: var(--rule); border: 1px solid var(--rule); margin-top: 8px; }
+.stat { background: var(--slide-bg); padding: 40px 38px; }
+.stat .v { font-family: var(--font-display); font-size: 78px; line-height: 1; color: var(--ink); }
+.stat .k { font-family: var(--font-mono); font-size: 18px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-faint); margin-top: 14px; }
+.stat.good .v { color: var(--accent); }
+.stat.cool .v { color: var(--cool); }
+
+/* ── Refusal panel: the most human slide in the deck ──────────────────── */
+.refusal { border: 1px solid var(--warn); background: rgba(255,107,74,.06);
+  padding: 52px 56px; display: flex; gap: 44px; align-items: flex-start; }
+.refusal .big { font-family: var(--font-display); font-size: 66px; line-height: 1.05; color: var(--warn); }
+.refusal p { font-family: var(--font-body); font-size: 27px; line-height: 1.5; color: var(--ink-dim);
+  margin: 0; max-width: 900px; }
+
+/* ── Gate table ───────────────────────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 24px; }
+th { text-align: left; font-weight: 400; color: var(--ink-faint); letter-spacing: .14em;
+  text-transform: uppercase; font-size: 17px; padding: 0 0 18px; border-bottom: 1px solid var(--rule); }
+td { padding: 24px 0; border-bottom: 1px solid var(--rule); color: var(--ink-dim); }
+td.n { color: var(--ink); font-variant-numeric: tabular-nums; }
+.pass { color: var(--accent); }
+.block { color: var(--warn); }
+.hold { color: var(--ink-faint); }
+
+/* ── Decay visual: IS vs floor vs OOS ─────────────────────────────────── */
+.bars { display: flex; align-items: flex-end; gap: 74px; height: 430px; margin-top: 10px; }
+.bar { display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
+.bar .col { background: var(--ink-faint); }
+.bar.oos .col { background: var(--accent); }
+.bar .lab { font-family: var(--font-mono); font-size: 19px; color: var(--ink-faint);
+  margin-top: 18px; letter-spacing: .1em; text-transform: uppercase; }
+.bar .num { font-family: var(--font-display); font-size: 54px; color: var(--ink); margin-bottom: 12px; }
+.floor { position: relative; border-top: 2px dashed var(--warn); }
+.floor span { position: absolute; right: 0; top: -46px; font-family: var(--font-mono);
+  font-size: 19px; color: var(--warn); letter-spacing: .1em; }
+
+/* ── Pipeline ─────────────────────────────────────────────────────────── */
+.pipe { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+.beat { border: 1px solid var(--rule); background: var(--panel); padding: 40px 38px; position: relative; }
+.beat .n { font-family: var(--font-mono); font-size: 18px; letter-spacing: .2em; color: var(--ink-faint); }
+.beat h3 { font-family: var(--font-display); font-weight: 400; font-size: 40px; margin: 16px 0 14px; color: var(--ink); }
+.beat p { font-family: var(--font-body); font-size: 22px; line-height: 1.5; color: var(--ink-dim); margin: 0; }
+.tag { display: inline-block; font-family: var(--font-mono); font-size: 17px; letter-spacing: .1em;
+  padding: 7px 14px; border: 1px solid var(--rule); margin-top: 22px; color: var(--ink-faint); }
+.tag.no { border-color: var(--accent); color: var(--accent); }
+
+/* ── Ledger strip: the governance signal ──────────────────────────────── */
+.ledger { display: flex; gap: 0; border: 1px solid var(--rule); }
+.ledger div { flex: 1; padding: 30px 34px; border-right: 1px solid var(--rule); }
+.ledger div:last-child { border-right: 0; }
+.ledger .v { font-family: var(--font-display); font-size: 62px; line-height: 1; }
+.ledger .k { font-family: var(--font-mono); font-size: 16px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-faint); margin-top: 12px; }
+
+.quote { font-family: var(--font-display); font-size: 62px; line-height: 1.24;
+  color: var(--ink); max-width: 1500px; margin: 0; }
+.foot { position: absolute; left: 120px; bottom: 76px; font-family: var(--font-mono);
+  font-size: 19px; color: var(--ink-faint); letter-spacing: .1em; }
+
+.deck-controls { display: flex; gap: 14px; align-items: center;
+  font-family: var(--font-mono); font-size: 15px; color: var(--ink-faint); }
+.deck-controls button { background: transparent; border: 1px solid var(--rule);
+  color: var(--ink-dim); font-family: var(--font-mono); font-size: 15px;
+  padding: 9px 16px; cursor: pointer; }
+.deck-controls button:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+<div class="deck-stage" id="stage">
+
+  <!-- 1 ─ TITLE ─────────────────────────────────────────────────────── -->
+  <section class="slide active" id="s1">
+    <div class="pad">
+      <p class="eyebrow rise d1">Bitget Agentic Trading Track · Tokenized US Equities</p>
+      <h1 class="rise d2">Money&nbsp;Boys</h1>
+      <p class="lede rise d3" style="margin-top:34px">
+        An autonomous desk for rTokens on Bitget v2 — where the model
+        <em>proposes</em> and deterministic code decides.
+      </p>
+      <div class="rule draw d4" style="margin-top:52px"></div>
+      <p class="mono rise d5" style="margin-top:26px">
+        Zero LLM order authority · SHA-256 receipt before every dispatch · 17 gaps closed under audit
+      </p>
+    </div>
+    <div class="foot">01 / 09</div>
+  </section>
+
+  <!-- 2 ─ THE THESIS IN PLAIN WORDS ──────────────────────────────────── -->
+  <section class="slide" id="s2">
+    <div class="pad">
+      <p class="eyebrow rise d1">What this actually is</p>
+      <h2 class="rise d2">It follows NVIDIA and Apple<br/>on a crypto exchange.</h2>
+      <p class="lede rise d3" style="margin-top:30px">
+        Those stocks now trade 24/7 as tokenised futures. Ours reads the gap between
+        the token and the share it tracks, and only proposes when the gap is wider
+        than the cost of trading.
+      </p>
+      <div class="stats rise d4" style="margin-top:56px">
+        <div class="stat cool"><div class="v">5</div><div class="k">pairs tracked</div></div>
+        <div class="stat"><div class="v">89</div><div class="k">days of real prices</div></div>
+        <div class="stat"><div class="v">150</div><div class="k">trades simulated</div></div>
+        <div class="stat"><div class="v">64</div><div class="k">shared trading days</div></div>
+      </div>
+      <p class="mono rise d5" style="margin-top:34px">
+        No weekend forward-filling. 26 token dates had no equity counterpart and were excluded, not invented.
+      </p>
+    </div>
+    <div class="foot">02 / 09</div>
+  </section>
+
+  <!-- 3 ─ THE REFUSAL ────────────────────────────────────────────────── -->
+  <section class="slide" id="s3">
+    <div class="pad">
+      <p class="eyebrow rise d1">The behaviour that matters</p>
+      <div class="refusal rise d2" style="margin-top:18px">
+        <div class="big">It said<br/>no.</div>
+        <p>
+          In every live market check we ran, the price gap was smaller than the cost
+          of trading — so the desk refused. Most systems trade anyway and hope.
+          <br/><br/>
+          A gap of <strong style="color:var(--ink)">0.0100%</strong> against a friction
+          hurdle of <strong style="color:var(--ink)">0.0200%</strong> is not an
+          opportunity. It is a fee with a rounding error attached.
+        </p>
+      </div>
+      <div class="stats rise d3" style="margin-top:52px">
+        <div class="stat"><div class="v">NEUTRAL</div><div class="k">every live read</div></div>
+        <div class="stat good"><div class="v">0</div><div class="k">unauthorized trades</div></div>
+        <div class="stat"><div class="v">0</div><div class="k">venue calls on veto</div></div>
+        <div class="stat"><div class="v">100%</div><div class="k">receipts sealed</div></div>
+      </div>
+    </div>
+    <div class="foot">03 / 09</div>
+  </section>
+
+  <!-- 4 ─ TRACK 1: THE DECAY TEST ────────────────────────────────────── -->
+  <section class="slide" id="s4">
+    <div class="pad">
+      <p class="eyebrow rise d1">Track 1 · Alpha Factory — the acceptance test</p>
+      <h2 class="rise d2">Does it survive<br/>outside its training window?</h2>
+      <div class="bars rise d3">
+        <div class="bar"><div class="num">2.94</div><div class="col" style="height:241px"></div><div class="lab">In-sample</div></div>
+        <div class="bar"><div class="num" style="color:var(--warn)">1.47</div><div class="col" style="height:120px;background:var(--warn);opacity:.35"></div><div class="lab">0.5× floor</div></div>
+        <div class="bar oos"><div class="num" style="color:var(--accent)">3.89</div><div class="col" style="height:319px"></div><div class="lab">Out-of-sample</div></div>
+      </div>
+      <p class="mono rise d4" style="margin-top:44px">
+        Decay ratio <em style="color:var(--accent)">1.32×</em> — held-out performance <strong style="color:var(--accent)">above</strong> the in-sample figure.
+        48 held-out trades against a ≥30 gate.
+      </p>
+    </div>
+    <div class="foot">04 / 09</div>
+  </section>
+
+  <!-- 5 ─ TRACK 1: THE CAVEATS WE VOLUNTEER ─────────────────────────── -->
+  <section class="slide" id="s5">
+    <div class="pad">
+      <p class="eyebrow rise d1">Track 1 — disclosed before you ask</p>
+      <h2 class="rise d2">What the average<br/>hides.</h2>
+      <table class="rise d3" style="margin-top:44px">
+        <thead><tr><th>Observation</th><th>Number</th><th>What it means</th></tr></thead>
+        <tbody>
+          <tr><td>Rolling 30-day Sharpe spread</td><td class="n">1.13 — 7.31</td><td>6.5× dispersion. Regime-sensitive, <span class="hold">not stable</span>.</td></tr>
+          <tr><td>Out-of-sample exceeds in-sample</td><td class="n">3.89 &gt; 2.94</td><td>Atypical. Timing variance compression, not skill.</td></tr>
+          <tr><td>Pairwise correlation ρ̄</td><td class="n">0.197</td><td>Asynchronous entries — <span class="hold">not</span> beta diversification.</td></tr>
+          <tr><td>Effective assets N<sub>eff</sub></td><td class="n">2.80</td><td>Derived heuristic, not proof of orthogonal risk.</td></tr>
+          <tr><td>Common shock exposure</td><td class="n">5 of 5</td><td>All long US mega-cap tech. Tail risk correlates.</td></tr>
+        </tbody>
+      </table>
+      <p class="mono rise d4" style="margin-top:34px">
+        Every figure above is in the artifact, not just this slide.
+      </p>
+    </div>
+    <div class="foot">05 / 09</div>
+  </section>
+
+  <!-- 6 ─ TRACK 2: THE BARRIER ──────────────────────────────────────── -->
+  <section class="slide" id="s6">
+    <div class="pad">
+      <p class="eyebrow rise d1">Track 2 · Agentic Trading — the barrier</p>
+      <h2 class="rise d2">Three steps between<br/>an idea and an order.</h2>
+      <div class="pipe rise d3" style="margin-top:50px">
+        <div class="beat">
+          <div class="n">BEAT 1</div>
+          <h3>The model proposes</h3>
+          <p>Qwen reads the market and forms a view. It holds no API key and cannot reach the exchange.</p>
+          <div class="tag no">dispatched: false</div>
+        </div>
+        <div class="beat">
+          <div class="n">BEAT 2</div>
+          <h3>Deterministic code decides</h3>
+          <p>Risk veto is checked <em>before</em> scoring and cannot be outvoted. Receipt sealed with SHA-256.</p>
+          <div class="tag">I-02 · I-03</div>
+        </div>
+        <div class="beat">
+          <div class="n">BEAT 3</div>
+          <h3>The venue executes</h3>
+          <p>Signed REST to Bitget v2. Fill, read back, close, read back flat.</p>
+          <div class="tag">Demo · paptrading:1</div>
+        </div>
+      </div>
+      <p class="mono rise d4" style="margin-top:40px">
+        A vetoed receipt makes <strong style="color:var(--accent)">zero</strong> network calls. Counted with a client spy, not asserted.
+      </p>
+    </div>
+    <div class="foot">06 / 09</div>
+  </section>
+
+  <!-- 7 ─ TRACK 2/3: LIVE PROOF ─────────────────────────────────────── -->
+  <section class="slide" id="s7">
+    <div class="pad">
+      <p class="eyebrow rise d1">Proven against the venue, not asserted</p>
+      <h2 class="rise d2">It trades, and<br/>it closes.</h2>
+      <table class="rise d3" style="margin-top:44px">
+        <thead><tr><th>Step</th><th>Result</th><th>Evidence</th></tr></thead>
+        <tbody>
+          <tr><td>Veto pre-check</td><td class="n block">refused, 0 venue calls</td><td class="mono">counting client spy</td></tr>
+          <tr><td>Live open · rNVDAUSDT</td><td class="n pass">FILLED in 135.8 ms</td><td class="mono">1491434982630129665</td></tr>
+          <tr><td>Read-back</td><td class="n">live · holdSide long</td><td class="mono">/detail</td></tr>
+          <tr><td>Live close</td><td class="n pass">FILLED in 123.8 ms</td><td class="mono">1491434983930363905</td></tr>
+          <tr><td>Final residual</td><td class="n pass">0 — account flat</td><td class="mono">venue read-back</td></tr>
+        </tbody>
+      </table>
+      <p class="mono rise d4" style="margin-top:34px">
+        Portfolio Copilot: net β ≤ 2.50 · sector ≤ 60% · single asset ≤ 40% — all HARD_VETO.
+      </p>
+    </div>
+    <div class="foot">07 / 09</div>
+  </section>
+
+  <!-- 8 ─ GOVERNANCE ────────────────────────────────────────────────── -->
+  <section class="slide" id="s8">
+    <div class="pad">
+      <p class="eyebrow rise d1">The part nobody else shows</p>
+      <h2 class="rise d2">We found our own<br/>backtest was fake.</h2>
+      <p class="lede rise d3" style="margin-top:28px; font-size:28px">
+        It reported a 100% win rate and zero drawdown. It was a hardcoded price table plus
+        hand-written headlines — no market data at any point. We stamped it
+        <em>SYNTHETIC</em>, quarantined it, and rebuilt from venue candles.
+      </p>
+      <div class="ledger rise d4" style="margin-top:48px">
+        <div><div class="v">17</div><div class="k">closed</div></div>
+        <div><div class="v">5</div><div class="k">open</div></div>
+        <div><div class="v" style="color:var(--warn)">1</div><div class="k">blocked external</div></div>
+        <div><div class="v">22</div><div class="k">total gaps</div></div>
+      </div>
+      <p class="mono rise d5" style="margin-top:34px">
+        GAP-019 stays blocked: Robinhood's terms are ambiguous. No AI signed that decision, and none will.
+      </p>
+    </div>
+    <div class="foot">08 / 09</div>
+  </section>
+
+  <!-- 9 ─ CLOSE ─────────────────────────────────────────────────────── -->
+  <section class="slide" id="s9">
+    <div class="pad">
+      <p class="eyebrow rise d1">Intelligence proposes</p>
+      <p class="quote rise d2">Deterministic risk decides.</p>
+      <div class="rule draw d3" style="margin-top:56px;max-width:900px"></div>
+      <p class="mono rise d4" style="margin-top:34px">
+        Bitget API v2 · Reality rTokens · Alibaba Cloud DashScope Qwen · Node + TypeScript + Zod
+      </p>
+      <p class="mono rise d5" style="margin-top:16px">
+        Live desk · open sandbox · receipts you can verify in your own browser
+      </p>
+    </div>
+    <div class="foot">09 / 09</div>
+  </section>
+
+</div>
+</div>
+
+<div class="deck-controls">
+  <button id="prev" type="button">←</button>
+  <span id="ind">1 / 9</span>
+  <button id="next" type="button">→</button>
+</div>
+
+<script>
+(function () {
+  var STAGE_W = 1920, STAGE_H = 1080;
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage');
+  var ind = document.getElementById('ind');
+  var i = 0;
+
+  function fit() {
+    var s = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+    var x = (window.innerWidth - STAGE_W * s) / 2;
+    var y = (window.innerHeight - STAGE_H * s) / 2;
+    stage.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + s + ')';
+  }
+
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function (el, k) { el.classList.toggle('active', k === i); });
+    ind.textContent = (i + 1) + ' / ' + slides.length;
+    // Re-trigger entrance animations by forcing reflow.
+    var s = slides[i];
+    void s.offsetWidth;
+  }
+
+  document.getElementById('next').addEventListener('click', function () { show(i + 1); });
+  document.getElementById('prev').addEventListener('click', function () { show(i - 1); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); show(i + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(i - 1); }
+    if (e.key === 'Home') { show(0); }
+    if (e.key === 'End') { show(slides.length - 1); }
+  });
+
+  window.addEventListener('resize', fit);
+  fit();
+  show(0);
+})();
+</script>
+</body>
+</html>
