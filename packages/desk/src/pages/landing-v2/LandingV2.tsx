@@ -28,6 +28,8 @@ function Logo({ className = "h-7 w-7" }: { className?: string }) {
   );
 }
 
+import { PersistentLedgerBanner } from "../../components/TrackNav";
+
 const NAV = [
   ["how", "How it works"],
   ["basis", "The edge"],
@@ -45,52 +47,64 @@ function Nav() {
   const go = useAnchorScroll();
   const [open, setOpen] = useState(false);
   return (
-    <header className="sticky top-0 z-10 px-3 pt-3 sm:px-6">
-      <nav
-        aria-label="Primary"
-        className="glass mx-auto flex max-w-6xl items-center justify-between rounded-full px-4 py-2 sm:px-6"
-        style={{ background: "oklch(0.15 0.012 265 / 0.78)" }}
-      >
-        <ul className="hidden items-center gap-6 text-sm font-semibold lg:flex lg:flex-1">
-          {NAV.slice(0, 3).map(([id, label]) => (
-            <li key={id}>
-              <a href={`#${id}`} onClick={(e) => go(e, id)} className="text-[var(--text-muted)] hover:text-white">{label}</a>
-            </li>
-          ))}
-        </ul>
-        <a href="#/" className="flex min-h-[44px] items-center gap-2 font-extrabold tracking-tight lg:justify-center">
-          <Logo /> <span>MONEY BOYS</span>
-        </a>
-        <div className="hidden items-center justify-end gap-6 text-sm font-semibold lg:flex lg:flex-1">
-          {NAV.slice(3).map(([id, label]) => (
-            <a key={id} href={`#${id}`} onClick={(e) => go(e, id)} className="text-[var(--text-muted)] hover:text-white">{label}</a>
-          ))}
-          <a href="#/desk" className="btn btn-primary !min-h-[44px] !px-5 !text-sm">Open the cockpit</a>
-        </div>
-        <div className="lg:hidden">
-          <button
-            type="button"
-            className="btn btn-ghost !min-h-[44px] !px-4 !text-sm"
-            aria-expanded={open}
-            aria-controls="lv2-menu"
-            onClick={() => setOpen((o) => !o)}
-          >
-            {open ? "Close" : "Menu"}
-          </button>
-        </div>
-      </nav>
-      {open && (
-        <div id="lv2-menu" className="glass mx-auto mt-2 max-w-6xl rounded-3xl p-4 lg:hidden" style={{ background: "oklch(0.15 0.012 265 / 0.95)" }}>
-          <ul className="flex flex-col">
-            {NAV.map(([id, label]) => (
+    <header className="sticky top-0 z-10">
+      <PersistentLedgerBanner />
+      <div className="px-3 pt-3 sm:px-6">
+        <nav
+          aria-label="Primary"
+          className="glass mx-auto flex max-w-6xl items-center justify-between rounded-full px-4 py-2 sm:px-6"
+          style={{ background: "oklch(0.15 0.012 265 / 0.78)" }}
+        >
+          <ul className="hidden items-center gap-6 text-sm font-semibold lg:flex lg:flex-1">
+            {NAV.slice(0, 3).map(([id, label]) => (
               <li key={id}>
-                <a href={`#${id}`} className="flex min-h-[48px] items-center font-semibold" onClick={(e) => { setOpen(false); go(e, id); }}>{label}</a>
+                <a href={`#${id}`} onClick={(e) => go(e, id)} className="text-[var(--text-muted)] hover:text-white">{label}</a>
               </li>
             ))}
-            <li><a href="#/desk" className="btn btn-primary mt-2 w-full">Open the cockpit</a></li>
           </ul>
-        </div>
-      )}
+          <a href="#/" className="flex min-h-[44px] items-center gap-2 font-extrabold tracking-tight lg:justify-center">
+            <Logo /> <span>MONEY BOYS</span>
+          </a>
+          <div className="hidden items-center justify-end gap-6 text-sm font-semibold lg:flex lg:flex-1">
+            {NAV.slice(3).map(([id, label]) => (
+              <a key={id} href={`#${id}`} onClick={(e) => go(e, id)} className="text-[var(--text-muted)] hover:text-white">{label}</a>
+            ))}
+            <a href="#/desk" className="btn btn-primary !min-h-[44px] !px-5 !text-sm">Open the cockpit</a>
+          </div>
+          <div className="lg:hidden">
+            <button
+              type="button"
+              className="btn btn-ghost !min-h-[44px] !px-4 !text-sm"
+              aria-expanded={open}
+              aria-controls="lv2-menu"
+              onClick={() => setOpen((o) => !o)}
+            >
+              {open ? "Close" : "Menu"}
+            </button>
+          </div>
+        </nav>
+        {open && (
+          <div id="lv2-menu" className="glass mx-auto mt-2 max-w-6xl rounded-3xl p-4 lg:hidden" style={{ background: "oklch(0.15 0.012 265 / 0.95)" }}>
+            <ul className="flex flex-col">
+              {NAV.map(([id, label]) => (
+                <li key={id}>
+                  <a href={`#${id}`} className="flex min-h-[48px] items-center font-semibold" onClick={(e) => { setOpen(false); go(e, id); }}>{label}</a>
+                </li>
+              ))}
+              <li className="border-t border-[var(--line)] pt-3 mt-2">
+                <div className="text-xs mono uppercase text-[var(--text-muted)] px-1 mb-2 font-bold">Track Rubrics:</div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <a href="#/track1" className="p-2 rounded-lg bg-white/5 text-white font-bold">Track 1 (Quant)</a>
+                  <a href="#/track2" className="p-2 rounded-lg bg-white/5 text-white font-bold">Track 2 (Agentic)</a>
+                  <a href="#/track3" className="p-2 rounded-lg bg-white/5 text-white font-bold">Track 3 (Copilot)</a>
+                  <a href="#/repro" className="p-2 rounded-lg bg-white/5 text-white font-bold">Reproducibility</a>
+                </div>
+              </li>
+              <li><a href="#/desk" className="btn btn-primary mt-3 w-full">Open the cockpit</a></li>
+            </ul>
+          </div>
+        )}
+      </div>
     </header>
   );
 }
@@ -537,12 +551,21 @@ function PerformanceSection() {
         </div>
       )}
 
-      <div className="reveal mt-8 flex flex-wrap gap-4" style={{ ["--i" as string]: 4 }}>
+      <div className="reveal mt-8 flex flex-wrap gap-3" style={{ ["--i" as string]: 4 }}>
         <a href="#/desk" className="btn btn-primary">
           Open the live cockpit <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
         </a>
-        <a href="#/evidence" className="btn btn-ghost">
-          Inspect benchmark pre-flight
+        <a href="#/track1" className="btn btn-ghost !text-xs !font-bold">
+          Track 1 (Quant Proof) &rarr;
+        </a>
+        <a href="#/track2" className="btn btn-ghost !text-xs !font-bold">
+          Track 2 (Agentic Timeline) &rarr;
+        </a>
+        <a href="#/track3" className="btn btn-ghost !text-xs !font-bold">
+          Track 3 (Copilot Depth) &rarr;
+        </a>
+        <a href="#/repro" className="btn btn-ghost !text-xs !font-bold text-[var(--accent)]">
+          Reproducibility &amp; Quarantine &rarr;
         </a>
       </div>
     </section>

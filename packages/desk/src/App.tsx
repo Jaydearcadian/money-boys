@@ -4,17 +4,22 @@ import { LandingPage } from "./pages/Landing";
 import { DeskPage } from "./pages/Desk";
 import { EvidencePage } from "./pages/Evidence";
 import { LandingV2 } from "./pages/landing-v2/LandingV2";
+import { Track1Page } from "./pages/track1/Track1Page";
+import { Track2Page } from "./pages/track2/Track2Page";
+import { Track3Page } from "./pages/track3/Track3Page";
+import { ReproPage } from "./pages/repro/ReproPage";
 
-/**
- * Three surfaces, deliberately separate routes rather than tabs: a tab would
- * visually imply one pipeline with two panels, and these are not one pipeline.
- * #/evidence is the read-only benchmark pre-flight. #/desk is the Bitget Demo
- * venue lifecycle. Neither is connected end-to-end to the other.
- */
-function route(): "desk" | "evidence" | "landing" | "v1" {
+type Route = "desk" | "evidence" | "landing" | "v1" | "track1" | "track2" | "track3" | "copilot" | "repro";
+
+function route(): Route {
   const h = window.location.hash;
   if (h.startsWith("#/desk")) return "desk";
   if (h.startsWith("#/evidence")) return "evidence";
+  if (h.startsWith("#/track1")) return "track1";
+  if (h.startsWith("#/track2")) return "track2";
+  if (h.startsWith("#/track3")) return "track3";
+  if (h.startsWith("#/copilot")) return "copilot";
+  if (h.startsWith("#/repro")) return "repro";
   if (h.startsWith("#/v1")) return "v1";
   return "landing";
 }
@@ -30,6 +35,10 @@ export default function App() {
   }, []);
   if (r === "desk") return <DeskPage />;
   if (r === "evidence") return <EvidencePage />;
+  if (r === "track1") return <Track1Page />;
+  if (r === "track2") return <Track2Page />;
+  if (r === "track3" || r === "copilot") return <Track3Page />;
+  if (r === "repro") return <ReproPage />;
   if (r === "v1") return <LandingPage latest={desk?.latestReceipt ?? null} />;
   return <LandingV2 desk={desk} />;
 }
