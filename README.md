@@ -113,6 +113,31 @@ PAPER              ≠ LIVE CAPITAL
 
 ---
 
+## 4b. Independent Audit
+
+A **Bitget GetAgent Studio audit** (`foundry/evidence/audit/andrew_studio_signoff.json`) signed off on **2026-10-08**.
+
+**Disposition: APPROVED** for public Studio publication and continued Paper observation.
+
+| Pillar | Status |
+|---|---|
+| Package identity (SHA-256 fingerprint vs published entity) | **PASS** — byte-level confirmed |
+| Fee resilience (12bps round-trip taker, 2bps slippage) | **PASS** — net PF 1.735 clears modelled friction |
+| Public Studio registry visibility | **PASS** |
+| Statistical integrity | **CONDITIONAL_PASS** |
+
+**Read the conditional honestly.** On a sample of **20 trades** (11 in holdout): net realized P&L **+$15.0067**, win rate **60.0%**, net profit factor **1.735**, expectancy **+$0.75/trade**. Edge persisted after dropping the largest winner (+$4.79, PF 1.44).
+
+**This is a 20-trade Studio sample, not the 89-day backtest in §3, and it is not a substitute for it.** The auditor's own qualification: *"Small sample size (11 holdout trades); frozen 500-bar walk-forward remains validation boundary."*
+
+**Operational constraints carried into publication:**
+
+- No rebinding or version switching while the Paper account holds an open 1.26 NVDA contract
+- Preserve Paper capital balance; do not reset capital during monitoring
+- Active Paper position outperforming benchmark by +87bps
+
+---
+
 ## 5. Product Surfaces
 
 | Layer | Route | What it is |

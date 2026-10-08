@@ -11,3 +11,7 @@ dist/
 .secrets/
 *.key
 *.enc
+
+# Playwright artifacts — never public
+test-results/
+playwright-report/

@@ -1,0 +1,54 @@
+{
+  "artifactType": "BITGET_STUDIO_AUDIT_SIGNOFF",
+  "auditor": "Andrew (Bitget GetAgent Studio Resident Auditor)",
+  "date": "2026-10-08T09:44:00Z",
+  "disposition": "APPROVED",
+  "scope": "Public Studio publication and continued Paper observation",
+  "playbook": {
+    "name": "Money Boys RWA Basis Desk",
+    "primaryId": "3010803e-9b57-4eec-8d2d-99f9377bc88a",
+    "secondaryId": "dc8435f0-5b54-4293-b778-790439bd422e",
+    "packageVersion": "3424a187-da22-4283-ab2e-5eaa24224578",
+    "packageFingerprint": "13ac8ecb6b9074a16174bb72138cf662df94eecbb5d400236a287a916654f53",
+    "visibility": "published",
+    "status": "ready",
+    "leaderboardStatus": "listed"
+  },
+  "verifiedPillars": {
+    "statisticalIntegrity": {
+      "status": "CONDITIONAL_PASS",
+      "sampleTrades": 20,
+      "repairedWinRate": 0.60,
+      "netRealizedPnlUsdt": 15.0067,
+      "netProfitFactor": 1.735,
+      "netExpectancyPerTradeUsdt": 0.75,
+      "holdoutEdgePersistence": "Edge survives dropping largest winner (+4.79 USDT, PF 1.44)",
+      "qualification": "Small sample size (11 holdout trades); frozen 500-bar walk-forward remains validation boundary"
+    },
+    "feeResilience": {
+      "status": "PASS",
+      "modeledTakerFee": "12 bps round-trip (6 bps each side)",
+      "modeledSlippage": "2 bps market order",
+      "makerRebates": "None (0 bps)",
+      "finding": "Net profit factor 1.735 clears transaction cost friction in tested sample"
+    },
+    "packageIdentity": {
+      "status": "PASS",
+      "method": "sha256sum package.tar.gz vs Studio Settings/Parameters fingerprint",
+      "hash": "13ac8ecb6b9074a16174bb72138cf662df94eecbb5d400236a287a916654f53",
+      "finding": "Byte-level identity confirmed between local package and published Cloud entity"
+    },
+    "publicStudioVerification": {
+      "status": "PASS",
+      "shareUrlActive": true,
+      "leaderboardStatus": "listed",
+      "paperTradingState": "running",
+      "finding": "Registry-vs-Studio visibility mismatch resolved"
+    }
+  },
+  "operationalConstraints": [
+    "No rebinding or version switching while Paper account holds open 1.26 NVDA contract",
+    "Preserve Paper capital balance; do not reset capital during monitoring",
+    "Active Paper position outperforming benchmark by +87 bps (+0.87 pp)"
+  ]
+}
