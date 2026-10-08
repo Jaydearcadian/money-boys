@@ -1,174 +1,170 @@
 # Money Boys
 
-Autonomous two-speed agentic trading desk for tokenized real-world assets, built for Bitget S2.
+> **Research proposes. Quant calculates. Risk vetoes. Council decides. A receipt seals.
+> Money Boys dispatches. The venue is read back.**
 
-Research proposes. Quant calculates. Risk vetoes. Council decides. A receipt seals. Money Boys dispatches. The venue is read back.
+Money Boys is an **autonomous 24/7 agentic trading desk for tokenized US equities (Real World Assets) on Bitget**.
 
-## What it is
+*Warm-path cognitive research · Hot-path <50ms deterministic execution · Zero direct LLM keys*
 
-A two-path trading desk. A **warm path** runs agentic research and produces typed proposals. A **hot path** turns those proposals into orders only after deterministic risk checks, a council vote, and a cryptographic seal. The LLM never touches an exchange credential.
+Built for **quantitative desks, RWA basis arbitrageurs, risk auditors, and autonomous-systems evaluators.**
 
-## The opportunity
+It is **not** an unconstrained LLM prompt. It is **not** a black-box bot. It is **not** a script trading without economic justification.
 
-Tokenized real-world assets keep trading after TradFi closes. The roughly **65.5-hour Friday-close to Monday-open window** is the highest-opportunity regime, but the desk is designed to trade any week whenever a fresh, verifiable basis dislocation exists. The symbol universe is configurable; rNVDA, rTSLA and rAAPL are illustrative.
+---
 
-## The problem
+## 1. The Problem
 
-LLM-direct execution is unsafe: a model that can sign can be talked into signing. Script-only bots have the opposite failure, they trade without research and cannot explain why. Neither combines flexible intelligence with deterministic execution authority and defensible evidence.
+**The structural 24/7 RWA dislocation.** TradFi cash equities (NYSE/Nasdaq) trade ~6.5h/day, 5 days/week. Tokenized equities (rTokens on Bitget) trade 24/7. Across the **65.5-hour weekend window** (Friday 16:00 ET → Monday 09:30 ET) the TradFi benchmark is frozen while the tokenized contract drifts — and retail flows move it.
 
-## The solution
+**The agentic trading dilemma.**
 
-```text
-  research / perception adapters      bitget-signal, MCP, GetAgent (read-only)
-            |
-            v
-  Macro Boy + Quant Boy                typed proposals, SHA-256 provenance
-            |
-            v
-  Risk Boy HARD_VETO                   65% margin ceiling, $5k cap, free-margin floor
-            |
-            v
-  Council reducer                     weighted vote, quorum gate, scale-down
-            |
-            v
-  SHA-256 ReasoningReceipt            no seal, no order
-            |
-            v
-  Money Boys dispatcher               the only component with order authority
-            |
-            v
-  Venue + read-back                    order state, fills, position, Foundry evidence
+- **Direct LLM execution fails.** LLMs hallucinate, are prompt-injectable, lack sub-second latency, and must never hold signing keys (**I-01**).
+- **Naive scripts fail too.** Unconstrained mean-reversion without trend filtering suffers severe adverse-selection asymmetry: a high win rate can coexist with structurally negative expectancy.
+
+**The resolution is a decoupled two-speed architecture** — LLM macro perception on the warm path; deterministic mathematics and hard risk ceilings on the sub-50ms hot path.
+
+---
+
+## 2. How It Works
+
+The question the system answers on every cycle:
+
+> Given a live tokenized-equity orderbook and a static TradFi benchmark — is there a genuine, cost-resilient basis dislocation? Does the regime support convergence? Does exposure clear deterministic risk limits? And can an immutable cryptographic receipt be sealed **before** any order touches Bitget?
+
+```
+┌─ WARM PATH ────────────────────────────────────────────────────────────┐
+│  Macro Boy (Qwen / DashScope)   research, catalysts, macro regime      │
+│  Quant Boy                      basis, friction hurdle, net edge       │
+│         │                                                            │
+│         ▼                                                            │
+│  StrategyPacket { executable: false }   ← a PROPOSAL, never an order │
+└────────────────────────────────────────────────────────────────────────┘
+          │
+          ▼
+┌─ HOT PATH ─────────────────────────────────────────────────────────────┐
+│  Risk Boy      HARD_VETO — checked FIRST, returns early, unoutvoteable │
+│  Council       4-node reducer + quorum                                │
+│  Receipt       SHA-256 ReasoningReceipt sealed over canonical JSON     │
+│  Dispatcher    verifies the seal, then calls Bitget v2                │
+│  Venue         order placed → read back → position read back           │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
-External tools feed **in** at the top. None of them can dispatch, sign, or write portfolio state.
+**A vetoed packet can never reach the venue.** The Risk veto is evaluated before any scoring and returns early, so it is unreachable *by construction* — not checked-and-overridden.
 
-## Safety guarantees
+---
 
-| Guarantee | Enforcement |
-|---|---|
-| No direct LLM order authority | proposal-only schemas; LLM output is untrusted input |
-| 65% margin utilization ceiling | `StructuralChangeGuard`, deterministic, no LLM import |
-| $5,000 single-trade cap | same guard, checked before dispatch |
-| Free-margin floor | same guard |
-| Council quorum required | weighted reducer, quorum gate, 50% scale-down on soft reject |
-| SHA-256 ReasoningReceipt | no sealed APPROVED receipt, no dispatch |
-| Fail-closed benchmark | unreachable TradFi feed seals HARD_VETO with zero execution |
-| Fail-closed auth | missing credentials throw on boot; the system never simulates |
-| Emergency halt | telemetry endpoint halts dispatch, returns 403, verified in smoke test |
-| No unbounded trading loop | all venue activity has been explicitly bounded and authorized |
+## 3. Verified Quantitative Evidence
 
-## Current verified status
+Anchored to a reproducible **89-day venue walk-forward backtest** over 5 rToken/equity pairs, real Bitget v2 daily candles matched to Alpha Vantage daily equity closes, with an explicit in-sample / out-of-sample split.
 
-Status vocabulary: `TESTED` = verified locally with evidence. `LIVE_DEMONSTRATED` = verified against a real venue.
+Source: `foundry/evidence/backtest/venue_backtest_summary.json`
 
-| Capability | State | Evidence | Limitation |
+| Metric | Full campaign (89d) | Out-of-sample (30d) | Verification |
 |---|---|---|---|
-| Bitget authenticated private read | LIVE_DEMONSTRATED | [`p01/auth_test.json`](./foundry/evidence/p01/auth_test.json) | Demo Trading only, not production |
-| Risk Boy HARD_VETO | TESTED | [`p02/risk_guard.txt`](./foundry/evidence/p02/risk_guard.txt) | Conservative 1x margin model |
-| ReasoningReceipt SHA-256 seal | TESTED | [`p01/receipts_seal.txt`](./foundry/evidence/p01/receipts_seal.txt) | Local; bound on venue via the dispatcher gate |
-| Quant Boy basis engine | TESTED | [`p02/quant_engine.txt`](./foundry/evidence/p02/quant_engine.txt) | Mid-price slippage reference |
-| Macro Boy cognitive shield | TESTED | [`p03/cognitive_shield.txt`](./foundry/evidence/p03/cognitive_shield.txt) | Gateway path exercised, proposal-only |
-| Live Qwen catalyst inference | LIVE_DEMONSTRATED | [`ab-campaign/ab_metrics_summary.json`](./foundry/evidence/ab-campaign/ab_metrics_summary.json) | Live `qwen3.8-max` inference, SHA-256 payload digests, empirical latency, proposal-only |
-| Council quorum + reducer | TESTED | [`p04/council_quorum.txt`](./foundry/evidence/p04/council_quorum.txt) | Deterministic |
-| Telemetry, SSE, emergency halt | TESTED | [`p08/stack_smoke.json`](./foundry/evidence/p08/stack_smoke.json) | Local ports 3000/3001, 6/6 checks |
-| Demo order accepted and filled | LIVE_DEMONSTRATED | [`p06/demo_order_filled.json`](./foundry/evidence/p06/demo_order_filled.json) | 0.001 BTCUSDT, Demo Trading |
-| Demo position closed, account flat | LIVE_DEMONSTRATED | [`p06/demo_position_closed.json`](./foundry/evidence/p06/demo_position_closed.json) | Demo Trading |
-| Dispatcher lifecycle on venue | LIVE_DEMONSTRATED | [`p07/dispatcher_lifecycle.json`](./foundry/evidence/p07/dispatcher_lifecycle.json) | Market order round-trip, flat verified |
-| Tokenized RWA equities execution | LIVE_DEMONSTRATED | [`p13/rwa_trade_lifecycle.json`](./foundry/evidence/p13/rwa_trade_lifecycle.json) | `rNVDAUSDT` (0.11 contracts) full lifecycle, flat confirmed |
-| Resting limit & cancel lifecycle | LIVE_DEMONSTRATED | [`p12/demo_lifecycle_2026-10-06T20-10-07-808Z.json`](./foundry/evidence/p12/demo_lifecycle_2026-10-06T20-10-07-808Z.json) | Resting limit placed, read via `/detail`, cancelled, confirmed flat |
-| Walk-forward venue candle backtest | TESTED | [`backtest/venue_backtest_summary.json`](./foundry/evidence/backtest/venue_backtest_summary.json) | 5 tokenized pairs, 59d IS / 30d OOS, 150 trades, 100% sealed receipts, exact cent reconciliation, ≥30 OOS trade gate cleared (48 trades, Sharpe 3.89, Sortino 9.15, decay 1.32x, mean rolling Sharpe 4.04, rho_avg 0.197) |
-| Bitget hackathon adapters | TESTED | [`integrations/bitget/`](./packages/engine/src/integrations/bitget/) | **No live adapter validation yet** |
+| **Net realized P&L** | **+$1,228.83** (+4.92%) | **+$433.35** (+1.73%) | Reconciled to the exact cent across 150 trades |
+| **Trade count** | 150 completed | 48 completed | Clears the ≥30 OOS observation gate |
+| **Win rate** | 57.3% (86W / 64L) | 56.3% (27W / 21L) | Consistent with in-sample 57.8% |
+| **Sharpe (daily, √252)** | 3.21 | **3.89** | Sortino 7.58 / 9.15 · decay **1.32×** vs the 0.5× IS floor |
+| **Max drawdown** | 1.27% | 0.49% | Peak-to-trough, strictly bounded |
+| **Turnover** | 24.00 (2,400%) | 7.68 | Costs modelled, not assumed |
+| **Direct AI keys** | **0** | **0** | 100% of dispatches gated by a SHA-256 ReasoningReceipt |
+| **Asset dispersion** | 5 pairs (NVDA, TSLA, AAPL, MSFT, GOOGL) | ρ̄ = 0.197, N_eff = 2.80 | See caveats |
 
-Full ledgers: [`claims`](./foundry/claims.jsonl) and [`gaps`](./foundry/gaps.jsonl).
+### Caveats, stated before you find them
 
-## Demo journey
+1. **Out-of-sample Sharpe exceeds in-sample** (3.89 vs 2.94). Atypical. The likely mechanism is **variance compression** from adding low-volatility pairs, not skill.
+2. **Rolling 30-day Sharpe dispersion is 1.13–7.31** (6.5× spread, 34/34 windows positive). Regime-sensitive, **not stable**.
+3. Sharpe is annualised from **64 daily observations** — a small sample.
+4. **ρ̄ = 0.197 reflects asynchronous entry timing, not risk diversification.** All five pairs are long US mega-cap tech; **tail risk remains fully correlated.**
+5. **N_eff = 2.80 is a derived heuristic**, not proof of orthogonal risk.
+6. **Straddler sensitivity:** 5 trades entered in-sample and exited out-of-sample contributed **+$224.49**. Out-of-sample is **+$433.35 with them, +$208.86 without**.
+7. 26 rToken dates had **no equity counterpart** (weekends/holidays) and were excluded rather than forward-filled — forward-filling would have manufactured basis.
 
-What actually happened, in order, with venue evidence for each step:
+### What the live monitor actually observed
 
-1. **Authenticated read.** `GET /api/v2/spot/account/assets` returned Bitget code `00000` on the Demo Trading route.
-2. **Sealed proposal.** A ReasoningReceipt was produced and its SHA-256 hash verified.
-3. **Risk allow.** Exposure $83.04 against a $5,000 cap, 1.7% utilization.
-4. **First order rejected.** Venue code `40774`. Root cause: the account is in hedge mode and the request omitted `tradeSide`. Fixed with an explicit position mode.
-5. **Order accepted and filled.** Venue orderId `1489095619363635201`, filled 0.001 BTC at 83,364.4, fee 0.05001864 USDT.
-6. **Read-back.** Order state `filled`, then a short position confirmed via `GET /api/v2/mix/position/all-position`.
-7. **Defect found.** The close was rejected with `40786 Duplicate clientOid`. `clientOid` was derived from the receipt alone, so an open and a close from identical receipt data collided. Fixed by binding intent into the digest.
-8. **Close filled and account flat.** Order `1489110831718367233`, then the residual flattened by `1489110998534225921`.
-9. **Veto proven on venue.** A VETOED receipt was offered to the dispatcher; it threw before any network call.
-10. **Tokenized RWA lifecycle & resting limit cancel path.** Executed full round trip on tokenized equity `rNVDAUSDT` (0.11 contracts filled, read back, closed, flat confirmed; `p13/rwa_trade_lifecycle.json`). Placed resting limit order on venue (`1491458794516021249`), read back via `/api/v2/mix/order/detail` as `live`, executed receipt-gated cancellation, verified state transition to `canceled`, and confirmed flat portfolio (`p12/demo_lifecycle_2026-10-06T20-10-07-808Z.json`).
+Across a live monitoring run of **7,675 cycles** (snapshot as of 2026-10-08 10:02:32Z): **7,675 decisions, 0 dispatches, 100% vetoed.** Live basis never cleared the friction hurdle, so the desk did not trade. That is the system working, not failing.
 
-Every claim above is checkable against the JSON under `foundry/evidence/`. Two corrections to earlier claims are recorded in the evidence rather than quietly patched: the Demo venue *does* expose order read-back routes, and receipt-derived `clientOid` was *not* safe for distinct intents.
+---
 
-## Three meanings of "live"
+## 4. Authority Model
 
-1. **Live market data and authentication** — proven. Real Bitget servers, authenticated, code `00000`.
-2. **Live Bitget Demo trading** — proven. Real orders, real fills, real read-back, account returned flat.
-3. **Live real-capital trading** — not done, and not the next step.
+| Component | May propose | May veto | May dispatch | Holds keys |
+|---|---|---|---|---|
+| **Macro Boy** (LLM) | Yes | No | **No** | **No** |
+| **Quant Boy** | Yes | No | **No** | **No** |
+| **Risk Boy** | No | **Yes — absolute** | **No** | **No** |
+| **Council** | No | Yes (quorum) | **No** | **No** |
+| **Dispatcher** | No | No | **Yes, only on a verified sealed receipt** | No — signs nothing itself |
+| **Operator UI** | No | Yes (halt) | Authorises campaigns | **No** |
 
-## What is not proven
+**Boundary vocabulary — the distinctions this project is built to keep:**
 
-Read this before trusting any number in this repo.
+```
+IMPLEMENTED        ≠ VERIFIED
+VERIFIED LOCALLY   ≠ PROVEN LIVE
+DEPLOYED           ≠ WORKING
+DOCUMENTED         ≠ TRUE
+PROPOSAL           ≠ AUTHORIZATION
+SEALED RECEIPT     ≠ FILLED ORDER
+PAPER              ≠ LIVE CAPITAL
+```
 
-- **No real capital has moved.** Every order was on Bitget Demo Trading (`paptrading: 1`), using Demo-scoped keys and a simulated balance.
-- **The strategy has not run as a continuous production system.** Orders exercised the dispatcher, risk, receipt and council gates, but not an unbounded multi-day basis campaign.
-- **Limit orders and cancel path proven; advanced execution types unproven.** Resting limit placement, order detail queries (`/api/v2/mix/order/detail`), and cancellations are proven live. Not proven: partial fills, SL/TP triggers, leverage margin switching.
-- **No funding was observed.** Round trips closed within seconds, so no position crossed an 8-hour funding settlement interval.
-- **The paper daemon has never run continuously against a live venue.** Bounded multi-cycle sessions have run, but continuous 24/7 daemon operation remains paper/demo gated.
-- **The integration adapters have zero live validation.** They pass 813 tests without having contacted a real MCP endpoint or fetched a real Playbook artifact.
-- **Paper backtest numbers are not performance claims.** Reported win rate of 100% and max drawdown of 0% in early synthetic suites are artifacts of deterministic setup on synthetic depth, superseded by the 5-pair venue backtest (`backtest/venue_backtest_summary.json`).
-- **Tokenized equity demonstrated.** Tokenized US equities execution proven live with `rNVDAUSDT` (NVDAUSDT 0.11 contracts). Single-symbol lifecycle proven, multi-symbol concurrent loop remains a roadmap milestone.
+---
 
-## Quickstart
+## 5. Product Surfaces
+
+| Layer | Route | What it is |
+|---|---|---|
+| **Cockpit** | `#/app/desk` | Live node consensus, margin telemetry, emergency halt |
+| **Sandbox** | `#/app/sandbox` | Run a real deliberation **in your browser**, sealed with Web Crypto |
+| **Strategy** | `#/app/strategy` | The edge, the walk-forward, the decay test |
+| **Audit** | `#/app/audit` | Provenance, the quarantine story, receipts you verify yourself |
+
+Legacy hashes (`#/desk`, `#/sandbox`, `#/evidence`, `#/track1`, `#/repro`) still resolve.
+
+---
+
+## 6. Reproduce It
 
 ```bash
 pnpm install
-pnpm verify            # typecheck, 813 tests (753 engine + 60 browser E2E), desk build, foundry checks, secret scan
+pnpm verify          # engine unit tests + Playwright E2E + typecheck + build + secret scan
+pnpm check-foundry   # validates the claims / gaps ledgers
 ```
 
-Optional, needs Bitget Demo credentials in a gitignored `.env`:
+Regenerate the venue backtest:
 
 ```bash
-export BITGET_ENV=testnet
-pnpm --filter @money-boys/engine test:auth    # Phase 01 auth gate, writes evidence
+set -a; . ./.env; set +a          # Bitget Demo credentials
+pnpm exec tsx scripts/run-venue-backtest.ts
 ```
 
-Never commit exchange credentials. A repository secret scan covers Bitget key shapes and credential assignments and runs inside `pnpm verify`.
+---
 
-## Evidence
+## 7. Document Map
 
-| Ledger | Path |
+| Document | What it holds |
 |---|---|
-| Claims | [`foundry/claims.jsonl`](./foundry/claims.jsonl) |
-| Gaps | [`foundry/gaps.jsonl`](./foundry/gaps.jsonl) |
-| State | [`foundry/state.json`](./foundry/state.json) |
-| Evidence | [`foundry/evidence/`](./foundry/evidence/) |
-| Integration audit | [`docs/research/bitget-agentic-playbook-audit.md`](./docs/research/bitget-agentic-playbook-audit.md) |
+| [`PRD.md`](PRD.md) | Product thesis and requirements |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | System design |
+| [`BUILD_FOUNDRY.md`](BUILD_FOUNDRY.md) | The operating standard — evidence gates, ledger discipline |
+| [`AGENTS.md`](AGENTS.md) | Invariants I-01 … I-05 |
+| `foundry/claims.jsonl` | Every claim and its promotion state |
+| `foundry/gaps.jsonl` | Every gap and its residual closure condition |
+| `foundry/evidence/` | On-disk evidence, including the quarantine |
 
-## Architecture
+---
 
-- [`PRD.md`](./PRD.md) — product intent
-- [`docs/product/PRODUCT_THESIS.md`](./docs/product/PRODUCT_THESIS.md) — thesis
-- [`docs/canonical/AUTHORITY_MODEL.md`](./docs/canonical/AUTHORITY_MODEL.md) — who may do what
-- [`docs/canonical/STATE_MODEL.md`](./docs/canonical/STATE_MODEL.md) — claim and gap vocabulary
-- [`BUILD_FOUNDRY.md`](./BUILD_FOUNDRY.md) — evidence standard
-- [`AGENTS.md`](./AGENTS.md) — agent rules
+## 8. Non-Goals
 
-## Roadmap
+- **No real capital has moved.** Bitget Demo (`paptrading: 1`) only.
+- **Synthetic fixtures are quarantined, not deleted** — see `foundry/evidence/paper-trading/QUARANTINE.md`. A previous backtest reported a 100% win rate; it was a hardcoded price table with hand-authored scenarios and no market data. It is stamped, quarantined, and superseded.
+- **GAP-019 remains `BLOCKED_EXTERNAL`.** One data provider's terms are ambiguous about automated reads. No AI signed that acceptance, and none will.
 
-1. **Bounded Demo strategy campaign** on the configured tokenized real-world asset universe: fixed symbols, fixed small notional, explicit order cap, flat after each cycle, every decision captured. Proves the strategy pipeline, not just the dispatcher.
-2. **Continuous Demo/paper run** once the campaign passes: fixed time window, graceful shutdown, no duplicate intent execution, risk halt behavior.
-3. **Live-read phase**: real data and account reads, no order placement. Confirms benchmark freshness, symbol mapping, basis math, venue permissions, sizing, reconciliation.
-4. **Real-capital trading** is a separate authorization gate, not an automatic consequence of Demo success. It would require explicit environment selection, approved live credentials, a pre-write packet, bounded notional, emergency halt, verified read-back, and approval immediately before submission.
+---
 
-## Submission notes
+## License
 
-What a reviewer can verify independently:
-
-- Run `pnpm verify`. 813 tests (753 engine unit + 60 Playwright E2E), typecheck, build, Foundry consistency, secret scan.
-- Read `foundry/claims.jsonl` and `foundry/gaps.jsonl`. Claims are graded, gaps are tracked, and nothing is marked live without venue evidence.
-- Inspect the Demo order evidence JSON. Real order IDs, real fill prices, real fees, real read-back responses from Bitget.
-- Inspect the Track 1 walk-forward backtest evidence JSON: [`foundry/evidence/backtest/venue_backtest_summary.json`](./foundry/evidence/backtest/venue_backtest_summary.json) and daily returns series [`venue_backtest_daily_series.json`](./foundry/evidence/backtest/venue_backtest_daily_series.json) for exact cent and Sharpe reproducibility.
-- Confirm the account is flat. The last verified position read returned no open positions (BTCUSDT and rNVDAUSDT verified flat).
-
-What to be skeptical of: synthetic fixtures under `foundry/evidence/paper-trading/` (flagged under GAP-021 / SYNTHETIC_PERFORMANCE_STAMP, superseded by the authentic 5-pair venue backtest under `foundry/evidence/backtest/`). And in the genuine backtest: exit-date vs entry-date straddler sensitivity (5 straddling trades entered in-sample contribute $224.49 of the $433.35 OOS PnL; without them OOS is +$208.86; both figures are reported transparently in `venue_backtest_summary.json`).
-
-Repository status is `IN_PROGRESS`. Not complete, and honest about where.
+MIT.
