@@ -474,8 +474,47 @@ function Strip() {
   );
 }
 
+
+/**
+ * PROOF STRIP FIGURES ARE THE OBSERVED ONES.
+ *
+ * The consolidation spec proposed "+$15.01 net gain, 60% win rate". That figure
+ * exists nowhere in the repository except inside live_paper_daemon.jsonl, a
+ * QUARANTINED synthetic artifact derived from a hardcoded price table. Shipping
+ * it on the front page of a track judged purely on quantitative rigor would be an
+ * unsubstantiated performance claim. These are the observed numbers instead.
+ */
 function RefusalAndPlainLanguage() {
   return (
+    <>
+    <section aria-label="Verified backtest proof" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <p className="mono text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)] mb-5">
+        89-day venue backtest &middot; Bitget v2 candles + Alpha Vantage equity &middot; source
+        venue_backtest_summary.json
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { v: "+$1,228.83", k: "full campaign &middot; +4.92%", d: "150 trades &middot; 57.3% win &middot; Sharpe 3.21", accent: true },
+          { v: "+$433.35", k: "out-of-sample &middot; +1.73%", d: "48 trades &middot; 56.3% win &middot; Sharpe 3.89", accent: true },
+          { v: "0.49%", k: "out-of-sample max drawdown", d: "0.48% decay vs the 0.5&times; IS floor", accent: false },
+          { v: "0", k: "direct AI keys", d: "deterministic Risk Boy + SHA-256 receipts", accent: false },
+        ].map((m) => (
+          <div key={m.k} className="rounded-2xl border border-[var(--line)] bg-[oklch(0.16_0.012_265)] p-5">
+            <div className={`text-3xl font-black tracking-tight ${m.accent ? "text-[var(--accent)]" : "text-white"}`}>
+              {m.v}
+            </div>
+            <div className="mt-1 text-[11px] mono uppercase tracking-wider text-[var(--text-muted)]">{m.k}</div>
+            <div className="mt-2 text-[11px] text-zinc-400">{m.d}</div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-4 text-[11px] text-[var(--text-muted)] leading-relaxed">
+        Observed figures from a reproducible walk-forward run. Rolling 30-day Sharpe dispersion is
+        1.13&ndash;7.31, and mean pairwise correlation reflects asynchronous entry timing rather than
+        risk diversification &mdash; both disclosed in the artifact and on the Strategy layer.
+      </p>
+    </section>
+
     <section aria-label="Plain language summary and refusal proof" className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <div className="grid gap-6 md:grid-cols-2">
         <div className="rounded-3xl border border-amber-500/30 bg-[oklch(0.16_0.012_265)] p-6 sm:p-7 relative overflow-hidden">
@@ -532,6 +571,7 @@ function RefusalAndPlainLanguage() {
         </div>
       </div>
     </section>
+    </>
   );
 }
 

@@ -111,6 +111,16 @@ export function EvidencePage() {
       </div>
 
       <main className="mx-auto max-w-6xl space-y-5 px-6 py-8">
+        {loading && !ev ? (
+          <section aria-busy="true" aria-live="polite" className="space-y-4">
+            <h1 className="text-2xl font-black tracking-tight">Benchmark pre-flight verdict</h1>
+            <p className="text-sm text-[var(--text-muted)]">
+              Loading venue and benchmark evidence… this page does not fabricate a verdict while it waits.
+            </p>
+            <div className="h-24 animate-pulse rounded-xl bg-[var(--panel)]" />
+            <div className="h-40 animate-pulse rounded-xl bg-[var(--panel)]" />
+          </section>
+        ) : null}
         {transportError && (
           <section data-testid="evidence-transport-error" className="rounded-2xl border border-rose-500/40 bg-rose-950/20 p-5 backdrop-blur-md">
             <h2 className="text-xs font-bold uppercase tracking-widest text-[var(--danger)]">Engine unreachable</h2>
