@@ -1,58 +1,58 @@
 {
   "startedAt": "2026-10-08T01:52:47.877Z",
-  "asOf": "2026-10-11T11:25:07.293Z",
-  "totalCyclesAcrossAllBots": 76651,
+  "asOf": "2026-10-11T14:07:04.787Z",
+  "totalCyclesAcrossAllBots": 79191,
   "totalDispatchedAcrossAllBots": 0,
   "symbols": {
     "rNVDAUSDT": {
-      "cycles": 15331,
+      "cycles": 15839,
       "approved": 0,
-      "vetoed": 15331,
+      "vetoed": 15839,
       "dispatched": 0,
-      "lastPrice": 230.92,
-      "lastBasisPct": 1.0458,
-      "lastNetEdgePct": 0.891,
-      "lastUpdated": "2026-10-11T11:25:05.267Z"
+      "lastPrice": 230.99,
+      "lastBasisPct": 1.0764,
+      "lastNetEdgePct": 0.9251,
+      "lastUpdated": "2026-10-11T14:07:02.768Z"
     },
     "rTSLAUSDT": {
-      "cycles": 15330,
+      "cycles": 15838,
       "approved": 0,
-      "vetoed": 15330,
+      "vetoed": 15838,
       "dispatched": 0,
-      "lastPrice": 383.16,
-      "lastBasisPct": 0.0927,
-      "lastNetEdgePct": -0.0612,
-      "lastUpdated": "2026-10-11T11:24:47.956Z"
+      "lastPrice": 383.23,
+      "lastBasisPct": 0.111,
+      "lastNetEdgePct": -0.0395,
+      "lastUpdated": "2026-10-11T14:06:45.488Z"
     },
     "rAAPLUSDT": {
-      "cycles": 15330,
+      "cycles": 15838,
       "approved": 0,
-      "vetoed": 15330,
+      "vetoed": 15838,
       "dispatched": 0,
-      "lastPrice": 336.67,
-      "lastBasisPct": 0.2531,
-      "lastNetEdgePct": 0.099,
-      "lastUpdated": "2026-10-11T11:24:49.789Z"
+      "lastPrice": 336.38,
+      "lastBasisPct": 0.1668,
+      "lastNetEdgePct": 0.016,
+      "lastUpdated": "2026-10-11T14:06:47.302Z"
     },
     "rMSFTUSDT": {
-      "cycles": 15330,
+      "cycles": 15838,
       "approved": 0,
-      "vetoed": 15330,
+      "vetoed": 15838,
       "dispatched": 0,
-      "lastPrice": 535.21,
-      "lastBasisPct": 0.1066,
-      "lastNetEdgePct": -0.0479,
-      "lastUpdated": "2026-10-11T11:24:51.599Z"
+      "lastPrice": 535.08,
+      "lastBasisPct": 0.0823,
+      "lastNetEdgePct": -0.0679,
+      "lastUpdated": "2026-10-11T14:06:49.115Z"
     },
     "rGOOGLUSDT": {
-      "cycles": 15330,
+      "cycles": 15838,
       "approved": 0,
-      "vetoed": 15330,
+      "vetoed": 15838,
       "dispatched": 0,
-      "lastPrice": 351.01,
-      "lastBasisPct": -0.3209,
-      "lastNetEdgePct": 0.1669,
-      "lastUpdated": "2026-10-11T11:24:53.411Z"
+      "lastPrice": 351.69,
+      "lastBasisPct": -0.1278,
+      "lastNetEdgePct": -0.0229,
+      "lastUpdated": "2026-10-11T14:06:50.929Z"
     }
   },
   "status": "ONLINE_MONITORING"
