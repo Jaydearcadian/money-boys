@@ -1,0 +1,39 @@
+{
+  "issues": [
+    {
+      "sev": "high",
+      "title": "overflow #/app@320",
+      "detail": {
+        "w": 320,
+        "sw": 330
+      }
+    },
+    {
+      "sev": "high",
+      "title": "overflow #/strategy@320",
+      "detail": {
+        "w": 320,
+        "sw": 404
+      }
+    },
+    {
+      "sev": "high",
+      "title": "overflow #/strategy@390",
+      "detail": {
+        "w": 390,
+        "sw": 404
+      }
+    }
+  ],
+  "land": {
+    "bg": "rgb(0, 0, 0)",
+    "card": "linear-gradient(rgb(18, 18, 18) 0%, rgb(7, 7, 7) 100%)",
+    "pill": "rgb(255, 255, 255)"
+  },
+  "desk": {
+    "bg": "rgb(0, 0, 0)",
+    "card": "linear-gradient(rgb(18, 18, 18) 0%, rgb(7, 7, 7) 100%)",
+    "navOn": "rgb(255, 255, 255)"
+  },
+  "accent": "rgb(52, 211, 153)"
+}

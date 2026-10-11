@@ -216,13 +216,23 @@ export function LiveDaemonMonitor() {
   const { data } = useJson<DemoBotsSummary>("/evidence/demo_bots_summary.json");
   if (!data) return null;
   const symKeys = Object.keys(data.symbols || {});
+  const started = Date.parse(data.startedAt);
+  const asOf = Date.parse(data.asOf || data.startedAt);
+  const uptimeDays = Number.isFinite(started) && Number.isFinite(asOf)
+    ? Math.max(0, (asOf - started) / 86_400_000)
+    : null;
+  const uptimeLabel = uptimeDays === null
+    ? "uptime n/a"
+    : uptimeDays >= 1
+      ? `${uptimeDays.toFixed(1)}d uptime`
+      : `${Math.round(uptimeDays * 24)}h uptime`;
   return (
     <Card
       title="24/7 Autonomous Desk Daemon"
       aside={
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <Pill tone="ok">{data.status}</Pill>
-          <span className="db-label">3+ Days Uptime</span>
+          <Pill tone={data.status.includes("ONLINE") ? "ok" : "warn"}>{data.status}</Pill>
+          <span className="db-label">{uptimeLabel}</span>
         </div>
       }
     >
@@ -254,7 +264,7 @@ export function LiveDaemonMonitor() {
         {symKeys.map((s) => {
           const b = data.symbols[s]!;
           return (
-            <div key={s} className="db-card" style={{ padding: 12 }}>
+            <div key={s} className="db-gauge-card" style={{ padding: 12 }}>
               <div className="db-card-head" style={{ marginBottom: 4 }}>
                 <b className="db-sym" style={{ fontSize: 12, color: colorOf(s) }}>{s}</b>
                 <span className="db-label" style={{ fontSize: 10 }}>{b.cycles.toLocaleString()} cyc</span>
@@ -526,11 +536,19 @@ export function CopilotView() {
 }
 
 export function SandboxLab() {
-  const { run } = useDesk();
+  const { run, runError, halted } = useDesk();
   return (
     <div className="db-sandbox-tab" data-testid="sandbox-lab">
       <Card title="Preset scenarios">
         <p className="db-lead">Four outcomes from the real engine: clear edge, size veto, margin ceiling, and no-edge refusal.</p>
+        {halted && (
+          <div className="db-empty bad" role="alert" data-testid="halt-banner">
+            Sandbox halted. Resume from the sidebar before running scenarios.
+          </div>
+        )}
+        {runError && !halted && (
+          <div className="db-empty bad" role="alert">{runError}</div>
+        )}
         <ScenarioGrid />
       </Card>
       <CustomSandbox />
