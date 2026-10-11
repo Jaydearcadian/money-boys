@@ -1,0 +1,38 @@
+venue:
+  name: BITGET
+  account_type: MARGIN
+  oms_type: NETTING
+  starting_balances:
+    - amount: 100000
+      currency: USDT
+
+strategy:
+  module: strategy
+  class: MoneyBoysRwaBasisStrategy
+  config_class: MoneyBoysRwaBasisStrategyConfig
+  config:
+    order_id_tag: "MB04"
+    trade_size: "0.05"
+    entry_hurdle_bps: 20
+    exit_hurdle_bps: 2
+    take_profit_bps: 120
+    stop_loss_bps: 65
+    trend_window: 80
+    max_hold_bars: 36
+    lookback_window: 20
+
+instrument:
+  id: NVDAUSDT.BITGET
+  kind: perpetual
+  raw_symbol: NVDAUSDT
+  base_currency: NVDA
+  quote_currency: USDT
+  settlement_currency: USDT
+  price_precision: 2
+  size_precision: 2
+  price_increment: "0.01"
+  size_increment: "0.01"
+  lot_size: "0.01"
+  maker_fee: "0.0002"
+  taker_fee: "0.0006"
+  bar_type: NVDAUSDT.BITGET-1-HOUR-LAST-EXTERNAL

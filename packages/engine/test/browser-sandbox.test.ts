@@ -53,7 +53,7 @@ describe("browser sandbox — boundary", () => {
 
   it("the desk component never posts to simulate-cycle either", () => {
     const raw = readFileSync(
-      join(ROOT, "packages/desk/src/components/desk/CouncilSandbox.tsx"),
+      join(ROOT, "packages/desk/src/pages/dashboard/components.tsx"),
       "utf8",
     );
     // Strip comments: the component explains WHY it avoids the endpoint, so the
@@ -63,8 +63,8 @@ describe("browser sandbox — boundary", () => {
       .split("\n")
       .filter((l) => !l.trimStart().startsWith("//"))
       .join("\n");
-    assert.ok(!code.includes("simulate-cycle"), "CouncilSandbox must not call the mutating endpoint");
-    assert.ok(!/\bfetch\s*\(/.test(code), "CouncilSandbox must not perform any network call");
+    assert.ok(!code.includes("simulate-cycle"), "Dashboard components must not call the mutating endpoint");
+    assert.ok(!/\bfetch\s*\(/.test(code), "Dashboard sandbox components must not perform any network call");
   });
 });
 
@@ -79,14 +79,11 @@ describe("browser sandbox — canonicalisation matches the server scheme", () =>
   });
 
   it("is byte-identical to the desk verifier's canonicalJson", () => {
-    const deskSrc = readFileSync(join(ROOT, "packages/desk/src/lib/verify.ts"), "utf8");
+    const sealSrc = readFileSync(join(ROOT, "packages/desk/src/lib/seal.ts"), "utf8");
     const engineSrc = readFileSync(join(ROOT, "packages/engine/src/council/browser-sandbox.ts"), "utf8");
-    // Both must sort keys and drop undefined. Compare behaviour, not source text,
-    // by hashing the same input through both algorithms conceptually: assert the
-    // engine implementation produces the documented sorted output.
-    assert.ok(deskSrc.includes(".sort()"), "desk verifier must still sort keys");
+    // Desk uses sandboxCanonicalJson directly from engine
+    assert.ok(sealSrc.includes("sandboxCanonicalJson"), "desk uses engine canonicalization");
     assert.ok(engineSrc.includes(".sort()"), "sandbox must sort keys");
-    assert.ok(deskSrc.includes("!== undefined"), "desk verifier must drop undefined");
     assert.ok(engineSrc.includes("!== undefined"), "sandbox must drop undefined");
   });
 

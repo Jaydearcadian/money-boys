@@ -1,4 +1,4 @@
-@import "./pages/landing-v2/landing-v2.css";
+@import "./styles/app-theme.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

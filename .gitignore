@@ -15,3 +15,7 @@ dist/
 # Playwright artifacts — never public
 test-results/
 playwright-report/
+.vercel
+scratch/
+__pycache__/
+*.pyc

@@ -1,0 +1,114 @@
+name: money-boys-rwa-basis
+display_name: "Money Boys RWA Basis Desk"
+display_name_i18n:
+  en: "Money Boys RWA Basis Desk"
+  zh: "Money Boys RWA 基差交易台"
+  zh-tw: "Money Boys RWA 基差交易台"
+  es: "Mesa de negociación de bases RWA de Money Boys"
+  ja: "Money Boys RWA ベーシス取引デスク"
+  vi: "Bàn giao dịch cơ sở RWA của Money Boys"
+version: "1.0.0"
+description: "Autonomous RWA US equity basis desk capturing synthetic forward spreads with strict risk gating"
+description_i18n:
+  en: "Autonomous RWA US equity basis desk capturing synthetic forward spreads with strict risk gating"
+  zh: "自主 RWA 美股基差套利交易台，结合严格风控门禁捕获合成远期基差"
+  zh-tw: "自主 RWA 美股基差套利交易台，結合嚴格風控門禁捕獲合成遠期基差"
+  es: "Mesa de arbitraje de bases de acciones RWA de EE. UU. que captura diferenciales con control estricto de riesgos"
+  ja: "厳格なリスクゲーティングで合成フォワードスプレッドを捕捉する自律型RWA米国株ベーシス裁定デスク"
+  vi: "Bàn kinh doanh chênh lệch cơ sở cổ phiếu RWA Mỹ tự động với kiểm soát rủi ro nghiêm ngặt"
+long_description: |
+  This Playbook is an autonomous basis trading strategy engineered for tokenized Real World Asset US equity contracts. The core thesis rests on structural price dislocations between synthetic equity fair value and perpetual contract pricing during market trading sessions. The Playbook aims to capture mean-reverting basis expansions when the contract price dislocates from its underlying reference equilibrium. Rather than chasing unverified directional momentum, the strategy approaches the market through deterministic spread evaluation, insisting that every proposed trade clears strict execution hurdle costs before committing capital.
+
+  Entry decisions are governed by basis spread expansion relative to an adaptive moving benchmark. When the observed contract basis deviates upward and surpasses the required entry hurdle after factoring in taker fees and execution slippage, the desk registers actionable conviction and opens a long position. If the basis contracts sharply below fair equilibrium, the strategy instead enters a short position to harvest negative basis convergence. When the spread fails to clear the transaction cost hurdle, the strategy deliberately refuses to enter and remains idle to preserve capital.
+
+  Exits occur when the basis spread converges back toward its historical moving baseline or reverses past neutral territory. As the mispricing compresses within the tighter exit hurdle boundary, the strategy closes the open position to realize accrued spread profits. The Playbook also closes active exposure if the spread experiences structural trend expansion contrary to the mean-reversion assumption, ensuring disciplined risk control without relying on arbitrary trailing indicators.
+
+  Subscribers may configure several operational parameters to align the strategy with their risk profile. Leverage scales position purchasing power and proportional return amplification, allowing subscribers to adjust exposure intensity according to their individual comfort. Margin budget establishes the absolute capital allocation ceiling utilized by the execution engine for order sizing and performance benchmarking. Additional tunable parameters govern the sensitivity of the entry and exit hurdle thresholds and the depth of the rolling equilibrium window.
+
+  The strategy underperforms during extended macro trending regimes where basis dislocation persists or widens without reverting toward fair equilibrium. Volatility shocks around equity earnings announcements, unexpected regulatory halts, and prolonged liquidity droughts can trigger adverse slippage and elevated drawdowns. Backtest evidence does not assure live profitability, and real market executions encounter funding rates, exchange commissions, and fill latency that may induce loss under unsuitable market conditions.
+
+market_type: contract
+trading_symbols: ["NVDAUSDT"]
+tags: ["rwa", "basis", "arbitrage", "us-equities", "contract", "follow-trade"]
+
+decision_mode: deterministic
+backtest_support: full
+runtime_profile: deterministic
+execution_mode: follow_trade
+follow_trade_supported: true
+
+strategy_config:
+  trading_symbols: ["NVDAUSDT"]
+  leverage: 3
+  margin_budget: "100"
+  entry_hurdle_bps: 20
+  exit_hurdle_bps: 2
+  take_profit_bps: 120
+  stop_loss_bps: 65
+  trend_window: 80
+  lookback_window: 20
+  max_hold_bars: 36
+
+user_config_schema:
+  trading_symbols:
+    type: array
+    item_type: string
+    default: ["NVDAUSDT"]
+    options: ["NVDAUSDT"]
+    aliases:
+      nvda: NVDAUSDT
+      rnvda: NVDAUSDT
+    min_items: 1
+    max_items: 1
+    label: "Trading symbol"
+  leverage:
+    type: integer
+    default: 3
+    min: 1
+    max: 10
+    aliases:
+      2x: 2
+      3x: 3
+      5x: 5
+    label: "Leverage"
+  margin_budget:
+    type: string
+    default: "100"
+    pattern: "^[0-9]+(\\.[0-9]+)?$"
+    label: "Margin budget USDT"
+  entry_hurdle_bps:
+    type: integer
+    default: 20
+    min: 10
+    max: 100
+    label: "Entry hurdle bps"
+  exit_hurdle_bps:
+    type: integer
+    default: 2
+    min: 1
+    max: 20
+    label: "Exit hurdle bps"
+  take_profit_bps:
+    type: integer
+    default: 120
+    min: 50
+    max: 300
+    label: "Take profit bps"
+  stop_loss_bps:
+    type: integer
+    default: 65
+    min: 20
+    max: 150
+    label: "Stop loss hurdle bps"
+  trend_window:
+    type: integer
+    default: 80
+    min: 20
+    max: 200
+    label: "Trend filter window"
+  lookback_window:
+    type: integer
+    default: 20
+    min: 5
+    max: 100
+    label: "Basis lookback window"

@@ -1,47 +1,33 @@
 import { useEffect, useState } from "react";
-import { fetchState, type DeskState } from "./lib/api";
-import { LandingPage } from "./pages/Landing";
-import { DeskPage } from "./pages/Desk";
-import { EvidencePage } from "./pages/Evidence";
-import { LandingV2 } from "./pages/landing-v2/LandingV2";
-import { Track1Page } from "./pages/track1/Track1Page";
-import { Track2Page } from "./pages/track2/Track2Page";
-import { Track3Page } from "./pages/track3/Track3Page";
-import { ReproPage } from "./pages/repro/ReproPage";
-import { SandboxPage } from "./pages/sandbox/SandboxPage";
+import { HomePage } from "./pages/home/HomePage";
+import { DashboardPage } from "./pages/dashboard/DashboardPage";
+import type { TabId } from "./pages/dashboard/state";
 
-type Route = "desk" | "evidence" | "landing" | "v1" | "track1" | "track2" | "track3" | "copilot" | "repro" | "sandbox";
+type Route = { page: "home" } | { page: "dashboard"; tab: TabId };
 
-function route(): Route {
+function parseRoute(): Route {
   const h = window.location.hash;
-  if (h.startsWith("#/sandbox") || h.startsWith("#/test")) return "sandbox";
-  if (h.startsWith("#/desk")) return "desk";
-  if (h.startsWith("#/evidence")) return "evidence";
-  if (h.startsWith("#/track1")) return "track1";
-  if (h.startsWith("#/track2")) return "track2";
-  if (h.startsWith("#/track3")) return "track3";
-  if (h.startsWith("#/copilot")) return "copilot";
-  if (h.startsWith("#/repro")) return "repro";
-  if (h.startsWith("#/v1")) return "v1";
-  return "landing";
+  if (h.startsWith("#/sandbox")) return { page: "dashboard", tab: "sandbox" };
+  if (h.startsWith("#/strategy") || h.startsWith("#/alpha")) return { page: "dashboard", tab: "strategy" };
+  if (h.startsWith("#/copilot")) return { page: "dashboard", tab: "copilot" };
+  if (h.startsWith("#/audit") || h.startsWith("#/receipts") || h.startsWith("#/logs")) return { page: "dashboard", tab: "audit" };
+  if (h.startsWith("#/council") || h.startsWith("#/app") || h.startsWith("#/dashboard") || h.startsWith("#/cockpit")) {
+    return { page: "dashboard", tab: "cockpit" };
+  }
+  return { page: "home" };
 }
 
 export default function App() {
-  const [r, setR] = useState(route());
-  const [desk, setDesk] = useState<DeskState | null>(null);
+  const [route, setRoute] = useState<Route>(parseRoute());
+
   useEffect(() => {
-    const onHash = () => setR(route());
+    const onHash = () => setRoute(parseRoute());
     window.addEventListener("hashchange", onHash);
-    fetchState().then(setDesk).catch(() => { /* landing renders without engine */ });
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
-  if (r === "sandbox") return <SandboxPage />;
-  if (r === "desk") return <DeskPage />;
-  if (r === "evidence") return <EvidencePage />;
-  if (r === "track1") return <Track1Page />;
-  if (r === "track2") return <Track2Page />;
-  if (r === "track3" || r === "copilot") return <Track3Page />;
-  if (r === "repro") return <ReproPage />;
-  if (r === "v1") return <LandingPage latest={desk?.latestReceipt ?? null} />;
-  return <LandingV2 desk={desk} />;
+
+  if (route.page === "dashboard") {
+    return <DashboardPage initialTab={route.tab} />;
+  }
+  return <HomePage />;
 }

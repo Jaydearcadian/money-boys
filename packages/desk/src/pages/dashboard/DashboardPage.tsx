@@ -1,17 +1,62 @@
-import type { ReactNode } from "react";
-import { DashboardLayout, type DashboardTab } from "../../layouts/DashboardLayout";
-import { DeskTab } from "./tabs/DeskTab";
-import { SandboxTab } from "./tabs/SandboxTab";
-import { StrategyTab } from "./tabs/StrategyTab";
-import { AuditTab } from "./tabs/AuditTab";
+import "./dashboard.css";
+import { DeskProvider, useDesk, type TabId } from "./state";
+import {
+  Sidebar,
+  TopHeader,
+  KpiRow,
+  BasisChart,
+  DecisionFeed,
+  ResultPanel,
+  ReceiptDrawer,
+  Card,
+  Loading,
+} from "./components";
+import { AgentMatrix, AuditView, CopilotView, MarginGauge, RwaCards, SandboxLab, StrategyView, TelemetryBar } from "./views";
 
-const TAB_FOR: Record<DashboardTab, ReactNode> = {
-  desk: <DeskTab />,
-  sandbox: <SandboxTab />,
-  strategy: <StrategyTab />,
-  audit: <AuditTab />,
-};
+function DashboardContent() {
+  const { tab, records, recordsError, run } = useDesk();
 
-export function DashboardPage({ initialTab }: { initialTab: DashboardTab }) {
-  return <DashboardLayout initialTab={initialTab}>{TAB_FOR[initialTab]}</DashboardLayout>;
+  return (
+    <div className="db-shell">
+      <Sidebar />
+      <main className="db-main">
+        <TopHeader />
+        <KpiRow />
+
+        {tab === "cockpit" && (
+          <>
+            <TelemetryBar />
+            <RwaCards />
+            <div className="db-row-split">
+              <AgentMatrix />
+              <MarginGauge />
+            </div>
+            <div className="db-row-split">
+              {records ? <BasisChart trades={records.trades} /> : <Loading error={recordsError} />}
+              <DecisionFeed limit={6} />
+            </div>
+            <Card title="Interactive Scenario Sandbox" aside={<span className="db-label">Runs real engine code</span>}>
+              <div style={{ marginTop: 4 }}>
+                <ResultPanel run={run} />
+              </div>
+            </Card>
+          </>
+        )}
+
+        {tab === "strategy" && <StrategyView />}
+        {tab === "copilot" && <CopilotView />}
+        {tab === "audit" && <AuditView />}
+        {tab === "sandbox" && <SandboxLab />}
+      </main>
+      <ReceiptDrawer />
+    </div>
+  );
+}
+
+export function DashboardPage({ initialTab = "cockpit" }: { initialTab?: TabId }) {
+  return (
+    <DeskProvider initialTab={initialTab}>
+      <DashboardContent />
+    </DeskProvider>
+  );
 }

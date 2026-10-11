@@ -1,0 +1,32 @@
+{
+  "test": "RWA_TOKEN_VENUE_LIFECYCLE",
+  "symbol": "rNVDAUSDT",
+  "venueSymbol": "NVDAUSDT",
+  "executedAt": "2026-10-08T01:50:40.268Z",
+  "environment": "testnet",
+  "vetoCheck": {
+    "blocked": true,
+    "networkCalls": 0
+  },
+  "openOrder": {
+    "orderId": "1491906882204499969",
+    "status": "FILLED",
+    "quantity": 0.11,
+    "fillPriceUsd": 238.15,
+    "latencyMs": 126.11400900000007,
+    "receiptHash": "f7904d16fe480967149d7f542eafba890ce8a956909d36e81d8bbf7038e536b4"
+  },
+  "positionReadBack": {
+    "symbol": "NVDAUSDT",
+    "size": 0.22,
+    "holdSide": "long"
+  },
+  "closeOrder": {
+    "orderId": "1491906883357933568",
+    "status": "FILLED",
+    "quantity": 0.22,
+    "latencyMs": 129.24097600000005
+  },
+  "accountFlat": true,
+  "proofDigest": "2ca5011cc8e1a9ef3fb4196a878ddebdb45b94aea2fdb9b737f487fe43e4814f"
+}

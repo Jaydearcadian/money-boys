@@ -61,6 +61,10 @@ See `AGENTS.md` I-01…I-05.
 | M4 | Macro Boy / warm path emits proposals only (no signing keys) | TESTED |
 | M5 | Narrow paper/live-read dispatch path with receipt + veto | E2E_VERIFIED / LIVE_DEMONSTRATED |
 
+## Day-0 Checks
+
+- **D12 — Studio Paper Trading Fill Extraction**: Verify whether GetAgent Studio / Playbook paper trading fills can be pulled programmatically via API/export or if they are only visible in the web UI. If programmatic fill extraction is supported, integrate a Playbook paper bot as an additional evaluation cohort member; if UI-only, keep Demo API bots as the primary programmatic trade dataset.
+
 ## Acceptance for demo
 
 1. `pnpm verify` green at reported HEAD  

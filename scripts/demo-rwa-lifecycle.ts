@@ -74,7 +74,7 @@ function mintReceipt(fillPriceUsd: number, approved: boolean, accountEquity = 93
     riskReport: toBlastRadiusReport(risk),
     councilScores: { compositeScore: approved ? 85 : 45, macro: approved ? 80 : 40, quant: quant.quantScore, risk: approved ? 90 : 0, exec: 85 },
     decision: approved && risk.decision === "APPROVED" ? "APPROVED" : "VETOED",
-    rationale: approved ? "RWA live demo lifecycle test: basis positive and margin safe" : "Veto probe: rejected before venue call",
+    rationale: approved ? `RWA live demo lifecycle test (${Date.now()}): basis positive and margin safe` : `Veto probe (${Date.now()}): rejected before venue call`,
     metadata: { passNumber: 1, originalQuantity: QUANTITY, executedQuantity: QUANTITY },
   });
 }
@@ -176,14 +176,19 @@ async function main(): Promise<void> {
 
   // Step 3: POSITION READ-BACK
   step(3, "POSITION READ-BACK FROM VENUE");
-  const posRes = await realClient.request(
-    "GET",
-    "/api/v2/mix/position/all-position",
-    { productType: PRODUCT_TYPE, marginCoin: "USDT" },
-    true,
-  );
-  const positions = Array.isArray(posRes.data) ? posRes.data : [];
-  const openPos = positions.find((p: Record<string, unknown>) => p["symbol"] === VENUE_SYMBOL) as Record<string, unknown> | undefined;
+  let openPos: Record<string, unknown> | undefined;
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const posRes = await realClient.request(
+      "GET",
+      "/api/v2/mix/position/all-position",
+      { productType: PRODUCT_TYPE, marginCoin: "USDT" },
+      true,
+    );
+    const positions = Array.isArray(posRes.data) ? posRes.data : [];
+    openPos = positions.find((p: Record<string, unknown>) => p["symbol"] === VENUE_SYMBOL) as Record<string, unknown> | undefined;
+    if (openPos && Number(openPos["total"] ?? openPos["available"] ?? 0) > 0) break;
+    await new Promise((r) => setTimeout(r, 400));
+  }
 
   if (!openPos) {
     bad(`Position not found on venue read-back!`);
@@ -210,15 +215,20 @@ async function main(): Promise<void> {
 
   // Step 5: FLAT ASSERTION
   step(5, "ASSERT ACCOUNT IS 100% FLAT");
-  const flatRes = await realClient.request(
-    "GET",
-    "/api/v2/mix/position/all-position",
-    { productType: PRODUCT_TYPE, marginCoin: "USDT" },
-    true,
-  );
-  const remaining = (Array.isArray(flatRes.data) ? flatRes.data : []).filter(
-    (p: Record<string, unknown>) => p["symbol"] === VENUE_SYMBOL,
-  );
+  let remaining: Record<string, unknown>[] = [];
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const flatRes = await realClient.request(
+      "GET",
+      "/api/v2/mix/position/all-position",
+      { productType: PRODUCT_TYPE, marginCoin: "USDT" },
+      true,
+    );
+    remaining = (Array.isArray(flatRes.data) ? flatRes.data : []).filter(
+      (p: Record<string, unknown>) => p["symbol"] === VENUE_SYMBOL && Number(p["total"] ?? p["available"] ?? 0) > 0,
+    );
+    if (remaining.length === 0) break;
+    await new Promise((r) => setTimeout(r, 400));
+  }
 
   if (remaining.length > 0) {
     bad(`Account NOT flat! Residual position(s): ${JSON.stringify(remaining)}`);

@@ -3,7 +3,15 @@
 > **Research proposes. Quant calculates. Risk vetoes. Council decides. A receipt seals.
 > Money Boys dispatches. The venue is read back.**
 
+[![Live Web Cockpit](https://img.shields.io/badge/Live%20Cockpit-money--boys--neon.vercel.app-emerald?style=flat-square)](https://money-boys-neon.vercel.app)
+[![Bitget API v2](https://img.shields.io/badge/Bitget%20API-v2%20Spot%2FMargin-cyan?style=flat-square)](https://www.bitget.com)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Pure%20Zod%20%2B%20WebCrypto-blue?style=flat-square)](https://www.typescriptlang.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+
 Money Boys is an **autonomous 24/7 agentic trading desk for tokenized US equities (Real World Assets) on Bitget**.
+
+👉 **Live Production URL:** [https://money-boys-neon.vercel.app](https://money-boys-neon.vercel.app)  
+👉 **Live Tunnel Fallback:** [https://actress-scored-texture-bureau.trycloudflare.com](https://actress-scored-texture-bureau.trycloudflare.com)
 
 *Warm-path cognitive research · Hot-path <50ms deterministic execution · Zero direct LLM keys*
 
@@ -138,16 +146,18 @@ A **Bitget GetAgent Studio audit** (`foundry/evidence/audit/andrew_studio_signof
 
 ---
 
-## 5. Product Surfaces
+## 5. Product Surfaces & Hackathon Tracks
 
-| Layer | Route | What it is |
+| Surface | Live Route | Track Alignment & Functionality |
 |---|---|---|
-| **Cockpit** | `#/app/desk` | Live node consensus, margin telemetry, emergency halt |
-| **Sandbox** | `#/app/sandbox` | Run a real deliberation **in your browser**, sealed with Web Crypto |
-| **Strategy** | `#/app/strategy` | The edge, the walk-forward, the decay test |
-| **Audit** | `#/app/audit` | Provenance, the quarantine story, receipts you verify yourself |
+| **Landing Page** | [`#/`](https://money-boys-neon.vercel.app/#/) | Moneliq obsidian hero, market hours gap clock, and 3-track overview |
+| **Cockpit** | [`#/app`](https://money-boys-neon.vercel.app/#/app) | Live telemetry, 5 RWA asset cards (`rNVDA`, `rTSLA`, `rAAPL`, `rMSFT`, `rGOOGL`), 4-agent node matrix, and margin utilization gauge (<65%) |
+| **Track 1: Alpha Factory** | [`#/strategy`](https://money-boys-neon.vercel.app/#/strategy) | **Track 1 (Quant / Alpha Factory):** 89-day walk-forward curve (+4.92% net return, +$1,228.83 USD), 3.89 OOS Sharpe vs 1.47 decay floor ($1.32\times$ retention), 48 OOS trades (clears $\ge 30$ gate), and 5x5 $\rho = 0.197$ correlation matrix |
+| **Track 2: Agentic Trading** | [`#/audit`](https://money-boys-neon.vercel.app/#/audit) | **Track 2 (Agentic Execution):** Three-Beat timeline visualizer (`dispatched: false` on Beat 1, deterministic hard veto on Beat 2), live Bitget API v2 lifecycle proof card (Order ID `1491906882204499969`, 126.1ms fill), and verifiable SHA-256 receipt drawer |
+| **Track 3: Portfolio Copilot** | [`#/copilot`](https://money-boys-neon.vercel.app/#/copilot) | **Track 3 (Portfolio Copilot):** Institutional factor ceilings ($\text{Beta} \le 2.50$, Sector concentration $\le 60\%$) and interactive pre-trade Blast Radius simulator powered live by `PortfolioCopilot.evaluateImpact` |
+| **Interactive Sandbox Lab** | [`#/sandbox`](https://money-boys-neon.vercel.app/#/sandbox) | 4 preset scenarios, custom token price/size/margin sliders, real in-browser engine deliberation, and live Web Crypto SHA-256 sealing and tamper detection |
 
-Legacy hashes (`#/desk`, `#/sandbox`, `#/evidence`, `#/track1`, `#/repro`) still resolve.
+Legacy hashes (`#/desk`, `#/sandbox`, `#/evidence`, `#/track1`, `#/track2`, `#/track3`, `#/repro`) remain supported via hash router fallbacks.
 
 ---
 

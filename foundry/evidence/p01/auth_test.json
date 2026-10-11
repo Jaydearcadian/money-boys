@@ -1,13 +1,13 @@
 {
   "claimId": "CLM-001",
-  "timestamp": "2026-09-30T06:42:02.692Z",
+  "timestamp": "2026-10-08T01:48:17.132Z",
   "status": "LIVE_DEMONSTRATED",
   "substrate": "Bitget API v2",
   "tickerSample": {
     "symbol": "BTCUSDT",
-    "lastPr": "83056.01",
-    "bidPr": "83056",
-    "askPr": "83056.01"
+    "lastPr": "83235.14",
+    "bidPr": "83235.14",
+    "askPr": "83235.15"
   },
   "authConfirmed": true,
   "authCode": "00000",
