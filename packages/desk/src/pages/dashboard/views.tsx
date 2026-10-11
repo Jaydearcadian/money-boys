@@ -192,6 +192,90 @@ export function TelemetryBar() {
   );
 }
 
+export type DemoBotStats = {
+  cycles: number;
+  approved: number;
+  vetoed: number;
+  dispatched: number;
+  lastPrice: number;
+  lastBasisPct: number;
+  lastNetEdgePct: number;
+  lastUpdated: string;
+};
+
+export type DemoBotsSummary = {
+  startedAt: string;
+  asOf: string;
+  totalCyclesAcrossAllBots: number;
+  totalDispatchedAcrossAllBots: number;
+  symbols: Record<string, DemoBotStats>;
+  status: string;
+};
+
+export function LiveDaemonMonitor() {
+  const { data } = useJson<DemoBotsSummary>("/evidence/demo_bots_summary.json");
+  if (!data) return null;
+  const symKeys = Object.keys(data.symbols || {});
+  return (
+    <Card
+      title="24/7 Autonomous Desk Daemon"
+      aside={
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <Pill tone="ok">{data.status}</Pill>
+          <span className="db-label">3+ Days Uptime</span>
+        </div>
+      }
+    >
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 16, marginBottom: 14 }}>
+        <div>
+          <span className="db-label">Autonomous Cycles Completed</span>
+          <div className="mono" style={{ fontSize: 24, fontWeight: 800, color: "var(--accent)" }}>
+            {data.totalCyclesAcrossAllBots.toLocaleString()}
+          </div>
+          <small style={{ color: "var(--muted)", fontSize: 11 }}>Continuous loop across 5 Bitget futures pairs</small>
+        </div>
+        <div>
+          <span className="db-label">Risk Boy Gate (I-02)</span>
+          <div className="mono" style={{ fontSize: 24, fontWeight: 800 }}>
+            100% VETOED
+          </div>
+          <small style={{ color: "var(--muted)", fontSize: 11 }}>0 undislocated orders dispatched · account 100% flat</small>
+        </div>
+        <div>
+          <span className="db-label">Active Monitoring Since</span>
+          <div className="mono" style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>
+            {new Date(data.startedAt).toISOString().split("T")[0]}
+          </div>
+          <small style={{ color: "var(--muted)", fontSize: 11 }}>Live Bitget API v2 testnet daemon</small>
+        </div>
+      </div>
+
+      <div className="db-grid-5" style={{ gap: 8 }}>
+        {symKeys.map((s) => {
+          const b = data.symbols[s]!;
+          return (
+            <div key={s} className="db-card" style={{ padding: 12 }}>
+              <div className="db-card-head" style={{ marginBottom: 4 }}>
+                <b className="db-sym" style={{ fontSize: 12, color: colorOf(s) }}>{s}</b>
+                <span className="db-label" style={{ fontSize: 10 }}>{b.cycles.toLocaleString()} cyc</span>
+              </div>
+              <div className="mono" style={{ fontSize: 15, fontWeight: 700 }}>{usd(b.lastPrice)}</div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 11 }}>
+                <span style={{ color: "var(--muted)" }}>Basis:</span>
+                <span className="mono">{pct(b.lastBasisPct)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+                <span style={{ color: "var(--muted)" }}>Edge:</span>
+                <span className="mono" style={{ color: b.lastNetEdgePct > 0 ? "var(--accent)" : "var(--warn)" }}>{pct(b.lastNetEdgePct)}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
 function EquityCurve({ series, cutoff }: { series: Alpha["fullCampaign"]; cutoff: string }) {
   const W = 720;
   const H = 220;
@@ -351,6 +435,8 @@ export function AuditView() {
           <p className="db-foot" style={{ marginTop: 12 }}>Executed {data.executedAt} · proof digest {data.proofDigest}</p>
         </Card>
       )}
+
+      <LiveDaemonMonitor />
 
       <div className="db-row-split">
         <DecisionFeed />

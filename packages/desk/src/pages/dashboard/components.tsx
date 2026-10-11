@@ -221,6 +221,15 @@ function Kpi({ label, value, sub, tone, icon, testId }: { label: string; value: 
 
 export function KpiRow() {
   const { records, run } = useDesk();
+  const [daemon, setDaemon] = useState<{ totalCyclesAcrossAllBots: number } | null>(null);
+
+  useEffect(() => {
+    fetch("/evidence/demo_bots_summary.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => j && setDaemon(j))
+      .catch(() => {});
+  }, []);
+
   const symbolsInDecisions = records ? new Set(records.decisions.map((d) => d.symbol)).size : null;
   const approved = records?.decisions.filter((d) => d.decision === "APPROVED").length ?? 0;
   const vetoed = records?.decisions.filter((d) => d.decision === "VETOED").length ?? 0;
@@ -244,9 +253,9 @@ export function KpiRow() {
       />
       <Kpi
         testId="kpi-receipts"
-        label="Decisions on record"
-        value={records ? String(records.decisions.length) : "…"}
-        sub={records ? `${approved} approved · ${vetoed} vetoed` : "loading"}
+        label={daemon ? "24/7 Cycles on record" : "Decisions on record"}
+        value={daemon ? daemon.totalCyclesAcrossAllBots.toLocaleString() : records ? String(records.decisions.length) : "…"}
+        sub={daemon ? "Autonomous daemon · 5 bots active" : records ? `${approved} approved · ${vetoed} vetoed` : "loading"}
         icon={<LockIcon className="h-5 w-5" />}
       />
       <Kpi

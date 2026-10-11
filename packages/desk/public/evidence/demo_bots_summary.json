@@ -1,0 +1,59 @@
+{
+  "startedAt": "2026-10-08T01:52:47.877Z",
+  "asOf": "2026-10-11T11:46:15.034Z",
+  "totalCyclesAcrossAllBots": 76984,
+  "totalDispatchedAcrossAllBots": 0,
+  "symbols": {
+    "rNVDAUSDT": {
+      "cycles": 15397,
+      "approved": 0,
+      "vetoed": 15397,
+      "dispatched": 0,
+      "lastPrice": 230.93,
+      "lastBasisPct": 1.0502,
+      "lastNetEdgePct": 0.8959,
+      "lastUpdated": "2026-10-11T11:46:07.579Z"
+    },
+    "rTSLAUSDT": {
+      "cycles": 15397,
+      "approved": 0,
+      "vetoed": 15397,
+      "dispatched": 0,
+      "lastPrice": 383.02,
+      "lastBasisPct": 0.0562,
+      "lastNetEdgePct": -0.0973,
+      "lastUpdated": "2026-10-11T11:46:09.392Z"
+    },
+    "rAAPLUSDT": {
+      "cycles": 15397,
+      "approved": 0,
+      "vetoed": 15397,
+      "dispatched": 0,
+      "lastPrice": 336.6,
+      "lastBasisPct": 0.2323,
+      "lastNetEdgePct": 0.0786,
+      "lastUpdated": "2026-10-11T11:46:11.211Z"
+    },
+    "rMSFTUSDT": {
+      "cycles": 15397,
+      "approved": 0,
+      "vetoed": 15397,
+      "dispatched": 0,
+      "lastPrice": 535.34,
+      "lastBasisPct": 0.1309,
+      "lastNetEdgePct": -0.025,
+      "lastUpdated": "2026-10-11T11:46:13.024Z"
+    },
+    "rGOOGLUSDT": {
+      "cycles": 15396,
+      "approved": 0,
+      "vetoed": 15396,
+      "dispatched": 0,
+      "lastPrice": 351.23,
+      "lastBasisPct": -0.2584,
+      "lastNetEdgePct": 0.1048,
+      "lastUpdated": "2026-10-11T11:45:55.658Z"
+    }
+  },
+  "status": "ONLINE_MONITORING"
+}

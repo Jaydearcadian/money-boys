@@ -11,7 +11,7 @@ import {
   Card,
   Loading,
 } from "./components";
-import { AgentMatrix, AuditView, CopilotView, MarginGauge, RwaCards, SandboxLab, StrategyView, TelemetryBar } from "./views";
+import { AgentMatrix, AuditView, CopilotView, LiveDaemonMonitor, MarginGauge, RwaCards, SandboxLab, StrategyView, TelemetryBar } from "./views";
 
 function DashboardContent() {
   const { tab, records, recordsError, run } = useDesk();
@@ -26,6 +26,7 @@ function DashboardContent() {
         {tab === "cockpit" && (
           <>
             <TelemetryBar />
+            <LiveDaemonMonitor />
             <RwaCards />
             <div className="db-row-split">
               <AgentMatrix />
